@@ -2,12 +2,12 @@
 
 家事の「できた」を友達と共有する、スマホ向けのバーチャルシェアハウス。
 **このリポジトリ1つにFrontend・Backend・テスト・公開手順をまとめています。**
-提出先: https://github.com/youmi-ngs/darupoyo-front
+提出先: https://github.com/youmi-ngs/darupoyo
 
 ## 構成と担当
 
 ```text
-darupoyo-front/
+darupoyo/
 ├── index.html, src/, public/   # Frontend：Vite + JavaScript
 ├── backend/
 │   ├── src/app/               # Backend：Python 3.12 + FastAPI

@@ -1,7 +1,7 @@
 # だるぽよ Backend
 
 Python 3.12 / FastAPI。認証・グループ・画像・達成記録・Gemini連携のAPI。
-このフォルダは提出リポジトリ darupoyo-front のBackend部分。Frontendは親ディレクトリ。
+このフォルダは提出リポジトリ darupoyo のBackend部分。Frontendは親ディレクトリ。
 BackendのDockerにはFrontendのコード・Node.js・画面配信を含めない。
 
 ## ローカル開発
