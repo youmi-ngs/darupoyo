@@ -1,0 +1,6 @@
+.gcloudignore
+.git/
+#!include:.gitignore
+.pytest_cache/
+tests/
+docs/

@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Private objects are accessed through the authenticated Backend only.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

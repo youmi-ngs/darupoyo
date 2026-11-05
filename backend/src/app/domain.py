@@ -1,0 +1,227 @@
+import hashlib
+import json
+import secrets
+from datetime import UTC, datetime, timedelta
+from uuid import uuid4
+from zoneinfo import ZoneInfo
+
+from fastapi import HTTPException
+
+from .services import REWARDS
+
+
+def utcnow():
+    return datetime.now(UTC)
+
+
+def digest(value):
+    return hashlib.sha256(value.encode()).hexdigest()
+
+
+def require_member(store, house_id, uid):
+    house = store.get(f"houses/{house_id}")
+    if not house or uid not in house["member_ids"]:
+        raise HTTPException(404, "House not found")
+    return house
+
+
+def new_day(day):
+    return {"day": day, "goals": {}, "completed": {}, "poses": {}, "recent": [], "latest": {}}
+
+
+class Domain:
+    def __init__(self, store, settings, clock=utcnow):
+        self.store, self.settings, self.clock = store, settings, clock
+
+    def day(self):
+        return self.clock().astimezone(ZoneInfo(self.settings.timezone)).date().isoformat()
+
+    def create_house(self, uid, body):
+        house_id = str(uuid4())
+        house = {
+            "id": house_id,
+            "name": body.name,
+            "owner_id": uid,
+            "member_ids": [uid],
+            "members": {uid: {"display_name": body.display_name}},
+            "created_at": self.clock().isoformat(),
+        }
+        self.store.atomic(lambda tx: tx.set(f"houses/{house_id}", house))
+        return house
+
+    def invite(self, uid, house_id):
+        token = secrets.token_urlsafe(32)
+        expires = (self.clock() + timedelta(days=7)).isoformat()
+
+        def run(tx):
+            require_member(tx, house_id, uid)
+            tx.set(f"invites/{digest(token)}", {"house_id": house_id, "expires_at": expires})
+
+        self.store.atomic(run)
+        return {"token": token, "expires_at": expires}
+
+    def join(self, uid, body):
+        def run(tx):
+            invitation = tx.get(f"invites/{digest(body.token)}")
+            if not invitation or datetime.fromisoformat(invitation["expires_at"]) <= self.clock():
+                raise HTTPException(404, "Invite not found or expired")
+            path = f"houses/{invitation['house_id']}"
+            house = tx.get(path)
+            if not house:
+                raise HTTPException(404, "House not found")
+            if uid in house["member_ids"]:
+                return house
+            if len(house["member_ids"]) >= 6:
+                raise HTTPException(409, "House is full")
+            house["member_ids"].append(uid)
+            house["members"][uid] = {"display_name": body.display_name}
+            tx.set(path, house)
+            return house
+
+        return self.store.atomic(run)
+
+    def dashboard(self, uid, house_id, day=None):
+        house = require_member(self.store, house_id, uid)
+        date = day or self.day()
+        state = self.store.get(f"houses/{house_id}/days/{date}") or new_day(date)
+        lights = {member: bool(state["completed"].get(member)) for member in house["member_ids"]}
+        return {
+            "house": house,
+            "state": state,
+            "lights": lights,
+            "happiness": round(100 * sum(lights.values()) / len(lights)),
+            "timezone": self.settings.timezone,
+        }
+
+    def goals(self, uid, house_id, body):
+        day = self.day()
+        path = f"houses/{house_id}/days/{day}"
+
+        def run(tx):
+            require_member(tx, house_id, uid)
+            state = tx.get(path) or new_day(day)
+            state["goals"][uid] = list(dict.fromkeys(c.value for c in body.chores))
+            tx.set(path, state)
+            return state
+
+        return self.store.atomic(run)
+
+    def complete(self, uid, house_id, body):
+        now = self.clock()
+        day = now.astimezone(ZoneInfo(self.settings.timezone)).date().isoformat()
+        day_path = f"houses/{house_id}/days/{day}"
+        request_path = f"houses/{house_id}/requests/{digest(uid + ':' + str(body.request_id))}"
+        fingerprint = digest(json.dumps(body.model_dump(mode="json"), sort_keys=True))
+        post_id = now.strftime("%Y%m%dT%H%M%S%f") + "_" + uuid4().hex
+        chore = body.chore.value
+
+        def run(tx):
+            require_member(tx, house_id, uid)
+            prior = tx.get(request_path)
+            if prior:
+                if prior["fingerprint"] != fingerprint:
+                    raise HTTPException(409, "request_id was already used with different content")
+                return tx.get(f"houses/{house_id}/posts/{prior['post_id']}"), False
+            state = tx.get(day_path) or new_day(day)
+            if body.media_id:
+                media = tx.get(f"houses/{house_id}/media/{body.media_id}")
+                expected = "cutout" if body.method == "pose" else "meal"
+                if not media or media["owner_id"] != uid or media["kind"] != expected:
+                    raise HTTPException(422, "Missing or incompatible owned media")
+            # All reads precede writes for Firestore transactions.
+            first = chore not in state["poses"] and body.method == "pose"
+            template = state["poses"].get(chore)
+            if body.reference_post_id and (
+                not template or template["post_id"] != body.reference_post_id
+            ):
+                raise HTTPException(409, "Pose reference changed; fetch today's pose and retry")
+            if first:
+                template = {
+                    "user_id": uid,
+                    "post_id": post_id,
+                    "media_id": str(body.media_id),
+                    "name": body.pose_name or "今日のオリジナルポーズ",
+                    "landmarks": [p.model_dump() for p in body.landmarks],
+                }
+                state["poses"][chore] = template
+            sync = [
+                other
+                for other, latest in state["latest"].get(chore, {}).items()
+                if other != uid
+                and 0
+                <= (now - datetime.fromisoformat(latest)).total_seconds()
+                <= self.settings.sync_seconds
+            ]
+            post = {
+                "id": post_id,
+                "user_id": uid,
+                "day": day,
+                "chore": chore,
+                "method": body.method,
+                "created_at": now.isoformat(),
+                "media_id": str(body.media_id) if body.media_id else None,
+                "duration_seconds": body.duration_seconds,
+                "hits": body.hits,
+                "total_beats": body.total_beats,
+                "gal": body.gal,
+                "similarity": body.similarity,
+                "pose_template_post_id": template["post_id"] if template else None,
+                "is_first_pose": first,
+                "sync_with": sync,
+                "reward": REWARDS[chore],
+                "reactions": {},
+                "praise": {
+                    "text": "今日の自分、えらすぎ！小さな一歩に拍手〜✨",
+                    "source": "fallback",
+                },
+            }
+            completed = state["completed"].setdefault(uid, [])
+            if chore not in completed:
+                completed.append(chore)
+            state["latest"].setdefault(chore, {})[uid] = now.isoformat()
+            state["recent"] = [
+                {
+                    k: post[k]
+                    for k in ("id", "user_id", "chore", "created_at", "reward", "sync_with")
+                }
+            ] + state["recent"][:49]
+            tx.set(f"houses/{house_id}/posts/{post_id}", post)
+            tx.set(day_path, state)
+            tx.set(request_path, {"fingerprint": fingerprint, "post_id": post_id})
+            return post, True
+
+        return self.store.atomic(run)
+
+    def set_praise(self, house_id, post_id, praise):
+        path = f"houses/{house_id}/posts/{post_id}"
+
+        def run(tx):
+            post = tx.get(path)
+            post["praise"] = praise
+            tx.set(path, post)
+            return post
+
+        return self.store.atomic(run)
+
+    def profile(self, uid, house_id, body):
+        def run(tx):
+            house = require_member(tx, house_id, uid)
+            house["members"][uid]["theme"] = body.theme
+            tx.set(f"houses/{house_id}", house)
+            return house
+
+        return self.store.atomic(run)
+
+    def react(self, uid, house_id, post_id, emoji):
+        path = f"houses/{house_id}/posts/{post_id}"
+
+        def run(tx):
+            require_member(tx, house_id, uid)
+            post = tx.get(path)
+            if not post:
+                raise HTTPException(404, "Post not found")
+            post["reactions"][uid] = emoji
+            tx.set(path, post)
+            return post
+
+        return self.store.atomic(run)
