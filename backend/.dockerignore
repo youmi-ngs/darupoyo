@@ -1,0 +1,44 @@
+# Git / editor metadata
+.git/
+.gitignore
+.github/
+.vscode/
+.idea/
+
+# Dependencies and build artifacts
+node_modules/
+**/node_modules/
+frontend/dist/
+frontend/public/models/
+frontend/test-results/
+frontend/playwright-report/
+.next/
+out/
+dist/
+build/
+__pycache__/
+.venv/
+.venv*/
+.pytest_cache/
+tests/
+docs/
+venv/
+
+# Local environment and credentials
+.env*
+!.env.example
+.dev.vars
+*service-account*.json
+*credentials*.json
+*gcp*.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret*
+*.secrets*
+
+# OS files
+.DS_Store

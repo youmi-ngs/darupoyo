@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 import { resolve } from 'node:path';
-const backendDir = resolve(process.env.BACKEND_DIR || '../darupoyo-back');
+const backendDir = resolve(process.env.BACKEND_DIR || './backend');
 export default defineConfig({
   testDir: './e2e', timeout: 45000, workers: 1,
   use: { ...devices['Pixel 7'], baseURL: 'http://127.0.0.1:5173', trace: 'retain-on-failure', launchOptions: { args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] } },

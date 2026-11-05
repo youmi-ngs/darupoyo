@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function member(houseId) {
+      return request.auth != null && request.auth.uid in
+        get(/databases/$(database)/documents/houses/$(houseId)).data.member_ids;
+    }
+    match /houses/{houseId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.member_ids;
+      allow write: if false;
+      match /days/{day} {
+        allow read: if member(houseId);
+        allow write: if false;
+      }
+      match /posts/{postId} {
+        allow read: if member(houseId);
+        allow write: if false;
+      }
+    }
+    // Includes invites, idempotency records and private media metadata.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

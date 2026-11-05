@@ -1,0 +1,63 @@
+# 依存ライブラリ（容量が大きすぎるため除外）
+node_modules/
+dist/
+frontend/public/models/
+test-results/
+playwright-report/
+
+# Next.js のビルド出力
+.next/
+out/
+
+# Pythonの仮想環境とキャッシュ
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+.venv*/
+.pytest_cache/
+.ruff_cache/
+.coverage
+application_default_credentials.json
+*serviceAccount*.json
+*-firebase-adminsdk-*.json
+.firebase/
+firebase-debug.log
+
+# ローカルの環境変数・シークレット（APIキー、トークン、パスワード等）
+# 共有用のテンプレートだけをコミットする（例: .env.example）
+.env*
+!.env.example
+!.env.*.example
+.dev.vars
+
+# クラウド認証情報（GCP / Firebase / AWS 等）
+*service-account*.json
+service-account*.json
+*credentials*.json
+*gcp*.json
+*.p12
+*.pfx
+
+# 秘密鍵・証明書・SSHキー
+*.pem
+*.key
+*.crt
+*.cer
+*.der
+id_rsa
+id_rsa.*
+id_dsa
+id_ecdsa
+id_ed25519
+
+# ローカル設定・シークレットのバックアップ
+*.secret
+*.secrets
+*.secret.*
+*.secrets.*
+*.bak
+
+# Mac固有のシステムファイル
+.DS_Store
