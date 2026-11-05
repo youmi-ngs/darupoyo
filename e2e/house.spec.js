@@ -1,0 +1,67 @@
+import { test, expect } from '@playwright/test';
+
+test('create, invite, sync, rhythm, private meal, persistence and room theme', async ({ page, browser }) => {
+  const errors = []; page.on('pageerror', e => errors.push(e.message));
+  const apiRequests = [];
+  page.on('request', request => { if (request.url().includes('/api/')) apiRequests.push(request.url()); });
+  await page.goto('/');
+  await page.getByLabel('あなたの名前').fill('もち');
+  await page.getByLabel('新しいハウスの名前').fill('温玉テスト');
+  await page.getByRole('button', { name: 'ハウスを作る', exact:true }).click();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('#open-menu').click();
+  await page.getByRole('button', { name:'友だちを招待する' }).click();
+  const url = await page.getByRole('textbox', {name:'招待リンク',exact:true}).inputValue();
+  await page.locator('#sheet-close').click();
+  const context = await browser.newContext({ viewport: {width:390,height:844} }); const friend = await context.newPage();
+  await friend.goto(url); await friend.getByLabel('あなたの名前').fill('ともだち'); await friend.getByRole('button', {name:'招待に参加する'}).click();
+  await expect(friend.locator('.onboarding')).toHaveCount(0);
+  await expect(page.locator('.doors .door')).toHaveCount(2);
+  await page.locator('[data-go="3"].scene-tab').click();
+  await page.locator('[data-chore="laundry"]').click();
+  await page.getByRole('button', {name:'洗濯リズム'}).click();
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
+  await page.getByRole('button', {name:'リズムをはじめる'}).click();
+  await page.clock.runFor(850);
+  await expect(page.locator('.capture-beat')).toHaveText('1 ♪');
+  await page.locator('.capture-beat').press('Enter');
+  await expect(page.locator('.capture-status')).toHaveText('1 / 8 ヒット');
+  await page.clock.runFor(6500);
+  await page.clock.resume();
+  await page.getByRole('button', {name:'部屋に飾る',exact:true}).click();
+  await expect(page.getByText('記録できた！')).toBeVisible();
+  await page.getByRole('button', {name:'お部屋へ',exact:true}).click();
+  await expect(page.locator('.door.is-lit')).toHaveCount(1);
+  await expect(friend.locator('.door.is-lit')).toHaveCount(1);
+  // A camera-independent API photo fixture tests authenticated upload and actual UI rendering.
+  const result = await page.evaluate(async () => {
+    const uid = localStorage.getItem('darupoyo-uid'), house = localStorage.getItem('darupoyo-house-'+uid), headers = { Authorization:'Bearer dev:'+uid };
+    const canvas = document.createElement('canvas'); canvas.width=32;canvas.height=32; const ctx=canvas.getContext('2d');ctx.fillStyle='#ffb3de';ctx.fillRect(0,0,32,32);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
+    const media=await fetch('/api/houses/'+house+'/media?kind=meal',{method:'POST',headers:{...headers,'Content-Type':blob.type},body:blob}).then(r=>r.json());
+    const response=await fetch('/api/houses/'+house+'/completions',{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({request_id:crypto.randomUUID(),chore:'meal',method:'photo',media_id:media.id})});
+    return {status:response.status,house,media:media.id};
+  });
+  expect(result.status).toBe(200);
+  await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('#nav-room').click(); await expect(page.locator('.mr-frame img')).toHaveCount(1);
+  await page.locator('#room-paint').click(); await page.getByRole('button',{name:'mint',exact:true}).click();
+  await expect(page.getByRole('button',{name:'mint',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.locator('#room-paint').click();
+  await page.screenshot({path:'test-results/mobile-room.png'});
+  await page.locator('#room-back').click(); await page.locator('#nav-home').click();
+  await page.screenshot({path:'test-results/mobile-house.png'});
+  const outsider = await browser.newContext(); const request = await outsider.request.get('http://127.0.0.1:5173/api/houses/'+result.house+'/media/'+result.media,{headers:{Authorization:'Bearer dev:outsider'}}); expect(request.status()).toBe(404);
+  await outsider.close(); await context.close(); expect(errors).toEqual([]);
+  if (process.env.VITE_API_BASE_URL) expect(apiRequests.some(url => url.startsWith(process.env.VITE_API_BASE_URL + '/houses'))).toBe(true);
+});
+
+test('camera permission failure does not create a completion', async ({ page }) => {
+  await page.addInitScript(()=>{ navigator.mediaDevices.getUserMedia = async()=>{throw new DOMException('Denied','NotAllowedError');}; });
+  await page.goto('/'); await page.getByLabel('あなたの名前').fill('camera'); await page.getByLabel('新しいハウスの名前').fill('permission'); await page.getByRole('button',{name:'ハウスを作る',exact:true}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button',{name:'ごはんを撮る'}).click();
+  await expect(page.locator('#toast')).toContainText('利用を許可');
+  await expect(page.locator('.door.is-lit')).toHaveCount(0);
+  await expect(page.locator('#post')).toHaveCount(0);
+});
