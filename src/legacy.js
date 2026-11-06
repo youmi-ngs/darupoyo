@@ -1,4 +1,4 @@
-import { client, start, houseApi, refresh, inviteLink, logout } from './api.js';
+import { client, start, houseApi, refresh, inviteLink, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
@@ -512,6 +512,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     renderAll();
   }
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
+  const switchButton = document.createElement('button'); switchButton.type = 'button'; switchButton.className = 'next-day'; switchButton.textContent = 'ハウスを切り替える'; switchButton.onclick = switchHouse; logoutButton.before(switchButton);
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
   document.body.classList.add('no-scroll');

@@ -115,6 +115,11 @@ function subscribe() {
   timer = setInterval(() => { if (!document.hidden) sync(); }, client.db ? 60000 : 2500);
   window.addEventListener('focus', sync);
 }
+// Forget the remembered house and reopen the house list (stays signed in).
+export function switchHouse() {
+  remove('darupoyo-house-' + client.uid);
+  location.reload();
+}
 export async function logout() {
   clearInterval(timer); subscriptions.forEach(stop => stop()); client.house = '';
   images.forEach(URL.revokeObjectURL); images.clear();
