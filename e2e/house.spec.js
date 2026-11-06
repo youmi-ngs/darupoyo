@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async({context})=>{await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));});
 
 test('create, invite, sync, rhythm, private meal, persistence and room theme', async ({ page, browser }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));

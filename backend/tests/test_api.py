@@ -50,7 +50,7 @@ def test_rhythm_profile_and_public_config(client):
         client.put(base + "/profile", headers=auth("outsider"), json={"theme": "pink"}).status_code
         == 404
     )
-    assert set(client.get("/api/config").json()) == {"auth_mode", "timezone", "firebase"}
+    assert set(client.get("/api/config").json()) == {"auth_mode", "data_backend", "timezone", "firebase"}
 
 
 def auth(uid="alice"):
@@ -355,3 +355,34 @@ def test_cors_is_exact(client):
         headers={"Origin": "https://attacker.example", "Access-Control-Request-Method": "POST"},
     )
     assert "access-control-allow-origin" not in bad.headers
+
+
+def test_firebase_team_mode_uses_verified_identity_with_memory_data(client, monkeypatch):
+    from firebase_admin import auth as firebase_auth
+
+    config = replace(LOCAL, auth_mode="firebase", project="darupoyo-ontama")
+    config.validate()
+    client.app.state.settings = config
+    client.app.state.firebase = object()
+    seen = []
+
+    def verify(token, *, app, check_revoked):
+        seen.append((token, check_revoked))
+        if token != "test-google-token":
+            raise firebase_auth.InvalidIdTokenError("invalid")
+        return {"uid": "google-user"}
+
+    monkeypatch.setattr(firebase_auth, "verify_id_token", verify)
+    public_config = client.get("/api/config").json()
+    assert public_config["auth_mode"] == "firebase"
+    assert public_config["data_backend"] == "memory"
+    assert client.get("/api/houses", headers=auth()).status_code == 401
+    headers = {"Authorization": "Bearer test-google-token"}
+    response = client.post("/api/houses", headers=headers,
+                           json={"name": "Team", "display_name": "Tester"})
+    assert response.status_code == 201
+    assert response.json()["member_ids"] == ["google-user"]
+    assert len(client.get("/api/houses", headers=headers).json()["items"]) == 1
+    assert all(check_revoked for _, check_revoked in seen)
+    with pytest.raises(ValueError):
+        replace(config, app_env="production").validate()

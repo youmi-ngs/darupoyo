@@ -215,6 +215,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .sheet-body { padding-top: 20px; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 14px; }
 .sheet-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 22px; line-height: 1.3; text-wrap: balance; }
 .sheet-text { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.move-in { display: grid; gap: 14px; }
 .choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .btn { min-height: 56px; padding: 0 18px; border-radius: 999px; border: 2.5px solid var(--ink); font-weight: 900; font-size: 16px; color: var(--ink); }
 .btn-main { background: var(--glossy); box-shadow: var(--pop); }
@@ -237,6 +238,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .ai { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid var(--ink); background: linear-gradient(180deg, #E6F8FF, var(--cyan)); display: grid; place-items: center; font-weight: 900; font-size: 13px; }
 .bubble { margin: 0; padding: 12px 16px; background: var(--paper); border: 2px solid var(--ink); border-radius: 20px 20px 20px 6px; font-weight: 700; min-width: 0; }
 .demo-note { margin: 0; font-size: 12px; color: var(--ink-soft); }
+.capture [hidden]{display:none!important}.capture-live{position:relative}.capture-count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;text-shadow:0 0 12px #3b2560,0 0 2px #3b2560;pointer-events:none}.capture-timer{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:13px;font-weight:700}.capture-timer button{min-width:48px;padding:8px 10px;border:2px solid #3b2560;border-radius:14px;background:#fff;color:#3b2560;font:inherit}.capture-timer button[aria-pressed=true]{background:#ffb3de}
 .room-log { display: flex; flex-direction: column; gap: 12px; }
 .log-item { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: center; }
 .log-item .shot { aspect-ratio: 5 / 6; }
@@ -524,6 +526,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .map-room { background: #ECE6F4; font-size: 11px; }
 .map-cell.is-done, .map-room.is-lit { background: #FFF8D6; box-shadow: inset 0 0 18px rgba(255, 236, 140, .9); }
 .map-cell.is-here { outline: 3px solid var(--berry); outline-offset: -3px; }
+.map-cell[hidden]{display:none}.map-plan.many-rooms{grid-template-rows:46px 62px 62px 48px 48px 48px;grid-template-areas:"balcony balcony balcony" "ra rb rc" "rd re rf" "ldk ldk wash" "ldk ldk wash" "entry entry wash"}
 
 
 /* ---------- no frame: scene goes edge to edge ---------- */
@@ -724,6 +727,7 @@ dialog.photo-modal { margin: auto; inset: 0; }
 .howto-list li::before { content: counter(h); grid-row: span 2; width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--ink); background: var(--note); font-size: 12px; font-weight: 900; display: grid; place-items: center; }
 .howto-list b { font-size: 14px; font-weight: 900; }
 .howto-list span { font-size: 12px; color: var(--ink-soft); line-height: 1.5; }
+.howto-start{display:block;width:100%;margin-top:16px}
 
 
 /* ---------- album (past logs) ---------- */

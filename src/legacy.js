@@ -171,7 +171,7 @@ import { capture } from './media.js';
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
-      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>おまかせ</b><small>毎回ちがうギャルがほめる</small>'; }
+      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<b></b><small></small><em></em>'; b.querySelector('b').textContent = GALS[id].name; b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
       b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); });
       return b;
@@ -179,7 +179,7 @@ import { capture } from './media.js';
     GAL_IDS.forEach((g) => box.append(mk(g)));
     box.append(mk('random'));
     const cur = $('gal-current');
-    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>おまかせ</small>' : galIcon(galPref) + '<small>' + GALS[galPref].name + '</small>';
+    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>ノリで</small>' : galIcon(galPref) + '<small>' + GALS[galPref].name + '</small>';
   }
 
   // ---------- house ----------
@@ -544,7 +544,7 @@ import { capture } from './media.js';
   });
   $('next-day').textContent = '友だちを招待する';
   $('next-day').addEventListener('click', async () => {
-    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住む友だちに共有してね。最大6人。</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
+    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
     catch (e) { toast(e.message); }
   });
 
@@ -563,6 +563,7 @@ import { capture } from './media.js';
     doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,1fr))';
     $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
     document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who); } });
+    $('map-plan').classList.toggle('many-rooms', RESIDENTS.length > 4);
     const convert = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:data.timezone, hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise.text, galLine:p.praise.text });
     state.posts = data.posts.filter(p=>p.day===data.state.day).map(convert);
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
@@ -576,6 +577,17 @@ import { capture } from './media.js';
     document.querySelector('.account-icon').textContent = nameOf(ME).slice(0,1);
     renderAll();
   }
+  // 招待で入居したときに、誰と住むのかを見せる
+  window.addEventListener('darupoyo:joined', () => {
+    const others = RESIDENTS.filter(r => r.who !== ME).map(r => nameOf(r.who));
+    if (!others.length) return;
+    const names = others.length > 3 ? others.slice(0, 3).join('、') + 'たち' : others.join('、');
+    sheetBody.innerHTML = '<div class="move-in"><h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><button class="btn btn-main" type="button" id="move-in-ok">おじゃまします！</button></div>';
+    sheetBody.querySelector('.sheet-title').textContent = names + 'と一緒に住む！';
+    sheetBody.querySelector('.sheet-text').textContent = '今日から「' + dashboard.house.name + '」の住人だよ。自分の部屋もできたよ。';
+    $('move-in-ok').onclick = () => sheet.close();
+    sheet.showModal(); $('move-in-ok').focus();
+  });
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
@@ -610,6 +622,13 @@ import { capture } from './media.js';
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
+  $('howto-start').addEventListener('click', () => $('howto-page').close());
+  // 初めて家に入ったときだけ、あそびかたを自動で開く
+  window.addEventListener('darupoyo:entered', () => {
+    const KEY = 'darupoyo-howto-seen';
+    try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, '1'); } catch (e) { return; }
+    $('howto-page').showModal();
+  });
   menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
   document.querySelectorAll('.map-cell').forEach((c) => c.addEventListener('click', () => { menu.close(); if (c.dataset.whoMap) { goScene(4, true); showRoom(c.dataset.whoMap); } else goScene(Number(c.dataset.go)); }));
   window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = 4; window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
