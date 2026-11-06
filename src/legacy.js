@@ -469,7 +469,7 @@ import { capture } from './media.js';
 
   // ---------- check sheet ----------
   function choicesFor(id) {
-    if (id === 'laundry') return [{ kind: 'rhythm', mode: 'mic', title: 'バサバサでリズム', hint: 'マイクで音の立ち上がりを拾う・8拍' }, { kind: 'rhythm', mode: 'tap', title: '洗濯リズム', hint: 'はたくリズムで8拍タップ（手動モード）' }];
+    if (id === 'laundry') return [{ kind: 'rhythm', mode: 'mic', title: 'バサバサでリズム', hint: 'カメラとマイクで、はたく動きと音を拾う・8拍' }, { kind: 'rhythm', mode: 'tap', title: '洗濯リズム', hint: 'はたくリズムで8拍タップ（手動モード）' }];
     const t = TASKS[id], list = [];
     (t.presets || []).forEach((p) => list.push({ kind: 'pose', mode: 'preset', title: p.name + 'のポーズ', hint: p.hint, fig: p.fig, praise: p.praise }));
     if (t.presets) {
@@ -483,7 +483,7 @@ import { capture } from './media.js';
   }
   function openSheet(id) {
     const t = TASKS[id], list = choicesFor(id);
-    const lead = id === 'laundry' ? '洗濯物をはたくリズムで8拍。マイクまたは手動タップで遊べるよ。'
+    const lead = id === 'laundry' ? '流れてくる音符に合わせて洗濯物をはたくと、キラキラが出るよ。手動タップでも遊べる。'
       : t.presets ? (isFirstToday(id) ? '今日の' + t.label + 'は一番乗り！決まったポーズか、オリジナルのポーズを撮ってね。' : 'ポーズを1つ選んで撮ってね。人だけ切り抜くから、部屋は写らないよ。')
       : t.sound ? '音だけ聞くから、カメラはいらないよ。' : 'ごはんだけ写せばOK。';
     sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><div class="choice"' + (list.length === 1 ? ' style="grid-template-columns:1fr"' : '') + '></div><p class="demo-note">カメラ・マイクは選んだ操作でのみ使います。保存前に確認できます。</p>';
