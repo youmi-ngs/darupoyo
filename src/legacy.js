@@ -497,7 +497,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     RESIDENTS.forEach(r => { ROOM_COLORS[r.who] = r.color; const slot = document.createElement('div'); slot.className = 'door-slot'; slot.dataset.who = r.who; doors.append(slot); });
     doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,1fr))';
     $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
-    document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who); } });
+    document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who) + 'のへや'; } });
     $('map-plan').classList.toggle('many-rooms', RESIDENTS.length > 4);
     const convert = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:data.timezone, hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise.text, galLine:p.praise.text });
     state.posts = data.posts.filter(p=>p.day===data.state.day).map(convert);

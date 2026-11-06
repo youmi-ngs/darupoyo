@@ -16,8 +16,7 @@ test('floor plan shows every member up to six (#15)', async ({ page }) => {
   await page.locator('#open-menu').click();
   await expect(page.locator('.map-room:visible')).toHaveCount(6);
   await expect(page.locator('#map-plan')).toHaveClass(/many-rooms/);
-  await expect(page.locator('.map-room:visible').last()).toHaveText('住人6');
+  await expect(page.locator('.map-room:visible').last()).toHaveText('住人6のへや');
   await page.locator('.map-room:visible').last().click();
   await expect(page.locator('.mr-plate b')).toHaveText('住人6の部屋');
 });
-

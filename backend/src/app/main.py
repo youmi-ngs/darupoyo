@@ -87,6 +87,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         response.headers["X-Content-Type-Options"] = "nosniff"
         return response
 
+    @app.get("/api/healthz")
     @app.get("/healthz")
     def health():
         return {"status": "ok"}
