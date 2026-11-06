@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "darupoyo",
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "headers": [{"source":"/index.html","headers":[{"key":"Cache-Control","value":"no-cache"}]}]
