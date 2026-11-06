@@ -60,7 +60,7 @@ export async function start(onUpdate, onError) {
   const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
   const houses = await api('/houses');
   const items = houses.items || houses;
-  const enter = async id => { client.house = id; await refresh(); localStorage.setItem('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); };
+  const enter = async id => { client.house = id; await refresh(); localStorage.setItem('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
   if (!invite) {
     const saved = localStorage.getItem('darupoyo-house-' + client.uid);
     if (items.some(h => h.id === saved)) { await enter(saved); return; }

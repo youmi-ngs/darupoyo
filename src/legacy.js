@@ -610,6 +610,13 @@ import { capture } from './media.js';
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
+  $('howto-start').addEventListener('click', () => $('howto-page').close());
+  // 初めて家に入ったときだけ、あそびかたを自動で開く
+  window.addEventListener('darupoyo:entered', () => {
+    const KEY = 'darupoyo-howto-seen';
+    try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, '1'); } catch (e) { return; }
+    $('howto-page').showModal();
+  });
   menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
   document.querySelectorAll('.map-cell').forEach((c) => c.addEventListener('click', () => { menu.close(); if (c.dataset.whoMap) { goScene(4, true); showRoom(c.dataset.whoMap); } else goScene(Number(c.dataset.go)); }));
   window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = 4; window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
