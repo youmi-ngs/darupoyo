@@ -19,6 +19,42 @@ function action(root, text, signal) {
     button.onclick = () => { button.remove(); signal.removeEventListener('abort', abort); resolve(); };
   });
 }
+function choose(root, options, signal) {
+  return new Promise((resolve, reject) => {
+    const buttons = options.map(({ label, value, sub }) => {
+      const button = document.createElement('button'); button.type = 'button'; button.className = 'btn ' + (sub ? 'btn-sub' : 'btn-main'); button.textContent = label;
+      button.onclick = () => { buttons.forEach(b => b.remove()); signal.removeEventListener('abort', abort); resolve(value); };
+      root.append(button); return button;
+    });
+    const abort = () => { buttons.forEach(b => b.remove()); reject(new DOMException('中止しました', 'AbortError')); };
+    signal.addEventListener('abort', abort, { once: true });
+  });
+}
+export function countdown(seconds, show, signal) {
+  return new Promise((resolve, reject) => {
+    let left = seconds; show(left);
+    const abort = () => { clearInterval(timer); reject(new DOMException('中止しました', 'AbortError')); };
+    const timer = setInterval(() => {
+      left--; show(left);
+      if (left <= 0) { clearInterval(timer); signal.removeEventListener('abort', abort); resolve(); }
+    }, 1000);
+    signal.addEventListener('abort', abort, { once: true });
+  });
+}
+const TIMER_KEY = 'darupoyo-camera-timer', TIMER_CHOICES = [0, 3, 5, 10];
+function timerPicker(root) {
+  let current = 0;
+  try { const saved = Number(localStorage.getItem(TIMER_KEY)); if (TIMER_CHOICES.includes(saved)) current = saved; } catch {}
+  const row = document.createElement('div'); row.className = 'capture-timer'; row.setAttribute('role', 'group'); row.setAttribute('aria-label', 'タイマー');
+  const label = document.createElement('span'); label.textContent = 'タイマー'; row.append(label);
+  const buttons = TIMER_CHOICES.map(sec => {
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = sec ? sec + '秒' : 'なし'; button.setAttribute('aria-pressed', String(sec === current));
+    button.onclick = () => { current = sec; buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(TIMER_CHOICES[i] === sec))); try { localStorage.setItem(TIMER_KEY, String(sec)); } catch {} };
+    row.append(button); return button;
+  });
+  root.append(row);
+  return { seconds: () => current, remove: () => row.remove() };
+}
 export async function capture(root, chore, choice, reference, signal) {
   root.innerHTML = '<div class="capture"><h2 class="sheet-title" id="sheet-title"></h2><p class="capture-status" role="status" aria-live="polite"></p></div>';
   const box = root.firstChild, status = box.querySelector('p'); box.querySelector('h2').textContent = choice.title;
@@ -91,16 +127,36 @@ export async function capture(root, chore, choice, reference, signal) {
       });
       return { method: 'sound', duration_seconds: detected };
     }
-    const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true; box.append(video);
-    status.textContent = chore === 'meal' ? 'ごはんを撮影してください。写真だけで記録できます。' : '全身を枠に入れて撮影。背景は端末内で切り抜いてから送ります。';
+    const live = document.createElement('div'); live.className = 'capture-live';
+    const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true;
+    const count = document.createElement('span'); count.className = 'capture-count'; count.setAttribute('aria-hidden', 'true'); count.hidden = true;
+    live.append(video, count); box.append(live);
+    const liveText = chore === 'meal' ? 'ごはんを撮影してください。写真だけで記録できます。' : '全身を枠に入れて撮影。背景は端末内で切り抜いてから送ります。';
+    status.textContent = liveText;
     if (reference?.image && choice.mode === 'original-copy') { const img = document.createElement('img'); img.src = reference.image; img.alt = '今日のお手本'; img.style.maxHeight = '150px'; box.append(img); }
     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: chore === 'meal' ? 'environment' : 'user', width: { ideal: 720 }, height: { ideal: 960 } }, audio: false });
     resources.push(() => stream.getTracks().forEach(t => t.stop())); check(signal); video.srcObject = stream; await video.play();
-    await action(box, 'この写真を撮る', signal); check(signal);
-    const canvas = document.createElement('canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true }); ctx.drawImage(video, 0, 0);
-    stream.getTracks().forEach(t => t.stop()); video.remove(); box.append(canvas);
+    const canvas = document.createElement('canvas'); canvas.hidden = true; box.append(canvas);
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    const takePhoto = async () => {
+      live.hidden = false; canvas.hidden = true; status.textContent = liveText;
+      const picker = chore === 'meal' ? null : timerPicker(box);
+      await action(box, 'この写真を撮る', signal); check(signal);
+      const seconds = picker ? picker.seconds() : 0; picker?.remove();
+      if (seconds) {
+        await countdown(seconds, left => { count.hidden = !left; count.textContent = left; if (left) status.textContent = left + '秒後に撮るよ'; }, signal);
+      }
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0);
+      live.hidden = true; canvas.hidden = false;
+    };
+    const stopCamera = () => { stream.getTracks().forEach(t => t.stop()); live.remove(); };
     if (chore === 'meal') {
+      for (;;) {
+        await takePhoto();
+        status.textContent = '撮れた写真を確認してね。';
+        if (await choose(box, [{ label: 'この写真を使う', value: true }, { label: 'もう1回撮る', value: false, sub: true }], signal)) break;
+      }
+      stopCamera();
       const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
       if (!Speech) return evidence;
@@ -111,23 +167,36 @@ export async function capture(root, chore, choice, reference, signal) {
       }
       return evidence;
     }
-    status.textContent = 'ポーズと背景を端末内で処理しています…';
-    const { FilesetResolver, PoseLandmarker } = await import('@mediapipe/tasks-vision');
-    const landmarker = await PoseLandmarker.createFromOptions(await FilesetResolver.forVisionTasks('/models/vision'), { baseOptions: { modelAssetPath: '/models/pose.task' }, runningMode: 'IMAGE', outputSegmentationMasks: true });
-    resources.push(() => landmarker.close()); check(signal);
-    const result = landmarker.detect(canvas); resources.push(() => result.close());
-    const landmarks = result.landmarks[0], mask = result.segmentationMasks?.[0];
-    if (!landmarks || !mask || [11,12,23,24,27,28].some(i => landmarks[i].visibility < .5)) throw new Error('全身を見つけられませんでした。明るい場所で少し離れて撮ってね');
-    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height), values = mask.getAsFloat32Array();
-    for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
-      const confidence = values[Math.floor(y * mask.height / canvas.height) * mask.width + Math.floor(x * mask.width / canvas.width)];
-      const offset = (y * canvas.width + x) * 4;
-      if (confidence < .8) { pixels.data[offset] = pixels.data[offset+1] = pixels.data[offset+2] = pixels.data[offset+3] = 0; }
+    let landmarker;
+    for (;;) {
+      await takePhoto();
+      status.textContent = 'ポーズと背景を端末内で処理しています…';
+      if (!landmarker) {
+        const { FilesetResolver, PoseLandmarker } = await import('@mediapipe/tasks-vision');
+        landmarker = await PoseLandmarker.createFromOptions(await FilesetResolver.forVisionTasks('/models/vision'), { baseOptions: { modelAssetPath: '/models/pose.task' }, runningMode: 'IMAGE', outputSegmentationMasks: true });
+        resources.push(() => landmarker.close()); check(signal);
+      }
+      const result = landmarker.detect(canvas);
+      try {
+        const landmarks = result.landmarks[0], mask = result.segmentationMasks?.[0];
+        if (!landmarks || !mask || [11,12,23,24,27,28].some(i => landmarks[i].visibility < .5)) {
+          status.textContent = '全身を見つけられませんでした。明るい場所で少し離れて撮ってね';
+          await choose(box, [{ label: 'もう1回撮る', value: false }], signal);
+          continue;
+        }
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height), values = mask.getAsFloat32Array();
+        for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
+          const confidence = values[Math.floor(y * mask.height / canvas.height) * mask.width + Math.floor(x * mask.width / canvas.width)];
+          const offset = (y * canvas.width + x) * 4;
+          if (confidence < .8) { pixels.data[offset] = pixels.data[offset+1] = pixels.data[offset+2] = pixels.data[offset+3] = 0; }
+        }
+        ctx.putImageData(pixels, 0, 0); status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
+        if (!await choose(box, [{ label: 'この切り抜きを使う', value: true }, { label: 'もう1回撮る', value: false, sub: true }], signal)) continue;
+        check(signal); stopCamera();
+        const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x,y,z,visibility }) => ({ x,y,z,visibility })), pose_name: choice.title };
+        if (choice.mode === 'original-copy' && reference) { evidence.reference_post_id = reference.post_id; evidence.similarity = poseSimilarity(landmarks, reference.landmarks); }
+        return evidence;
+      } finally { result.close(); }
     }
-    ctx.putImageData(pixels, 0, 0); status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
-    await action(box, 'この切り抜きを使う', signal); check(signal);
-    const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x,y,z,visibility }) => ({ x,y,z,visibility })), pose_name: choice.title };
-    if (choice.mode === 'original-copy' && reference) { evidence.reference_post_id = reference.post_id; evidence.similarity = poseSimilarity(landmarks, reference.landmarks); }
-    return evidence;
   } finally { cleanup(); signal.removeEventListener('abort', cleanup); }
 }
