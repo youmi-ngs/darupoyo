@@ -101,6 +101,7 @@ def upload(c, h, kind="meal", uid="alice"):
 
 def test_health_auth_and_legacy_removed(client):
     assert client.get("/healthz").json() == {"status": "ok"}
+    assert client.get("/api/healthz").json() == {"status": "ok"}
     assert client.get("/api/houses").status_code == 401
     assert client.get("/api/houses", headers={"Authorization": "Bearer garbage"}).status_code == 401
     assert client.post("/api/input", json={}).status_code == 404

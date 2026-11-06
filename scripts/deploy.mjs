@@ -39,7 +39,7 @@ try {
   } });
   run(firebase, ['deploy', '--only', 'hosting', '--project', project, '--non-interactive']);
   const origin = `https://${site}.web.app`;
-  for (const [path, expected] of [['/healthz', 200], ['/api/config', 200], ['/api/houses', 401], ['/', 200]]) {
+  for (const [path, expected] of [['/api/healthz', 200], ['/api/config', 200], ['/api/houses', 401], ['/', 200]]) {
     const response = await fetch(origin + path);
     if (response.status !== expected) throw new Error(`${path}: expected ${expected}, got ${response.status}`);
     if (path === '/api/config') {
