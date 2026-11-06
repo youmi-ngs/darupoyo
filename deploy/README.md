@@ -4,7 +4,8 @@
 
 - プロジェクト: `darupoyo-8ed91`
 - Frontend: Firebase Hosting（Vite の `dist/`）
-- Backend: `backend/Dockerfile` → Cloud Build → Artifact Registry → Cloud Run
+- Backend: `backend/Dockerfile` → Cloud Build → Artifact Registry `ontama` → Cloud Run `ontama-backend`
+- 実行サービスアカウント: `ontama-runtime`（既存環境を使用）
 - リージョン: 東京 `asia-northeast1`
 - データ: Firestore `(default)`、写真: 非公開 Cloud Storage バケット
 - ログイン: Firebase Authentication / Google
@@ -58,9 +59,9 @@ Cloud Build を使うのでローカルで Docker Desktop を起動する必要�
 
 公開 URL: https://darupoyo.web.app
 
-ほめコメントは初回は `fallback`（定型文）。Vertex AI を使う場合は、
-`deploy/config.json` の `praiseBackend` を `vertex` に変更し、利用可能な `geminiModel` を指定。
-Vertex API と runtime SA の権限も設定する。音声認識自体はブラウザの機能。
+ほめコメントは既存環境の Vertex AI / Gemini 設定を引き継ぐ。
+モデルは `deploy/config.json` の `geminiModel` で指定する。定型文のみで運用する場合は
+`praiseBackend` を `fallback` に変更する。音声認識自体はブラウザの機能。
 
 ## 分離して操作する場合
 

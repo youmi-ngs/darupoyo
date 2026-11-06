@@ -1,9 +1,11 @@
 {
   "projectId": "darupoyo-8ed91",
   "region": "asia-northeast1",
-  "service": "darupoyo-backend",
-  "repository": "darupoyo",
-  "runtimeServiceAccount": "darupoyo-runtime",
-  "praiseBackend": "fallback",
-  "hostingSite": "darupoyo"
+  "service": "ontama-backend",
+  "repository": "ontama",
+  "runtimeServiceAccount": "ontama-runtime",
+  "praiseBackend": "vertex",
+  "hostingSite": "darupoyo",
+  "geminiModel": "gemini-3.5-flash-lite",
+  "storageBucket": "darupoyo-8ed91.firebasestorage.app"
 }
