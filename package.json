@@ -9,6 +9,7 @@
     "dev": "vite --host 127.0.0.1 --port 5173",
     "dev:backend": "bash backend/scripts/dev.sh",
     "dev:all": "node scripts/dev-all.mjs",
+    "share": "node scripts/share.mjs",
     "dev:emu": "node scripts/dev-emu.mjs",
     "setup:backend": "uv venv --python 3.12 backend/.venv && uv pip sync --python backend/.venv/bin/python backend/requirements-dev.lock",
     "test:backend": "cd backend && uv run --python .venv/bin/python --no-project python -m pytest -q",
