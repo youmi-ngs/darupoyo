@@ -237,6 +237,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .ai { width: 44px; height: 44px; flex: none; border-radius: 50%; border: 2px solid var(--ink); background: linear-gradient(180deg, #E6F8FF, var(--cyan)); display: grid; place-items: center; font-weight: 900; font-size: 13px; }
 .bubble { margin: 0; padding: 12px 16px; background: var(--paper); border: 2px solid var(--ink); border-radius: 20px 20px 20px 6px; font-weight: 700; min-width: 0; }
 .demo-note { margin: 0; font-size: 12px; color: var(--ink-soft); }
+.capture [hidden]{display:none!important}.capture-live{position:relative}.capture-count{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:96px;font-weight:900;color:#fff;text-shadow:0 0 12px #3b2560,0 0 2px #3b2560;pointer-events:none}.capture-timer{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:13px;font-weight:700}.capture-timer button{min-width:48px;padding:8px 10px;border:2px solid #3b2560;border-radius:14px;background:#fff;color:#3b2560;font:inherit}.capture-timer button[aria-pressed=true]{background:#ffb3de}
 .room-log { display: flex; flex-direction: column; gap: 12px; }
 .log-item { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 12px; align-items: center; }
 .log-item .shot { aspect-ratio: 5 / 6; }

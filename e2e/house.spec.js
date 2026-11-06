@@ -55,7 +55,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await page.screenshot({path:'test-results/mobile-room.png'});
   await page.locator('#room-back').click(); await page.locator('#nav-home').click();
   await page.screenshot({path:'test-results/mobile-house.png'});
-  const outsider = await browser.newContext(); const request = await outsider.request.get('http://127.0.0.1:5173/api/houses/'+result.house+'/media/'+result.media,{headers:{Authorization:'Bearer dev:outsider'}}); expect(request.status()).toBe(404);
+  const outsider = await browser.newContext(); const request = await outsider.request.get(new URL('/api/houses/', page.url()).href+result.house+'/media/'+result.media,{headers:{Authorization:'Bearer dev:outsider'}}); expect(request.status()).toBe(404);
   await outsider.close(); await context.close(); expect(errors).toEqual([]);
   if (process.env.VITE_API_BASE_URL) expect(apiRequests.some(url => url.startsWith(process.env.VITE_API_BASE_URL + '/houses'))).toBe(true);
 });

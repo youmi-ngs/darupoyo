@@ -171,7 +171,7 @@ import { capture } from './media.js';
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
-      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>おまかせ</b><small>毎回ちがうギャルがほめる</small>'; }
+      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<b></b><small></small><em></em>'; b.querySelector('b').textContent = GALS[id].name; b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
       b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); });
       return b;
@@ -179,7 +179,7 @@ import { capture } from './media.js';
     GAL_IDS.forEach((g) => box.append(mk(g)));
     box.append(mk('random'));
     const cur = $('gal-current');
-    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>おまかせ</small>' : galIcon(galPref) + '<small>' + GALS[galPref].name + '</small>';
+    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>ノリで</small>' : galIcon(galPref) + '<small>' + GALS[galPref].name + '</small>';
   }
 
   // ---------- house ----------
@@ -544,7 +544,7 @@ import { capture } from './media.js';
   });
   $('next-day').textContent = '友だちを招待する';
   $('next-day').addEventListener('click', async () => {
-    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住む友だちに共有してね。最大6人。</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
+    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
     catch (e) { toast(e.message); }
   });
 
