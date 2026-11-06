@@ -47,14 +47,15 @@ export async function mockFetch(url, init = {}) {
     return json(house);
   }
 
-  const match = path.match(/^\/houses\/([^/]+)(\/.*)$/);
+  const match = path.match(/^\/houses\/([^/]+)(\/.*)?$/);
   if (!match) return fail(404, 'API not found');
-  const [, houseId, rest] = match, house = db.houses[houseId];
+  const [, houseId, rest = ''] = match, house = db.houses[houseId];
   if (!house || !house.member_ids.includes(uid)) return fail(404, 'House not found');
   const day = today(), dayKey = houseId + '/' + day;
   const state = db.days[dayKey] || newDay(day);
   const posts = Object.values(db.posts).filter(p => p.house_id === houseId);
 
+  if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
   if (rest === '/invites') {
     const token = crypto.randomUUID().replace(/-/g, ''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
     db.invites[token] = { house_id: houseId, expires_at }; save(db); return json({ token, expires_at }, 201);
@@ -65,7 +66,11 @@ export async function mockFetch(url, init = {}) {
     return json({ house, state: shown, lights, happiness: Math.round(100 * Object.values(lights).filter(Boolean).length / house.member_ids.length), timezone: 'Asia/Tokyo' });
   }
   if (rest === '/goals') { state.goals[uid] = [...new Set(body.chores)]; db.days[dayKey] = state; save(db); return json(state); }
-  if (rest === '/profile') { house.members[uid].theme = body.theme; save(db); return json(house); }
+  if (rest === '/profile') {
+    if (body.theme) house.members[uid].theme = body.theme;
+    if (body.display_name) house.members[uid].display_name = body.display_name.trim();
+    save(db); return json(house);
+  }
   if (rest === '/media' && method === 'POST') {
     const id = crypto.randomUUID(), data = await blobToDataUrl(body);
     media.set(id, body);

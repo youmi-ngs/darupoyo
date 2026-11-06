@@ -110,3 +110,34 @@ test('switch between houses from the menu', async ({ page }) => {
   await page.waitForTimeout(800);
   await page.screenshot({ path: 'test-results/settings-switch.png' });
 });
+
+test('rename yourself and the house from settings', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/');
+  await page.getByLabel('あなたの名前').fill('もち');
+  await page.getByLabel('新しいハウスの名前').fill('温玉');
+  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  const howto = page.locator('#howto-page[open] #howto-close');
+  if (await howto.count()) await howto.click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  const form = page.locator('#account-form');
+  await page.getByRole('button', { name: '名前と家の名前を変える' }).click();
+  await expect(form.getByLabel('名前', { exact: true })).toHaveValue('もち');
+  await expect(form.getByLabel('家の名前')).toHaveValue('温玉');
+  const inner = page.locator('#settings .drawer-inner');
+  expect(await inner.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  await form.getByLabel('名前', { exact: true }).fill('もちこ');
+  await form.getByLabel('家の名前').fill('ぽよハウス');
+  await form.getByRole('button', { name: '保存' }).click();
+  await expect(page.locator('#account-form')).toBeHidden();
+  await expect(page.locator('.account-row b')).toHaveText('もちこ');
+  await expect(page.locator('.account-row small')).toContainText('ぽよハウス');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'test-results/settings-rename.png' });
+  await page.reload();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('.account-row b')).toHaveText('もちこ');
+  await expect(page.locator('.account-row small')).toContainText('ぽよハウス');
+});

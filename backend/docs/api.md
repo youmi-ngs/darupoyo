@@ -33,7 +33,8 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
 | POST | /api/join | 招待で参加、6人上限 |
 | GET | /api/houses/{id}/dashboard?day=2026-11-05 | 電気・掲示板・今日のポーズ・日次状態 |
 | PUT | /api/houses/{id}/goals | 今日やる家事マグネット（空でもOK） |
-| PUT | /api/houses/{id}/profile | 部屋のテーマ：pink/lilac/cyan/lime/peach/mint/cream/night |
+| PUT | /api/houses/{id} | 家の名前を変更 `{name}`（1〜60文字）。住人なら誰でも |
+| PUT | /api/houses/{id}/profile | 自分の部屋のテーマ `theme`（pink/lilac/cyan/lime/peach/mint/cream/night）と表示名 `display_name`（1〜40文字）。片方だけでも可 |
 | POST | /api/houses/{id}/media?kind=meal または cutout | 画像バイナリをアップロード |
 | GET | /api/houses/{id}/media/{mediaId} | 所属者だけ画像を取得 |
 | POST | /api/houses/{id}/completions | 達成記録、AIほめコメント |
