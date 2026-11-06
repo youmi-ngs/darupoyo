@@ -71,7 +71,7 @@ export async function start(onUpdate, onError) {
   button(invite ? '招待に参加する' : 'ハウスを作る', async () => {
     if (!name.value.trim() || !field.value.trim()) throw new Error('名前を入力してください');
     const h = await api(invite ? '/join' : '/houses', invite ? { token: field.value.trim(), display_name: name.value.trim() } : { name: field.value.trim(), display_name: name.value.trim() });
-    await enter(h.id); if (invite) history.replaceState(null, '', location.pathname);
+    await enter(h.id); if (invite) { history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
   }, dialog);
 }
 function subscribe() {

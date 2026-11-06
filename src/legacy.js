@@ -577,6 +577,17 @@ import { capture } from './media.js';
     document.querySelector('.account-icon').textContent = nameOf(ME).slice(0,1);
     renderAll();
   }
+  // 招待で入居したときに、誰と住むのかを見せる
+  window.addEventListener('darupoyo:joined', () => {
+    const others = RESIDENTS.filter(r => r.who !== ME).map(r => nameOf(r.who));
+    if (!others.length) return;
+    const names = others.length > 3 ? others.slice(0, 3).join('、') + 'たち' : others.join('、');
+    sheetBody.innerHTML = '<div class="move-in"><h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><button class="btn btn-main" type="button" id="move-in-ok">おじゃまします！</button></div>';
+    sheetBody.querySelector('.sheet-title').textContent = names + 'と一緒に住む！';
+    sheetBody.querySelector('.sheet-text').textContent = '今日から「' + dashboard.house.name + '」の住人だよ。自分の部屋もできたよ。';
+    $('move-in-ok').onclick = () => sheet.close();
+    sheet.showModal(); $('move-in-ok').focus();
+  });
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
