@@ -524,6 +524,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .map-room { background: #ECE6F4; font-size: 11px; }
 .map-cell.is-done, .map-room.is-lit { background: #FFF8D6; box-shadow: inset 0 0 18px rgba(255, 236, 140, .9); }
 .map-cell.is-here { outline: 3px solid var(--berry); outline-offset: -3px; }
+.map-cell[hidden]{display:none}.map-plan.many-rooms{grid-template-rows:46px 62px 62px 48px 48px 48px;grid-template-areas:"balcony balcony balcony" "ra rb rc" "rd re rf" "ldk ldk wash" "ldk ldk wash" "entry entry wash"}
 
 
 /* ---------- no frame: scene goes edge to edge ---------- */
