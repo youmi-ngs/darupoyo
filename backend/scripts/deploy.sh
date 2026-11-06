@@ -26,7 +26,8 @@ image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${repository}/${service}:${tag}"
 for value in "$PROJECT_ID" "$REGION" "$STORAGE_BUCKET" "$CORS_ORIGINS" "$GEMINI_MODEL" "$FIREBASE_WEB_API_KEY" "$FIREBASE_AUTH_DOMAIN" "$FIREBASE_APP_ID"; do
   if [[ "$value" == *"|"* ]]; then echo "Environment values must not contain |" >&2; exit 1; fi
 done
-gcloud builds submit --project "$PROJECT_ID" --tag "$image" .
+# Build status is checked even when the deployer cannot stream the logs bucket.
+gcloud builds submit --suppress-logs --project "$PROJECT_ID" --tag "$image" .
 # Public HTTP transport is intentional. Firebase ID tokens protect every data API;
 # Cloud Run IAM tokens are not Firebase ID tokens. /healthz is public.
 gcloud run deploy "$service" --project "$PROJECT_ID" --region "$REGION" \
