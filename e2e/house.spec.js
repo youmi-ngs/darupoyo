@@ -27,6 +27,9 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await expect(page.locator('.capture-beat')).toHaveText('1 ♪');
   await page.locator('.capture-beat').press('Enter');
   await expect(page.locator('.capture-status')).toHaveText('1 / 8 ヒット');
+  await expect(page.locator('.rhythm-note')).toHaveCount(8);
+  await expect(page.locator('.rhythm-grade')).toHaveText('良');
+  await expect(page.locator('.fx-spark')).toHaveCount(8);
   await page.clock.runFor(6500);
   await page.clock.resume();
   await page.getByRole('button', {name:'部屋に飾る',exact:true}).click();
