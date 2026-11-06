@@ -4,6 +4,8 @@ from io import BytesIO
 from fastapi import HTTPException
 from PIL import Image, UnidentifiedImageError
 
+from . import gals
+
 LABELS = {"laundry": "洗濯", "meal": "ごはん", "dryer": "ドライヤー", "garbage": "ゴミ捨て"}
 REWARDS = {"laundry": "いい匂いの服", "meal": "ツヤ肌", "dryer": "美髪", "garbage": "スッキリ玄関"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -78,27 +80,27 @@ class Praise:
                 http_options=types.HttpOptions(timeout=8000),
             )
 
-    def generate(self, chore, gal="reiwa"):
-        fallback = {
-            "text": f"{LABELS[chore]}できたのえらすぎ！今日の自分に拍手〜✨",
-            "source": "fallback",
-        }
+    def generate(self, chore, gal="reiwa", context=None):
+        """A praise line in the chosen gal's voice; never fails the completion."""
+        fallback = {"text": gals.fallback_line(chore, gal), "source": "fallback"}
         if self.client is None:
             return fallback
         try:
             from google.genai import types
 
-            result = self.client.models.generate_content(
-                model=self.settings.model,
-                contents=f"家事の達成：{LABELS[chore]}。口調：{dict(heisei='平成ギャル・あげぽよ', reiwa='令和ギャル・それな', kuro='黒ギャル・姉御', hime='姫ギャル・かわいい')[gal]}",
-                config=types.GenerateContentConfig(
-                    system_instruction="一人暮らしの学生の小さな達成を日本語の明るいギャル口調でほめて。80文字以内。比較・説教・未達成への言及・健康効果の断定は禁止。ユーザーに指示せず、達成を肯定する一言だけ。",
-                    max_output_tokens=200,
-                ),
-            )
-            text = (result.text or "").strip()
-            if text and len(text) <= 120:
-                return {"text": text, "source": "gemini"}
+            system, contents = gals.prompt(chore, gal, context)
+            # One retry if the line breaks a rule (e.g. mentions how a meal was made).
+            for _ in range(2):
+                result = self.client.models.generate_content(
+                    model=self.settings.model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system, temperature=1.0, max_output_tokens=200
+                    ),
+                )
+                text = (result.text or "").strip().strip("「」\"")
+                if gals.acceptable(chore, text):
+                    return {"text": text, "source": "gemini"}
         except Exception:  # noqa: BLE001 -- optional provider must never invalidate a completed chore
             # Do not log tokens, user media, or provider exception payloads.
             logging.getLogger(__name__).warning("praise_provider_unavailable")
