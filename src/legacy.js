@@ -1,4 +1,4 @@
-import { client, start, houseApi, refresh, inviteLink, logout } from './api.js';
+import { client, start, houseApi, refresh, inviteLink, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
@@ -510,6 +510,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     document.querySelector('.account-row b').textContent = nameOf(ME);
     document.querySelector('.account-row small').textContent = data.house.name + '・' + RESIDENTS.length + '人';
     document.querySelector('.account-icon').textContent = nameOf(ME).slice(0,1);
+    renderAccountForm();
     renderAll();
   }
   // 招待で入居したときに、誰と住むのかを見せる
@@ -523,7 +524,33 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     $('move-in-ok').onclick = () => sheet.close();
     sheet.showModal(); $('move-in-ok').focus();
   });
+  // ---------- rename yourself / the house ----------
+  const accountEdit = $('account-edit'), accountForm = $('account-form');
+  function renderAccountForm() {
+    accountEdit.hidden = false;
+    if (accountForm.hidden) { accountForm.display_name.value = nameOf(ME); accountForm.house_name.value = dashboard.house.name; }
+  }
+  function toggleAccountForm(open) {
+    accountForm.hidden = !open; accountEdit.setAttribute('aria-expanded', String(open));
+    document.querySelector('.account-row').hidden = open;
+    if (open) { renderAccountForm(); accountForm.display_name.focus(); } else if (accountForm.contains(document.activeElement)) accountEdit.focus();
+  }
+  accountEdit.addEventListener('click', () => toggleAccountForm(accountForm.hidden));
+  accountForm.querySelector('.account-cancel').addEventListener('click', () => toggleAccountForm(false));
+  accountForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = accountForm.display_name.value.trim(), house = accountForm.house_name.value.trim();
+    if (!name || !house) { toast('名前を入力してね'); return; }
+    const save = accountForm.querySelector('[type=submit]'); save.disabled = true;
+    try {
+      if (name !== nameOf(ME)) await houseApi('/profile', { display_name: name }, 'PUT');
+      if (house !== dashboard.house.name) await houseApi('', { name: house }, 'PUT');
+      toggleAccountForm(false); await refresh(); toast('変更したよ');
+    } catch (err) { toast(err.message); } finally { save.disabled = false; }
+  });
+  $('settings').addEventListener('close', () => toggleAccountForm(false));
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
+  const switchButton = document.createElement('button'); switchButton.type = 'button'; switchButton.className = 'next-day'; switchButton.textContent = 'ハウスを切り替える'; switchButton.onclick = switchHouse; logoutButton.before(switchButton);
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
   document.body.classList.add('no-scroll');

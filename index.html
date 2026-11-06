@@ -226,7 +226,12 @@
     <h2 class="settings-title" id="settings-title">せって～</h2>
     <section class="set-card">
       <h3 class="drawer-h">アカウント</h3>
-      <div class="account-row"><span class="account-icon" aria-hidden="true">M</span><div><b>mochi</b><small>シェアハウス「温玉」・4人</small></div></div>
+      <div class="account-row"><span class="account-icon" aria-hidden="true">M</span><div><b>mochi</b><small>シェアハウス「温玉」・4人</small></div><button class="account-edit" type="button" id="account-edit" aria-label="名前と家の名前を変える" aria-expanded="false" aria-controls="account-form" hidden>✎</button></div>
+      <form class="account-form" id="account-form" hidden>
+        <label>名前<input name="display_name" maxlength="40" required autocomplete="nickname"></label>
+        <label>家の名前<input name="house_name" maxlength="60" required></label>
+        <div class="account-actions"><button class="btn account-cancel" type="button">やめる</button><button class="btn" type="submit">保存</button></div>
+      </form>
     </section>
     <details class="set-card set-toggle" id="gal-toggle">
       <summary><span class="drawer-h">ほめてくれるギャル</span><span class="gal-current" id="gal-current"></span><span class="toggle-ic" aria-hidden="true"></span></summary>

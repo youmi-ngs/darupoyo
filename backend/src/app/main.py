@@ -13,7 +13,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
 from .domain import Domain, require_member
-from .models import Completion, Goals, HouseCreate, Join, Profile, Reaction
+from .models import Completion, Goals, HouseCreate, HouseUpdate, Join, Profile, Reaction
 from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image
 from .store import FirestoreStore, MemoryStore
 
@@ -135,6 +135,10 @@ def create_app(settings=None, store=None, praise=None, clock=None):
     @app.put("/api/houses/{house_id}/goals")
     def goals(house_id: UUID, body: Goals, uid=Depends(current_user)):
         return app.state.domain.goals(uid, str(house_id), body)
+
+    @app.put("/api/houses/{house_id}")
+    def rename_house(house_id: UUID, body: HouseUpdate, uid=Depends(current_user)):
+        return app.state.domain.rename_house(uid, str(house_id), body)
 
     @app.put("/api/houses/{house_id}/profile")
     def profile(house_id: UUID, body: Profile, uid=Depends(current_user)):

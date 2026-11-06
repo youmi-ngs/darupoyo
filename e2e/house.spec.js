@@ -77,3 +77,67 @@ test('missing mic points laundry to the tap mode', async ({ page }) => {
   await expect(page.getByRole('button',{name:/洗濯リズム/})).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
 });
+
+test('switch between houses from the menu', async ({ page }) => {
+  const create = async name => {
+    await page.getByLabel('あなたの名前').fill('もち');
+    await page.getByLabel('新しいハウスの名前').fill(name);
+    await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+    await expect(page.locator('.onboarding')).toHaveCount(0);
+  };
+  const switchHouse = async () => {
+    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+    await page.getByRole('button', { name: 'ハウスを切り替える' }).click();
+    await expect(page.locator('.onboarding')).toBeVisible();
+  };
+  await page.goto('/');
+  await create('ひとつめ');
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  // The settings drawer must still fit without scrolling.
+  const settings = page.locator('#settings .drawer-inner');
+  expect(await settings.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  await page.locator('#settings-close').click();
+  await switchHouse();
+  await create('ふたつめ');
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('.account-row small')).toContainText('ふたつめ');
+  await page.locator('#settings-close').click();
+  await switchHouse();
+  await page.getByRole('button', { name: 'ひとつめに入る' }).click();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('.account-row small')).toContainText('ひとつめ');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'test-results/settings-switch.png' });
+});
+
+test('rename yourself and the house from settings', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/');
+  await page.getByLabel('あなたの名前').fill('もち');
+  await page.getByLabel('新しいハウスの名前').fill('温玉');
+  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  const howto = page.locator('#howto-page[open] #howto-close');
+  if (await howto.count()) await howto.click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  const form = page.locator('#account-form');
+  await page.getByRole('button', { name: '名前と家の名前を変える' }).click();
+  await expect(form.getByLabel('名前', { exact: true })).toHaveValue('もち');
+  await expect(form.getByLabel('家の名前')).toHaveValue('温玉');
+  const inner = page.locator('#settings .drawer-inner');
+  expect(await inner.evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  await form.getByLabel('名前', { exact: true }).fill('もちこ');
+  await form.getByLabel('家の名前').fill('ぽよハウス');
+  await form.getByRole('button', { name: '保存' }).click();
+  await expect(page.locator('#account-form')).toBeHidden();
+  await expect(page.locator('.account-row b')).toHaveText('もちこ');
+  await expect(page.locator('.account-row small')).toContainText('ぽよハウス');
+  await page.waitForTimeout(800);
+  await page.screenshot({ path: 'test-results/settings-rename.png' });
+  await page.reload();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('.account-row b')).toHaveText('もちこ');
+  await expect(page.locator('.account-row small')).toContainText('ぽよハウス');
+});

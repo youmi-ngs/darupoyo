@@ -99,4 +99,16 @@ class Reaction(Model):
 
 
 class Profile(Model):
-    theme: Literal["pink", "lilac", "cyan", "lime", "peach", "mint", "cream", "night"]
+    # Send either or both; omitted fields stay as they are.
+    theme: Literal["pink", "lilac", "cyan", "lime", "peach", "mint", "cream", "night"] | None = None
+    display_name: str | None = Field(default=None, min_length=1, max_length=40, pattern=r"\S")
+
+    @model_validator(mode="after")
+    def any_field(self):
+        if self.theme is None and self.display_name is None:
+            raise ValueError("Send theme or display_name")
+        return self
+
+
+class HouseUpdate(Model):
+    name: str = Field(min_length=1, max_length=60, pattern=r"\S")

@@ -206,7 +206,21 @@ class Domain:
     def profile(self, uid, house_id, body):
         def run(tx):
             house = require_member(tx, house_id, uid)
-            house["members"][uid]["theme"] = body.theme
+            member = house["members"][uid]
+            if body.theme is not None:
+                member["theme"] = body.theme
+            if body.display_name is not None:
+                member["display_name"] = body.display_name.strip()
+            tx.set(f"houses/{house_id}", house)
+            return house
+
+        return self.store.atomic(run)
+
+    def rename_house(self, uid, house_id, body):
+        # Any member may rename the shared house.
+        def run(tx):
+            house = require_member(tx, house_id, uid)
+            house["name"] = body.name.strip()
             tx.set(f"houses/{house_id}", house)
             return house
 
