@@ -1,0 +1,32 @@
+name: Deploy
+# Every change on main goes to https://darupoyo.web.app (Backend on Cloud Run + Hosting).
+# Auth is keyless (Workload Identity Federation); see scripts/setup-github-deploy.sh.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  # One deploy at a time, in order; never cancel one halfway.
+  group: deploy-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: google-github-actions/auth@v2
+        with:
+          project_id: darupoyo-8ed91
+          workload_identity_provider: projects/324099635682/locations/global/workloadIdentityPools/github/providers/darupoyo
+          service_account: github-deployer@darupoyo-8ed91.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v2
+      - run: npm run deploy

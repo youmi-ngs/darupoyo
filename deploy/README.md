@@ -46,7 +46,17 @@ Firebase Storage の直接 SDK は使わず、アクセス制御は Cloud Storag
 そのためルートの deploy は `backend/storage.rules` を使用しない。
 Firestore のブラウザ購読には `backend/firestore.rules` を公開する。
 
-## 更新の公開
+## 自動デプロイ（main にマージすると本番に出る）
+
+`.github/workflows/deploy.yml` が、main が更新されるたびに `npm run deploy` を GitHub Actions で実行する。
+同時に来ても1つずつ順番に実行し、途中で止めない。結果は GitHub の Actions タブ「Deploy」で見られる。
+手動で出し直すときは Actions →「Deploy」→「Run workflow」。
+
+GitHub から Google Cloud へは鍵ファイルなしでログインする（Workload Identity 連携）。
+`youmi-ngs/darupoyo` の main からの実行だけが、デプロイ専用アカウント `github-deployer` を使える。
+最初の1回だけ、プロジェクトのオーナーが `bash scripts/setup-github-deploy.sh` を実行して準備する（何度実行しても安全）。
+
+## 更新の公開（手動）
 
 ```sh
 npm run deploy
