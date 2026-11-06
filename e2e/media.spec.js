@@ -7,11 +7,14 @@ test('packaged Google models load and process blank inputs without false complet
     const {AudioClassifier}=await import('/node_modules/@mediapipe/tasks-audio/audio_bundle.mjs');
     const pose=await PoseLandmarker.createFromOptions(await FilesetResolver.forVisionTasks('/models/vision'),{baseOptions:{modelAssetPath:'/models/pose.task'},runningMode:'IMAGE',outputSegmentationMasks:true});
     const c=document.createElement('canvas');c.width=256;c.height=256;const detected=pose.detect(c);const count=detected.landmarks.length;detected.close();pose.close();
+    const {ImageSegmenter}=await import('/node_modules/@mediapipe/tasks-vision/vision_bundle.mjs');
+    const seg=await ImageSegmenter.createFromOptions(await FilesetResolver.forVisionTasks('/models/vision'),{baseOptions:{modelAssetPath:'/models/segmenter.tflite'},runningMode:'IMAGE',outputConfidenceMasks:true,outputCategoryMask:false});
+    const segmented=seg.segment(c);const bg=segmented.confidenceMasks[0].getAsFloat32Array();const person=bg.filter(v=>v<.5).length/bg.length;segmented.close();seg.close();
     const audio=await AudioClassifier.createFromOptions(await FilesetResolver.forAudioTasks('/models/audio'),{baseOptions:{modelAssetPath:'/models/yamnet.tflite'},maxResults:5});
     const classes=audio.classify(new Float32Array(15600),16000).flatMap(r=>r.classifications.flatMap(c=>c.categories));audio.close();
-    return {count,hair:classes.some(c=>/hair dryer/i.test(c.categoryName)&&c.score>=.2)};
+    return {count,person:person<.02,hair:classes.some(c=>/hair dryer/i.test(c.categoryName)&&c.score>=.2)};
   });
-  expect(result).toEqual({count:0,hair:false});
+  expect(result).toEqual({count:0,person:true,hair:false});
 });
 test('camera capture, photo-only fallback, save and stream release',async({page,context})=>{
   await context.grantPermissions(['camera']);

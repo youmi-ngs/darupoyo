@@ -2,7 +2,7 @@
 import { action, blobOf, check, onAbort, openCamera, snapshot } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
 import { createPoseLandmarker, hasFullBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
-import { applyMask } from './segment.js';
+import { createSegmenter, cutout } from './segment.js';
 export { poseSimilarity };
 
 async function mealVoice(box, status, evidence, signal, resources) {
@@ -43,16 +43,17 @@ function livePreview(video, landmarker, choice, reference, status, resources) {
   return stop;
 }
 
-async function poseCutout(box, status, canvas, ctx, landmarker, choice, reference, signal) {
+async function poseCutout(box, status, canvas, ctx, landmarker, choice, reference, signal, resources) {
   status.textContent = 'ポーズと背景を端末内で処理しています…';
-  await landmarker.setOptions({ runningMode: 'IMAGE' }); check(signal);
+  const [segmenter] = await Promise.all([createSegmenter(), landmarker.setOptions({ runningMode: 'IMAGE' })]);
+  resources.push(() => segmenter.close()); check(signal);
   const result = landmarker.detect(canvas);
   try {
-    const landmarks = result.landmarks[0], mask = result.segmentationMasks?.[0];
-    if (!mask || !hasFullBody(landmarks)) throw new Error('全身を見つけられませんでした。明るい場所で少し離れて撮ってね');
+    const landmarks = result.landmarks[0];
+    if (!hasFullBody(landmarks)) throw new Error('全身を見つけられませんでした。明るい場所で少し離れて撮ってね');
     const score = choice.preset ? presetScore(choice.preset, landmarks) : null;
     if (score !== null && score < PRESET_PASS) throw new Error(choice.title + 'に見えなかったかも（' + score + '%）。もう一度撮ってね');
-    applyMask(canvas, ctx, mask);
+    if (cutout(segmenter, canvas, ctx) < .02) throw new Error('人をうまく切り抜けませんでした。明るい場所で撮ってね');
     status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
     await action(box, 'この切り抜きを使う', signal); check(signal);
     const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x, y, z, visibility }) => ({ x, y, z, visibility })), pose_name: choice.title };
@@ -77,7 +78,7 @@ export async function capture(root, chore, choice, reference, signal) {
     const stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal);
     let landmarker, stopPreview = () => {};
     if (chore !== 'meal') {
-      landmarker = await createPoseLandmarker({ runningMode: 'VIDEO', outputSegmentationMasks: true });
+      landmarker = await createPoseLandmarker({ runningMode: 'VIDEO' });
       resources.push(() => landmarker.close()); check(signal);
       stopPreview = livePreview(video, landmarker, choice, reference, status, resources);
     }
@@ -86,6 +87,6 @@ export async function capture(root, chore, choice, reference, signal) {
     const { canvas, ctx } = snapshot(video);
     stream.getTracks().forEach(t => t.stop()); video.remove(); box.append(canvas);
     if (chore === 'meal') return await mealVoice(box, status, { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' }, signal, resources);
-    return await poseCutout(box, status, canvas, ctx, landmarker, choice, reference, signal);
+    return await poseCutout(box, status, canvas, ctx, landmarker, choice, reference, signal, resources);
   } finally { cleanup(); signal.removeEventListener('abort', cleanup); }
 }
