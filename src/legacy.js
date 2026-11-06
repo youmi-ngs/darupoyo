@@ -472,7 +472,11 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('sheet-close').addEventListener('click', () => sheet.close());
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').disabled) sheet.close(); });
 
+  // The camera button starts the chore of the place you are standing in.
+  const SCENE_CHORE = { entry: 'trash', ldk: 'meal', wash: 'dryer', balcony: 'laundry' };
   $('shoot').addEventListener('click', () => {
+    const here = SCENE_CHORE[scenes[sceneIdx]?.dataset.scene];
+    if (here && TASKS[here] && $('fridge-view').hidden && $('room-view').hidden) { openSheet(here); return; }
     const next = state.board.find((b) => !b.done);
     if (next) openSheet(next.id);
     else { showFridge(); boardSub.textContent = 'まずマグネットを1個貼ってね'; toast('冷蔵庫にマグネットを貼ると始められるよ'); }
