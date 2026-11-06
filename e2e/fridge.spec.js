@@ -10,8 +10,8 @@ test('the fridge board says it is today\'s to-do list (#22)', async ({ page }) =
   await page.locator('#open-fridge').click();
   await expect(page.locator('#board-title')).toBeVisible();
   await expect(page.locator('#board-title')).toHaveText('今日やること');
-  await expect(page.locator('.board-empty')).toHaveText('今日やる家事をここに貼る');
+  await expect(page.locator('#board-magnets .board-empty')).toHaveText('今日やる家事をここに貼る');
   await page.locator('#tray .magnet').first().click();
-  await expect(page.locator('.board-empty')).toHaveCount(0);
+  await expect(page.locator('#board-magnets .board-empty')).toHaveCount(0);
   await expect(page.locator('#board-title')).toBeVisible();
 });
