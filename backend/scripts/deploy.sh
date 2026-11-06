@@ -26,8 +26,19 @@ image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${repository}/${service}:${tag}"
 for value in "$PROJECT_ID" "$REGION" "$STORAGE_BUCKET" "$CORS_ORIGINS" "$GEMINI_MODEL" "$FIREBASE_WEB_API_KEY" "$FIREBASE_AUTH_DOMAIN" "$FIREBASE_APP_ID"; do
   if [[ "$value" == *"|"* ]]; then echo "Environment values must not contain |" >&2; exit 1; fi
 done
-# Build status is checked even when the deployer cannot stream the logs bucket.
-gcloud builds submit --suppress-logs --project "$PROJECT_ID" --tag "$image" .
+# Query build status separately; log streaming requires unrelated bucket permissions.
+build_id="$(gcloud builds submit --async --format='value(id)' --project "$PROJECT_ID" --tag "$image" .)"
+if [[ -z "$build_id" ]]; then echo "Cloud Build did not return an ID" >&2; exit 1; fi
+build_status=""
+for ((attempt=0; attempt<240; attempt++)); do
+  build_status="$(gcloud builds describe "$build_id" --project "$PROJECT_ID" --format='value(status)')"
+  case "$build_status" in
+    SUCCESS) break ;;
+    QUEUED|PENDING|WORKING) sleep 5 ;;
+    *) echo "Cloud Build $build_id finished with $build_status" >&2; exit 1 ;;
+  esac
+done
+if [[ "$build_status" != SUCCESS ]]; then echo "Timed out waiting for Cloud Build $build_id" >&2; exit 1; fi
 # Public HTTP transport is intentional. Firebase ID tokens protect every data API;
 # Cloud Run IAM tokens are not Firebase ID tokens. /healthz is public.
 gcloud run deploy "$service" --project "$PROJECT_ID" --region "$REGION" \
