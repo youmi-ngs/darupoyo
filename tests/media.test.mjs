@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { poseSimilarity } from '../src/media.js';
+import { poseSimilarity } from '../src/pose.js';
 const pose = Array.from({length:33},(_,i)=>({x:(i%2)*.4+.2,y:i/33,visibility:1,z:0}));
 test('pose comparison normalizes translation and body scale',()=>{
   assert.equal(poseSimilarity(pose,pose),100);
