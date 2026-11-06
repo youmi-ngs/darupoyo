@@ -65,3 +65,11 @@ test('camera permission failure does not create a completion', async ({ page }) 
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
   await expect(page.locator('#post')).toHaveCount(0);
 });
+test('missing mic points laundry to the tap mode', async ({ page }) => {
+  await page.addInitScript(()=>{ navigator.mediaDevices.getUserMedia = async()=>{throw new DOMException('none','NotFoundError');}; });
+  await page.goto('/'); await page.getByLabel('あなたの名前').fill('nomic'); await page.getByLabel('新しいハウスの名前').fill('no device'); await page.getByRole('button',{name:'ハウスを作る',exact:true}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('[data-chore="laundry"]').click(); await page.getByRole('button',{name:/バサバサでリズム/}).click();
+  await expect(page.locator('#toast')).toHaveText('マイクが見つかりません。洗濯リズムならタップで遊べるよ');
+  await expect(page.getByRole('button',{name:/洗濯リズム/})).toBeVisible();
+  await expect(page.locator('.door.is-lit')).toHaveCount(0);
+});

@@ -426,6 +426,16 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     choice.querySelector('button').focus();
   }
   let captureController;
+  // When the camera or mic cannot be used, laundry still has the tap mode; other chores ask for access.
+  function deviceMessage(e, id) {
+    const device = id === 'dryer' || id === 'laundry' ? 'マイク' : 'カメラ';
+    const tap = id === 'laundry' ? '。洗濯リズムならタップで遊べるよ' : '';
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') return device + 'の利用を許可してください' + tap;
+    if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError') return device + 'が見つかりません' + tap;
+    if (e.name === 'NotReadableError') return device + 'をほかのアプリが使っているみたい' + tap;
+    if (!navigator.mediaDevices) return 'このページでは' + device + 'を使えません（https か localhost で開いてね）' + tap;
+    return e.message;
+  }
   async function judge(id, c) {
     captureController?.abort(); captureController = new AbortController();
     const signal = captureController.signal;
@@ -453,7 +463,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       };
     } catch (e) {
       if (e.name === 'AbortError') return;
-      openSheet(id); toast(e.name === 'NotAllowedError' ? 'カメラ・マイクの利用を許可してください' : e.message);
+      openSheet(id); toast(deviceMessage(e, id));
     }
   }
   sheet.addEventListener('cancel', e => { if ($('sheet-close').disabled) e.preventDefault(); });
