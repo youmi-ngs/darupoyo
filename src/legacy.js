@@ -113,14 +113,15 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>おまかせ</b><small>毎回ちがうギャルがほめる</small>'; }
-      else { b.innerHTML = galIcon(id) + '<b></b><small></small><em></em>'; b.querySelector('b').textContent = GALS[id].name; b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
+      else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
       b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); });
       return b;
     };
     GAL_IDS.forEach((g) => box.append(mk(g)));
     box.append(mk('random'));
     const cur = $('gal-current');
-    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>おまかせ</small>' : galIcon(galPref) + '<small>' + GALS[galPref].name + '</small>';
+    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>おまかせ</small>' : galIcon(galPref);
+    if (cur) cur.setAttribute('aria-label', galPref === 'random' ? 'おまかせ' : GALS[galPref].name);
   }
 
   // ---------- house ----------
