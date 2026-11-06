@@ -20,7 +20,7 @@
     <div class="walk">
       <div class="top-ui">
         <button class="ham" type="button" id="open-menu" aria-label="メニュー（タイトル・間取り・掲示板）" aria-haspopup="dialog"><span></span><span></span><span></span></button>
-        <div class="tab-row"><div class="scene-tabs" id="scene-tabs" aria-label="場所"><button class="scene-tab" type="button" data-go="0">玄関</button><button class="scene-tab" type="button" data-go="1">リビング</button><button class="scene-tab" type="button" data-go="2">洗面所</button><button class="scene-tab" type="button" data-go="3">ベランダ</button><button class="scene-tab" type="button" data-go="4">みんなの部屋</button></div></div>
+        <div class="tab-row"><div class="scene-tabs" id="scene-tabs" aria-label="場所"><button class="scene-tab" type="button" data-go="0">玄関</button><button class="scene-tab" type="button" data-go="1">リビング</button><button class="scene-tab" type="button" data-go="2">おふろば</button><button class="scene-tab" type="button" data-go="3">ベランダ</button><button class="scene-tab" type="button" data-go="4">みんなの部屋</button></div></div>
       </div>
       <button class="walk-arrow left" type="button" id="walk-left" aria-label="左の部屋へ">‹</button>
       <div class="plan" id="plan">
@@ -53,9 +53,9 @@
           </button>
         </div>
       </div>
-      <div class="scene" data-scene="wash" aria-label="洗面所">
+      <div class="scene" data-scene="wash" aria-label="おふろば">
         <div class="sv sv-wash">
-          <span class="sv-label">洗面所</span>
+          <span class="sv-label">おふろば</span>
           <button class="sv-hit" type="button" data-chore="dryer" style="left:6%;bottom:calc(var(--fl) - 42px);width:56%">
             <svg viewBox="0 0 200 230" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><rect x="40" y="6" width="96" height="80" rx="40" fill="#E2F6FF"/><path d="M60 30q10-12 22-14" stroke="#FFFFFF" stroke-width="5"/><path d="M152 30h20" /><path d="M162 30v10"/><path d="M150 44h26a10 10 0 0 1 0 20h-26z" fill="#D9C2FF"/><path d="M158 64l-4 26h12l2-26z" fill="#D9C2FF"/><path d="M180 46q8 8 0 16M188 42q12 12 0 24" stroke-width="2"/><rect x="20" y="104" width="136" height="20" rx="8" fill="#FFFFFF"/><ellipse cx="88" cy="112" rx="40" ry="5" fill="#CFEFFF"/><path d="M88 96v8M80 96h16"/><rect x="28" y="124" width="120" height="102" rx="6" fill="#F0E6FF"/><path d="M88 124v102"/><circle cx="78" cy="172" r="3" fill="#3B2560"/><circle cx="98" cy="172" r="3" fill="#3B2560"/></g></svg>
             <span class="area-task">ドライヤー</span><span class="who-dots"></span>
@@ -164,7 +164,7 @@
       <button class="map-cell map-room" type="button" style="grid-area:rc" data-go="4" data-who-map="[メンバー3]">[メンバー3]</button>
       <button class="map-cell map-room" type="button" style="grid-area:rd" data-go="4" data-who-map="[メンバー4]">[メンバー4]</button>
       <button class="map-cell" type="button" style="grid-area:ldk" data-go="1" data-chore-map="meal">リビング<small>冷蔵庫・ごはん</small></button>
-      <button class="map-cell" type="button" style="grid-area:wash" data-go="2" data-chore-map="dryer">洗面所<small>ドライヤー</small></button>
+      <button class="map-cell" type="button" style="grid-area:wash" data-go="2" data-chore-map="dryer">おふろば<small>ドライヤー</small></button>
       <button class="map-cell" type="button" style="grid-area:entry" data-go="0" data-chore-map="trash">玄関<small>ゴミ捨て</small></button>
     </div>
     <h2 class="drawer-h">け〜じばん</h2>
