@@ -1,4 +1,4 @@
-import { client, start, houseApi, refresh, inviteLink, logout } from './backend.js';
+import { client, start, houseApi, refresh, inviteLink, logout } from './api.js';
 import { capture } from './media.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {

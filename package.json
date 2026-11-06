@@ -16,7 +16,9 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.mjs",
     "test:e2e": "playwright test",
-    "test:emu": "playwright test -c playwright.emu.config.js"
+    "test:emu": "playwright test -c playwright.emu.config.js",
+    "test:mock": "playwright test -c playwright.mock.config.js",
+    "dev:mock": "VITE_API_MOCK=1 vite --host 127.0.0.1 --port 5173"
   },
   "dependencies": {
     "@mediapipe/tasks-audio": "0.10.32",
