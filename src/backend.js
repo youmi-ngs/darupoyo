@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from 'firebase/auth';
-import { getFirestore, doc, collection, onSnapshot } from 'firebase/firestore';
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, doc, collection, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
 
 export const client = { uid: '', house: '', config: null, auth: null };
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '/api').replace(/\/$/, '');
@@ -45,6 +45,11 @@ export async function start(onUpdate, onError) {
   if (client.config.auth_mode === 'firebase') {
     if (!client.config.firebase.apiKey || !client.config.firebase.appId) throw new Error('Firebase Web設定が必要です');
     const app = initializeApp(client.config.firebase); client.auth = getAuth(app); client.db = getFirestore(app);
+    if (import.meta.env.VITE_FIREBASE_EMULATORS) {
+      // Local Emulator Suite (npm run dev:emu); never set for a real deploy.
+      connectAuthEmulator(client.auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectFirestoreEmulator(client.db, '127.0.0.1', 8085);
+    }
     await new Promise(resolve => { const unsub = onAuthStateChanged(client.auth, () => { unsub(); resolve(); }); });
   } else {
     client.uid = localStorage.getItem('darupoyo-uid') || crypto.randomUUID(); localStorage.setItem('darupoyo-uid', client.uid);

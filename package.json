@@ -9,12 +9,14 @@
     "dev": "vite --host 127.0.0.1 --port 5173",
     "dev:backend": "bash backend/scripts/dev.sh",
     "dev:all": "node scripts/dev-all.mjs",
+    "dev:emu": "node scripts/dev-emu.mjs",
     "setup:backend": "uv venv --python 3.12 backend/.venv && uv pip sync --python backend/.venv/bin/python backend/requirements-dev.lock",
     "test:backend": "cd backend && uv run --python .venv/bin/python --no-project python -m pytest -q",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.mjs",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:emu": "playwright test -c playwright.emu.config.js"
   },
   "dependencies": {
     "@mediapipe/tasks-audio": "0.10.32",

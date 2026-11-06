@@ -24,6 +24,8 @@ application_default_credentials.json
 *-firebase-adminsdk-*.json
 .firebase/
 firebase-debug.log
+*-debug.log
+.emulator-data/
 
 # ローカルの環境変数・シークレット（APIキー、トークン、パスワード等）
 # 共有用のテンプレートだけをコミットする（例: .env.example）
