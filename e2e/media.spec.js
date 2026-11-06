@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async({context})=>{await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));});
 test('packaged Google models load and process blank inputs without false completion',async({page})=>{
   test.setTimeout(90000);
   await page.goto('/');
@@ -23,6 +24,12 @@ test('camera capture, photo-only fallback, save and stream release',async({page,
   await page.getByRole('button',{name:'この写真を撮る'}).waitFor({state:'visible'});
   await page.evaluate(()=>{window.testStream=document.querySelector('video').srcObject;});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
+  // 撮影直後に確認でき、撮り直してもカメラは動いたまま（#12 #13）
+  await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('video')).toBeHidden();
+  await page.getByRole('button',{name:'もう1回撮る'}).click();
+  await expect(page.locator('video')).toBeVisible();await expect(page.locator('.capture canvas')).toBeHidden();
+  await page.getByRole('button',{name:'この写真を撮る'}).click();
+  await page.getByRole('button',{name:'この写真を使う'}).click();
   await page.getByRole('button',{name:'写真だけで進む'}).or(page.locator('#post')).first().waitFor({state:'visible'});
   if(await page.getByRole('button',{name:'写真だけで進む'}).count()) await page.getByRole('button',{name:'写真だけで進む'}).click();
   await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();await expect(page.getByText('記録できた！')).toBeVisible();
@@ -36,7 +43,7 @@ test('preset pose shows live guidance and rejects a frame without a person',asyn
   await page.locator('[data-chore="trash"]').click();await page.getByRole('button',{name:/サンタのポーズ/}).click();
   await expect(page.locator('.capture-status')).toHaveText('全身が入るように、少し離れてね',{timeout:30000});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
-  await expect(page.locator('#toast')).toContainText('全身を見つけられませんでした');
-  await expect(page.getByRole('button',{name:/サンタのポーズ/})).toBeVisible();
+  await expect(page.locator('.capture-status')).toContainText('全身を見つけられませんでした');
+  await expect(page.getByRole('button',{name:'もう1回撮る'})).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
 });

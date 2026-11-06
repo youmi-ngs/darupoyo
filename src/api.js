@@ -69,11 +69,12 @@ export async function start(onUpdate, onError) {
   client.config = await config();
   if (client.config.auth_mode === 'firebase') {
     if (!client.config.firebase.apiKey || !client.config.firebase.appId) throw new Error('Firebase Web設定が必要です');
-    const app = initializeApp(client.config.firebase); client.auth = getAuth(app); client.db = getFirestore(app);
+    const app = initializeApp(client.config.firebase); client.auth = getAuth(app);
+    if (client.config.data_backend !== 'memory') client.db = getFirestore(app);
     if (import.meta.env.VITE_FIREBASE_EMULATORS) {
       // Local Emulator Suite (npm run dev:emu); never set for a real deploy.
       connectAuthEmulator(client.auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-      connectFirestoreEmulator(client.db, '127.0.0.1', 8085);
+      if (client.db) connectFirestoreEmulator(client.db, '127.0.0.1', 8085);
     }
     await new Promise(resolve => { const unsub = onAuthStateChanged(client.auth, () => { unsub(); resolve(); }); });
   } else {
@@ -85,11 +86,12 @@ export async function start(onUpdate, onError) {
   if (client.auth && !client.auth.currentUser) await new Promise(resolve => button('Googleでログイン', async () => { await signInWithPopup(client.auth, new GoogleAuthProvider()); resolve(); }, dialog));
   client.uid = client.auth?.currentUser?.uid || client.uid;
   dialog.querySelectorAll('button').forEach(b => b.remove());
-  if (!client.auth) dialog.querySelector('[role=status]').textContent = mockFetch ? 'モックで動いています（Backendなし）：記録はこのブラウザにだけ残ります' : 'ローカル開発モード：記録はBackendを再起動すると消えます';
+  if (mockFetch) dialog.querySelector('[role=status]').textContent = 'モックで動いています（Backendなし）：記録はこのブラウザにだけ残ります';
+  else if (client.config.data_backend === 'memory') dialog.querySelector('[role=status]').textContent = 'チームテスト用：記録はサーバーを再起動すると消えます';
   const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
   const houses = await api('/houses');
   const items = houses.items || houses;
-  const enter = async id => { client.house = id; await refresh(); write('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); };
+  const enter = async id => { client.house = id; await refresh(); write('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
   if (!invite) {
     const saved = read('darupoyo-house-' + client.uid);
     if (items.some(h => h.id === saved)) { await enter(saved); return; }
@@ -100,13 +102,13 @@ export async function start(onUpdate, onError) {
   button(invite ? '招待に参加する' : 'ハウスを作る', async () => {
     if (!name.value.trim() || !field.value.trim()) throw new Error('名前を入力してください');
     const h = await api(invite ? '/join' : '/houses', invite ? { token: field.value.trim(), display_name: name.value.trim() } : { name: field.value.trim(), display_name: name.value.trim() });
-    await enter(h.id); if (invite) history.replaceState(null, '', location.pathname);
+    await enter(h.id); if (invite) { history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
   }, dialog);
 }
 function subscribe() {
   const sync = () => refresh().catch(report);
+  if (client.auth) subscriptions.push(onAuthStateChanged(client.auth, user => { if (!user) location.reload(); }));
   if (client.db) {
-    subscriptions.push(onAuthStateChanged(client.auth, user => { if (!user) location.reload(); }));
     subscriptions.push(onSnapshot(doc(client.db, 'houses', client.house), sync, report));
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'days'), sync, report));
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'posts'), sync, report));

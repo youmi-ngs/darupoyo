@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+});
 
 // Signs in through the Auth Emulator's fake Google account picker.
 async function signIn(page, name) {
@@ -27,11 +30,13 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   const friendContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const friend = await friendContext.newPage();
   await signIn(friend, 'ともだち');
+  await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await friend.goto(url);
   await friend.reload();
   await friend.getByLabel('あなたの名前').fill('ともだち');
   await friend.getByRole('button', { name: '招待に参加する' }).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
+  await friend.getByRole('button', { name: 'おじゃまします！' }).click();
   await expect(page.locator('.doors .door')).toHaveCount(2, { timeout: 15000 });
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
 

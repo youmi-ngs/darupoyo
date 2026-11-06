@@ -1,6 +1,9 @@
-.gcloudignore
-.git/
-#!include:.gitignore
-.pytest_cache/
-tests/
-docs/
+# Cloud Build only needs the backend image inputs. Never upload local credentials,
+# virtual environments, test data, frontend sources, or editor files.
+**
+!Dockerfile
+!requirements.lock
+!src/
+!src/**
+src/**/__pycache__/
+src/**/*.pyc
