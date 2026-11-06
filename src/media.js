@@ -1,3 +1,4 @@
+import { confirmMealVoice } from './meal-voice.js';
 
 export function poseSimilarity(a, b) {
   const normalize = points => {
@@ -103,18 +104,11 @@ export async function capture(root, chore, choice, reference, signal) {
       const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
       if (!Speech) return evidence;
-      status.textContent = '写真だけでもOK。「いただきます」を使う場合はブラウザの音声認識サービスに音声が送られる場合があります。';
-      await new Promise((resolve, reject) => {
-        const voice = document.createElement('button'); voice.className = 'btn btn-sub'; voice.textContent = '「いただきます」を言う'; box.append(voice);
-        const skip = document.createElement('button'); skip.className = 'btn btn-main'; skip.textContent = '写真だけで進む'; box.append(skip); skip.onclick = resolve;
-        const abort = () => reject(new DOMException('中止しました', 'AbortError')); signal.addEventListener('abort', abort, { once:true }); resources.push(()=>signal.removeEventListener('abort',abort));
-        voice.onclick = () => {
-          voice.disabled = true; const speech = new Speech(); speech.lang = 'ja-JP'; speech.continuous = false; resources.push(() => speech.abort());
-          speech.onresult = e => { if (Array.from(e.results).some(r=>r[0].transcript.replace(/\s/g,'').includes('いただきます'))) { evidence.method = 'photo_voice'; evidence.itadakimasu = true; resolve(); } else status.textContent = '聞き取れませんでした。もう一度か、写真だけで進めます。'; };
-          speech.onerror = () => { status.textContent = '音声認識を利用できません。写真だけでも記録できます。'; voice.disabled = false; };
-          speech.onend = () => { voice.disabled = false; }; speech.start();
-        };
-      });
+      status.hidden = true;
+      if (await confirmMealVoice(box, Speech, signal)) {
+        evidence.method = 'photo_voice';
+        evidence.itadakimasu = true;
+      }
       return evidence;
     }
     status.textContent = 'ポーズと背景を端末内で処理しています…';
