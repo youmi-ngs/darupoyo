@@ -544,7 +544,7 @@ import { capture } from './media.js';
   });
   $('next-day').textContent = '友だちを招待する';
   $('next-day').addEventListener('click', async () => {
-    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住む友だちに共有してね。最大6人。</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
+    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
     catch (e) { toast(e.message); }
   });
 
