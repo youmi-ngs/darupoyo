@@ -22,7 +22,8 @@ class HouseCreate(Model):
 
 
 class Join(Model):
-    token: str = Field(min_length=20, max_length=200)
+    # Short code (8 chars, any case, optional hyphen) or an older long link token.
+    token: str = Field(min_length=8, max_length=200)
     display_name: str = Field(min_length=1, max_length=40, pattern=r"\S")
 
 

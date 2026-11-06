@@ -12,10 +12,10 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('#open-menu').click();
   await page.getByRole('button', { name:'友だちを招待する' }).click();
-  const url = await page.getByRole('textbox', {name:'招待リンク',exact:true}).inputValue();
+  const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
   await page.locator('#sheet-close').click();
   const context = await browser.newContext({ viewport: {width:390,height:844} }); const friend = await context.newPage();
-  await friend.goto(url); await friend.getByLabel('あなたの名前').fill('ともだち'); await friend.getByRole('button', {name:'招待に参加する'}).click();
+  await friend.goto('/'); await friend.getByRole('button', { name: '招待コードで入る' }).click(); await friend.getByLabel('招待コード').fill(code); await friend.getByLabel('あなたの名前').fill('ともだち'); await friend.getByRole('button', {name:'招待に参加する'}).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.doors .door')).toHaveCount(2);
   await page.locator('[data-go="3"].scene-tab').click();
@@ -86,7 +86,7 @@ test('switch between houses from the menu', async ({ page }) => {
     await expect(page.locator('.onboarding')).toHaveCount(0);
   };
   const switchHouse = async () => {
-    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+    await page.locator('#open-menu').click();
     await page.getByRole('button', { name: 'ハウスを切り替える' }).click();
     await expect(page.locator('.onboarding')).toBeVisible();
   };

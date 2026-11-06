@@ -1,5 +1,6 @@
 import hashlib
 import json
+import re
 import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
@@ -12,6 +13,17 @@ from .services import REWARDS
 
 def utcnow():
     return datetime.now(UTC)
+
+
+# No 0/O or 1/I so codes survive being read aloud or retyped.
+INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+INVITE_LENGTH = 8
+
+
+def normalize_invite(token):
+    """Accept short codes typed as k7pm-3qxd or with spaces; older long link tokens stay as-is."""
+    compact = re.sub(r"[\s-]", "", token)
+    return compact.upper() if len(compact) == INVITE_LENGTH else token
 
 
 def digest(value):
@@ -50,19 +62,24 @@ class Domain:
         return house
 
     def invite(self, uid, house_id):
-        token = secrets.token_urlsafe(32)
         expires = (self.clock() + timedelta(days=7)).isoformat()
 
         def run(tx):
             require_member(tx, house_id, uid)
-            tx.set(f"invites/{digest(token)}", {"house_id": house_id, "expires_at": expires})
+            # Short code people can read aloud or type; retry on the rare collision.
+            while True:
+                code = "".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_LENGTH))
+                if not tx.get(f"invites/{digest(code)}"):
+                    break
+            tx.set(f"invites/{digest(code)}", {"house_id": house_id, "expires_at": expires})
+            return code
 
-        self.store.atomic(run)
+        token = self.store.atomic(run)
         return {"token": token, "expires_at": expires}
 
     def join(self, uid, body):
         def run(tx):
-            invitation = tx.get(f"invites/{digest(body.token)}")
+            invitation = tx.get(f"invites/{digest(normalize_invite(body.token))}")
             if not invitation or datetime.fromisoformat(invitation["expires_at"]) <= self.clock():
                 raise HTTPException(404, "Invite not found or expired")
             path = f"houses/{invitation['house_id']}"

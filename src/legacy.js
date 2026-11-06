@@ -1,4 +1,4 @@
-import { client, start, houseApi, refresh, inviteLink, logout, switchHouse } from './api.js';
+import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
@@ -479,7 +479,13 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   });
   $('next-day').textContent = '友だちを招待する';
   $('next-day').addEventListener('click', async () => {
-    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
+    try {
+      const code = await inviteCode(); $('menu').close();
+      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待コード貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input class="invite-code" aria-label="招待コード" readonly><button class="btn invite-copy" type="button">コピー</button>';
+      const input = sheetBody.querySelector('.invite-code'); input.value = code; input.onclick = () => input.select();
+      sheetBody.querySelector('.invite-copy').onclick = () => navigator.clipboard.writeText(code).then(() => toast('コピーしたよ'), () => { input.select(); toast('長押しでコピーしてね'); });
+      sheet.showModal();
+    }
     catch (e) { toast(e.message); }
   });
 
@@ -550,7 +556,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   });
   $('settings').addEventListener('close', () => toggleAccountForm(false));
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
-  const switchButton = document.createElement('button'); switchButton.type = 'button'; switchButton.className = 'next-day'; switchButton.textContent = 'ハウスを切り替える'; switchButton.onclick = switchHouse; logoutButton.before(switchButton);
+  $('switch-house').addEventListener('click', switchHouse);
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
   document.body.classList.add('no-scroll');

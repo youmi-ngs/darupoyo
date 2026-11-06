@@ -98,12 +98,25 @@ export async function start(onUpdate, onError) {
     items.forEach(h => button(h.name + 'に入る', () => enter(h.id), dialog));
   }
   const name = document.createElement('input'); name.placeholder = 'あなたの名前'; name.setAttribute('aria-label', 'あなたの名前'); name.maxLength = 40; name.value = client.auth?.currentUser?.displayName || ''; dialog.append(name);
-  const field = document.createElement('input'); field.placeholder = invite ? '招待コード' : '新しいハウスの名前'; field.setAttribute('aria-label', field.placeholder); field.maxLength = invite ? 200 : 60; field.value = invite || ''; dialog.append(field);
-  button(invite ? '招待に参加する' : 'ハウスを作る', async () => {
-    if (!name.value.trim() || !field.value.trim()) throw new Error('名前を入力してください');
-    const h = await api(invite ? '/join' : '/houses', invite ? { token: field.value.trim(), display_name: name.value.trim() } : { name: field.value.trim(), display_name: name.value.trim() });
-    await enter(h.id); if (invite) { history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
+  // One field: a new house name, or an invite code after tapping 招待コードで入る.
+  let joining = Boolean(invite);
+  const field = document.createElement('input'); dialog.append(field);
+  const main = button('', async () => {
+    if (!name.value.trim() || !field.value.trim()) throw new Error(joining ? '名前と招待コードを入力してください' : '名前を入力してください');
+    const h = await api(joining ? '/join' : '/houses', joining ? { token: field.value.trim(), display_name: name.value.trim() } : { name: field.value.trim(), display_name: name.value.trim() });
+    await enter(h.id);
+    if (joining) { if (invite) history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
   }, dialog);
+  const swap = document.createElement('button'); swap.type = 'button'; swap.className = 'onboarding-swap'; dialog.append(swap);
+  const setMode = join => {
+    joining = join;
+    field.placeholder = join ? '招待コード' : '新しいハウスの名前'; field.setAttribute('aria-label', field.placeholder);
+    field.maxLength = join ? 200 : 60; field.autocapitalize = join ? 'characters' : 'sentences'; field.autocomplete = 'off';
+    main.textContent = join ? '招待に参加する' : 'ハウスを作る';
+    swap.textContent = join ? '新しくハウスを作る' : '招待コードで入る';
+  };
+  swap.onclick = () => { field.value = ''; dialog.querySelector('[role=status]').textContent = ''; setMode(!joining); field.focus(); };
+  setMode(joining); if (invite) field.value = invite;
 }
 function subscribe() {
   const sync = () => refresh().catch(report);
@@ -129,9 +142,8 @@ export async function logout() {
   else remove('darupoyo-uid', userStore());
   location.reload();
 }
-export async function inviteLink() {
-  const result = await houseApi('/invites', {});
-  // Fragments never reach the HTTP server/access log or Referer header.
-  const url = new URL(location.origin); url.hash = new URLSearchParams({invite:result.token}).toString();
-  return url.href;
+// Short code shown as K7PM-3QXD; the Backend accepts it in any case, with or without the hyphen.
+export async function inviteCode() {
+  const { token } = await houseApi('/invites', {});
+  return token.length === 8 ? token.slice(0, 4) + '-' + token.slice(4) : token;
 }

@@ -29,8 +29,8 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
 | GET | /api/config | 公開Firebase Web設定・認証モード（Admin秘密情報は含まない） |
 | GET | /api/me | 認証確認 |
 | POST / GET | /api/houses | ハウス作成 / 自分のハウス一覧（最大50） |
-| POST | /api/houses/{id}/invites | 招待トークン作成（7日有効） |
-| POST | /api/join | 招待で参加、6人上限 |
+| POST | /api/houses/{id}/invites | 招待コード作成（8文字、7日有効）。`token` に入る |
+| POST | /api/join | 招待コードで参加、6人上限。大文字小文字・ハイフン・空白は区別しない |
 | GET | /api/houses/{id}/dashboard?day=2026-11-05 | 電気・掲示板・今日のポーズ・日次状態 |
 | PUT | /api/houses/{id}/goals | 今日やる家事マグネット（空でもOK） |
 | PUT | /api/houses/{id} | 家の名前を変更 `{name}`（1〜60文字）。住人なら誰でも |
@@ -48,7 +48,7 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
 ## 接続例
 
 ハウス作成: `{"name":"温玉ハウス","display_name":"ぽよ"}`。
-招待は返ったtokenをFrontendのURLフラグメント `/#invite=...` に載せ（HTTPアクセスログには送らない）、参加画面で `{"token":"...","display_name":"友達"}` を `/api/join` へ送る。
+招待は8文字のコード（`A-Z`から`I`/`O`を除いた文字と`2-9`。例 `K7PM3QXD`）。画面では `K7PM-3QXD` のように区切って見せ、参加画面で入力された値を `{"token":"k7pm-3qxd","display_name":"友達"}` として `/api/join` へ送る。以前の長い招待token（`/#invite=...` のリンク）も期限内は使える。
 マグネット: `{"chores":["meal","dryer"]}`。目標未設定でもクリアできる。
 
 ### ドライヤーの音
