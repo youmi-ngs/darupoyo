@@ -24,7 +24,12 @@ try {
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(`${response.status}: ${data.error?.message || 'Google API request failed'}`);
+    if (!response.ok) {
+      if (data.error?.message === 'CONFIGURATION_NOT_FOUND') {
+        throw new Error(`Enable Authentication and Google sign-in at https://console.firebase.google.com/project/${project}/authentication/providers`);
+      }
+      throw new Error(`${response.status}: ${data.error?.message || 'Google API request failed'}`);
+    }
     return data;
   }
   const base = `https://firebase.googleapis.com/v1beta1/projects/${project}`;
