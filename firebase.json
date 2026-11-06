@@ -1,7 +1,41 @@
 {
   "hosting": {
     "public": "dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "headers": [{"source":"/index.html","headers":[{"key":"Cache-Control","value":"no-cache"}]}]
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "run": {
+          "serviceId": "darupoyo-backend",
+          "region": "asia-northeast1"
+        }
+      },
+      {
+        "source": "/healthz",
+        "run": {
+          "serviceId": "darupoyo-backend",
+          "region": "asia-northeast1"
+        }
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "backend/firestore.rules",
+    "indexes": "backend/firestore.indexes.json"
   }
 }

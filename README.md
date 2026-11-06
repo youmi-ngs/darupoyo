@@ -95,24 +95,16 @@ CIも同じリポジトリだけで単体テスト・Dockerビルド・接続テ
 
 ## ビルド・公開
 
-リポジトリは1つ、公開先はFrontendとBackendで独立させる。
+GCP プロジェクト `darupoyo-ontama` に同じリポジトリから公開する。
+Frontend は Firebase Hosting、Backend は Docker → Cloud Build → Cloud Run。
+詳しい初期設定・再公開手順は [deploy/README.md](deploy/README.md)。
 
 ```sh
-# Frontend（ルートで実行）
-VITE_API_BASE_URL=https://YOUR-CLOUD-RUN/api npm run build
-firebase deploy --only hosting --project YOUR_PROJECT_ID
-
-# Backend（ルートからビルド）
-docker build --platform linux/amd64 -t darupoyo-back:local backend
-# Cloud Runデプロイ：必要な環境変数を設定後
-bash backend/scripts/deploy.sh
+# 初回: CLI ログインと課金アカウント接続後
+npm run setup:cloud
+# Firebase Console で Google ログインを有効化後
+npm run deploy
 ```
-
-Frontendはdist/をFirebase Hostingなどへ、BackendはCloud Runへ配置する。
-詳細は[Backendのデプロイ手順](backend/docs/deploy.md)。
-Firestore/Storageのルールのデプロイはbackend/内のfirebase.jsonを使用する。
-公開時はBackendのCORS_ORIGINSとFirebase Authの承認済みドメインにFrontendを登録する。
-実際のGoogleサービスへの接続には対象プロジェクトの設定が必要。ローカルテストでは課金APIを呼ばない。
 
 ## 接続先・秘密情報
 
