@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+test.beforeEach(async ({ context }) => {
+  await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+});
 
 test('two tabs share the mock house and see each other clear chores', async ({ page, context }) => {
   const errors = []; page.on('pageerror', e => errors.push(e.message));
@@ -14,10 +17,12 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
   const url = await page.getByRole('textbox', { name: '招待リンク', exact: true }).inputValue();
 
   const friend = await context.newPage();
+  await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await friend.goto(url);
   await friend.getByLabel('あなたの名前').fill('ともだち');
   await friend.getByRole('button', { name: '招待に参加する' }).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
+  await friend.getByRole('button', { name: 'おじゃまします！' }).click();
   await expect(page.locator('.doors .door')).toHaveCount(2, { timeout: 8000 });
 
   await friend.locator('[data-go="3"].scene-tab').click();

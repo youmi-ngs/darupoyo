@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { countdown } from '../src/media.js';
 import { poseSimilarity, presetScore, PRESET_PASS } from '../src/pose.js';
 
 const pose = Array.from({length:33},(_,i)=>({x:(i%2)*.4+.2,y:i/33,visibility:1,z:0}));
@@ -49,4 +50,17 @@ test('copycat similarity accepts a mirrored copy and rejects a different pose',(
   });
   assert.ok(poseSimilarity(mirrored, santa) >= 95);
   assert.ok(poseSimilarity(wizard, santa) < poseSimilarity(mirrored, santa));
+});
+
+test('countdown shows each second, then resolves',async()=>{
+  const shown=[];
+  await countdown(1,n=>shown.push(n),new AbortController().signal);
+  assert.deepEqual(shown,[1,0]);
+});
+test('countdown stops when aborted',async()=>{
+  const controller=new AbortController(), shown=[];
+  const running=countdown(5,n=>shown.push(n),controller.signal);
+  controller.abort();
+  await assert.rejects(running,{name:'AbortError'});
+  assert.deepEqual(shown,[5]);
 });

@@ -112,7 +112,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
-      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>おまかせ</b><small>毎回ちがうギャルがほめる</small>'; }
+      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
       b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); });
       return b;
@@ -120,8 +120,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     GAL_IDS.forEach((g) => box.append(mk(g)));
     box.append(mk('random'));
     const cur = $('gal-current');
-    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>おまかせ</small>' : galIcon(galPref);
-    if (cur) cur.setAttribute('aria-label', galPref === 'random' ? 'おまかせ' : GALS[galPref].name);
+    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>ノリで</small>' : galIcon(galPref);
+    if (cur) cur.setAttribute('aria-label', galPref === 'random' ? 'ノリで' : GALS[galPref].name);
   }
 
   // ---------- house ----------
@@ -394,7 +394,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
 
   // ---------- check sheet ----------
   function choicesFor(id) {
-    if (id === 'laundry') return [{ kind: 'rhythm', mode: 'mic', title: 'バサバサでリズム', hint: 'マイクで音の立ち上がりを拾う・8拍' }, { kind: 'rhythm', mode: 'tap', title: '洗濯リズム', hint: 'はたくリズムで8拍タップ（手動モード）' }];
+    if (id === 'laundry') return [{ kind: 'rhythm', mode: 'mic', title: 'バサバサでリズム', hint: 'カメラとマイクで、はたく動きと音を拾う・8拍' }, { kind: 'rhythm', mode: 'tap', title: '洗濯リズム', hint: 'はたくリズムで8拍タップ（手動モード）' }];
     const t = TASKS[id], list = [];
     (t.presets || []).forEach((p) => list.push({ kind: 'pose', mode: 'preset', preset: p.id, title: p.name + 'のポーズ', hint: p.hint, fig: p.fig, praise: p.praise }));
     if (t.presets) {
@@ -408,7 +408,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
   function openSheet(id) {
     const t = TASKS[id], list = choicesFor(id);
-    const lead = id === 'laundry' ? '洗濯物をはたくリズムで8拍。マイクまたは手動タップで遊べるよ。'
+    const lead = id === 'laundry' ? '流れてくる音符に合わせて洗濯物をはたくと、キラキラが出るよ。手動タップでも遊べる。'
       : t.presets ? (isFirstToday(id) ? '今日の' + t.label + 'は一番乗り！決まったポーズか、オリジナルのポーズを撮ってね。' : 'ポーズを1つ選んで撮ってね。人だけ切り抜くから、部屋は写らないよ。')
       : t.sound ? '音だけ聞くから、カメラはいらないよ。' : 'ごはんだけ写せばOK。';
     sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><div class="choice"' + (list.length === 1 ? ' style="grid-template-columns:1fr"' : '') + '></div><p class="demo-note">カメラ・マイクは選んだ操作でのみ使います。保存前に確認できます。</p>';
@@ -479,7 +479,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   });
   $('next-day').textContent = '友だちを招待する';
   $('next-day').addEventListener('click', async () => {
-    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住む友だちに共有してね。最大6人。</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
+    try { const url = await inviteLink(); $('menu').close(); sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input aria-label="招待リンク" readonly style="width:100%;padding:16px">'; sheetBody.querySelector('input').value = url; sheetBody.querySelector('input').onclick = e => e.target.select(); sheet.showModal(); }
     catch (e) { toast(e.message); }
   });
 
@@ -498,6 +498,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,1fr))';
     $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
     document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who); } });
+    $('map-plan').classList.toggle('many-rooms', RESIDENTS.length > 4);
     const convert = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:data.timezone, hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise.text, galLine:p.praise.text });
     state.posts = data.posts.filter(p=>p.day===data.state.day).map(convert);
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
@@ -511,6 +512,17 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     document.querySelector('.account-icon').textContent = nameOf(ME).slice(0,1);
     renderAll();
   }
+  // 招待で入居したときに、誰と住むのかを見せる
+  window.addEventListener('darupoyo:joined', () => {
+    const others = RESIDENTS.filter(r => r.who !== ME).map(r => nameOf(r.who));
+    if (!others.length) return;
+    const names = others.length > 3 ? others.slice(0, 3).join('、') + 'たち' : others.join('、');
+    sheetBody.innerHTML = '<div class="move-in"><h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><button class="btn btn-main" type="button" id="move-in-ok">おじゃまします！</button></div>';
+    sheetBody.querySelector('.sheet-title').textContent = names + 'と一緒に住む！';
+    sheetBody.querySelector('.sheet-text').textContent = '今日から「' + dashboard.house.name + '」の住人だよ。自分の部屋もできたよ。';
+    $('move-in-ok').onclick = () => sheet.close();
+    sheet.showModal(); $('move-in-ok').focus();
+  });
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
   const switchButton = document.createElement('button'); switchButton.type = 'button'; switchButton.className = 'next-day'; switchButton.textContent = 'ハウスを切り替える'; switchButton.onclick = switchHouse; logoutButton.before(switchButton);
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
@@ -546,6 +558,13 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
+  $('howto-start').addEventListener('click', () => $('howto-page').close());
+  // 初めて家に入ったときだけ、あそびかたを自動で開く
+  window.addEventListener('darupoyo:entered', () => {
+    const KEY = 'darupoyo-howto-seen';
+    try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, '1'); } catch (e) { return; }
+    $('howto-page').showModal();
+  });
   menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
   document.querySelectorAll('.map-cell').forEach((c) => c.addEventListener('click', () => { menu.close(); if (c.dataset.whoMap) { goScene(4, true); showRoom(c.dataset.whoMap); } else goScene(Number(c.dataset.go)); }));
   window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = 4; window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });

@@ -23,9 +23,7 @@ application_default_credentials.json
 *serviceAccount*.json
 *-firebase-adminsdk-*.json
 .firebase/
-firebase-debug.log
-*-debug.log
-.emulator-data/
+firebase-debug*.log
 
 # ローカルの環境変数・シークレット（APIキー、トークン、パスワード等）
 # 共有用のテンプレートだけをコミットする（例: .env.example）
@@ -63,3 +61,6 @@ id_ed25519
 
 # Mac固有のシステムファイル
 .DS_Store
+
+*-debug.log
+.emulator-data/

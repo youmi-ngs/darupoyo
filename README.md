@@ -44,7 +44,29 @@ GCP設定なしで試せる開発用ログイン・メモリ保存・定型ほ�
 **ローカルの記録はBackend再起動で消える。** 本番ではFirebase認証とFirestore/Storageを使う。
 共有更新はローカル2.5秒間隔、本番Firestore通知。
 
-### 起動のしかた（3種類）
+## チームで Google ログインを試す（Cloud Run の課金設定不要）
+
+Firebase に既存の `darupoyo-8ed91` を追加し、Web アプリ `darupoyo-web` を登録、
+Authentication の Google ログインを有効化する。
+バックエンドで ID token と失効状態を検証するため、管理者のローカル ADC を設定する。
+
+```sh
+gcloud auth application-default login --project=darupoyo-8ed91
+# cloudflared の共有 URL を渡す。既存の dev:all は先に停止する。
+npm run dev:team -- https://YOUR-SHARED-URL.trycloudflare.com
+```
+
+起動時に Firebase の公開 Web 設定を取得し、指定 URL のホストを Auth の承認済みドメインへ追加する。
+共有 URL が変わったら、このコマンドも新しい URL で再実行する。
+使わなくなった共有ホストは Firebase Console の承認済みドメインから削除する。
+Google の認証情報をリポジトリや共有端末へコピーしない。
+
+このモードは Google ログインのみ本物。写真・ハウス・記録は Mac のメモリ上に保持し、
+バックエンド再起動で消える。チームの更新は 2.5 秒間隔で反映する。
+Firestore と Cloud Storage は使わず、Mac とトンネルを動かしている間だけ利用できる。
+通常の `npm run dev:all` は引き続き開発用ログインで起動する。
+
+## その他のローカル起動
 
 | コマンド | Backend | ログイン・データ | 使う場面 |
 |---|---|---|---|
@@ -57,7 +79,7 @@ Emulatorの画面は http://127.0.0.1:4000 、ログインはEmulatorの偽Googl
 Emulatorのデータは `.emulator-data/` に残る（消すと最初から）。`demo-` で始まるIDなので本物のプロジェクトにはつながらない。
 `npm run dev` でもBackendが応答しなければ自動でモックになる（開発時のみ。本番ビルドにモックは入らない）。
 
-### チームでスマホから試す（`npm run share`）
+## チームでスマホから試す（`npm run share`）
 
 1台のPCで `dev:all` を動かし、Cloudflareの一時的なhttps URL（無料・登録なし）をつける。
 スマホはhttpsでないとカメラ・マイクが使えないため。事前に `brew install cloudflared`。
@@ -67,11 +89,12 @@ Emulatorのデータは `.emulator-data/` に残る（消すと最初から）�
 - 試し終わったら Ctrl+C で止める。止めると記録は消え、URLも使えなくなる（毎回URLは変わる）。
 - 電気は2.5秒ごとの更新で反映される。
 
+
 ## 機能
 
 - ハウス作成・最大6人の招待・マグネット・達成記録・部屋の点灯・アルバム・リアクション
 - ゴミ捨て：MediaPipeによる人物切り抜きとポーズ比較。送信前に切り抜きを確認
-- 洗濯：音の立ち上がり／手動タップのリズムゲーム。洗濯音の種類を分類するものではない
+- 洗濯：カメラの動きとマイクの音の立ち上がり（または手動タップ）で遊ぶリズムゲーム。叩くとキラキラと効果音が出る。映像・音声は端末内でのみ処理し、洗濯音の種類を分類するものではない
 - 食事：写真だけ、または対応ブラウザの「いただきます」音声認識
 - ドライヤー：端末内YAMNetで検出時間を蓄積
 - 本番のほめコメント：BackendからVertex AI / Gemini（障害時は定型文）
@@ -91,43 +114,21 @@ npm run test:e2e
 VITE_API_BASE_URL=http://127.0.0.1:8080/api npm run test:e2e
 ```
 
-```sh
-npm run test:mock          # Backendなし・モックで2タブ
-npm run dev:emu            # 別ターミナルで起動してから
-npm run test:emu           # 2ユーザーでログインし、リアルタイムで電気がつくか
-```
-
 E2Eはこのリポジトリ内のBackendとFrontendを自動起動する。
 CIも同じリポジトリだけで単体テスト・Dockerビルド・接続テストを実行する。
 
 ## ビルド・公開
 
-リポジトリは1つ、公開先はFrontendとBackendで独立させる。
+GCP プロジェクト `darupoyo-8ed91` に同じリポジトリから公開する。
+Frontend は Firebase Hosting、Backend は Docker → Cloud Build → Cloud Run。
+詳しい初期設定・再公開手順は [deploy/README.md](deploy/README.md)。
 
 ```sh
-# Frontend（ルートで実行）
-VITE_API_BASE_URL=https://YOUR-CLOUD-RUN/api npm run build
-firebase deploy --only hosting --project YOUR_PROJECT_ID
-
-# Backend（ルートからビルド）
-docker build --platform linux/amd64 -t darupoyo-back:local backend
-# Cloud Runデプロイ：必要な環境変数を設定後
-bash backend/scripts/deploy.sh
+# 初回: CLI ログインと課金アカウント接続後
+npm run setup:cloud
+# Firebase Console で Google ログインを有効化後
+npm run deploy
 ```
-
-Frontendはdist/をFirebase Hostingなどへ、BackendはCloud Runへ配置する。
-詳細は[Backendのデプロイ手順](backend/docs/deploy.md)。
-ルートの `firebase.json` は Hosting と、backend/ の Firestore / Storage ルールをまとめて出す。
-
-### 凍結が解けたら（半日デプロイの手順）
-
-1. `.firebaserc` の `demo-darupoyo` を本物のプロジェクトIDに書きかえる。
-2. Firebaseコンソールで Auth（Google）・Firestore・Storage を有効にし、Webアプリを登録して apiKey / appId を控える。
-3. Backend：`backend/docs/deploy.md` の環境変数を設定して `bash backend/scripts/deploy.sh`（Cloud Run）。
-4. Frontend：`VITE_API_BASE_URL=https://（Cloud RunのURL）/api npm run build` → `npx firebase deploy`。
-5. Cloud Run の `CORS_ORIGINS` と Firebase Auth の承認済みドメインに Hosting のURLを登録する。
-公開時はBackendのCORS_ORIGINSとFirebase Authの承認済みドメインにFrontendを登録する。
-実際のGoogleサービスへの接続には対象プロジェクトの設定が必要。ローカルテストでは課金APIを呼ばない。
 
 ## 接続先・秘密情報
 
