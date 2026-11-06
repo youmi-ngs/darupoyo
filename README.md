@@ -44,6 +44,28 @@ GCP設定なしで試せる開発用ログイン・メモリ保存・定型ほ�
 **ローカルの記録はBackend再起動で消える。** 本番ではFirebase認証とFirestore/Storageを使う。
 共有更新はローカル2.5秒間隔、本番Firestore通知。
 
+## チームで Google ログインを試す（Cloud Run の課金設定不要）
+
+Firebase に既存の `darupoyo-ontama` を追加し、Web アプリ `darupoyo-web` を登録、
+Authentication の Google ログインを有効化する。
+バックエンドで ID token と失効状態を検証するため、管理者のローカル ADC を設定する。
+
+```sh
+gcloud auth application-default login --project=darupoyo-ontama
+# cloudflared の共有 URL を渡す。既存の dev:all は先に停止する。
+npm run dev:team -- https://YOUR-SHARED-URL.trycloudflare.com
+```
+
+起動時に Firebase の公開 Web 設定を取得し、指定 URL のホストを Auth の承認済みドメインへ追加する。
+共有 URL が変わったら、このコマンドも新しい URL で再実行する。
+使わなくなった共有ホストは Firebase Console の承認済みドメインから削除する。
+Google の認証情報をリポジトリや共有端末へコピーしない。
+
+このモードは Google ログインのみ本物。写真・ハウス・記録は Mac のメモリ上に保持し、
+バックエンド再起動で消える。チームの更新は 2.5 秒間隔で反映する。
+Firestore と Cloud Storage は使わず、Mac とトンネルを動かしている間だけ利用できる。
+通常の `npm run dev:all` は引き続き開発用ログインで起動する。
+
 ## 機能
 
 - ハウス作成・最大6人の招待・マグネット・達成記録・部屋の点灯・アルバム・リアクション

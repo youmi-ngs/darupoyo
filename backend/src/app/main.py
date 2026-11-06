@@ -97,6 +97,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         config = app.state.settings
         return {
             "auth_mode": config.auth_mode,
+            "data_backend": config.data_backend,
             "timezone": config.timezone,
             "firebase": {
                 "apiKey": os.getenv("FIREBASE_WEB_API_KEY", ""),

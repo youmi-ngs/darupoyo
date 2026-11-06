@@ -44,7 +44,8 @@ export async function start(onUpdate, onError) {
   client.config = await response.json();
   if (client.config.auth_mode === 'firebase') {
     if (!client.config.firebase.apiKey || !client.config.firebase.appId) throw new Error('Firebase Web設定が必要です');
-    const app = initializeApp(client.config.firebase); client.auth = getAuth(app); client.db = getFirestore(app);
+    const app = initializeApp(client.config.firebase); client.auth = getAuth(app);
+    if (client.config.data_backend === 'firestore') client.db = getFirestore(app);
     await new Promise(resolve => { const unsub = onAuthStateChanged(client.auth, () => { unsub(); resolve(); }); });
   } else {
     client.uid = localStorage.getItem('darupoyo-uid') || crypto.randomUUID(); localStorage.setItem('darupoyo-uid', client.uid);
@@ -55,7 +56,7 @@ export async function start(onUpdate, onError) {
   if (client.auth && !client.auth.currentUser) await new Promise(resolve => button('Googleでログイン', async () => { await signInWithPopup(client.auth, new GoogleAuthProvider()); resolve(); }, dialog));
   client.uid = client.auth?.currentUser?.uid || client.uid;
   dialog.querySelectorAll('button').forEach(b => b.remove());
-  if (!client.auth) dialog.querySelector('[role=status]').textContent = 'ローカル開発モード：記録はBackendを再起動すると消えます';
+  if (client.config.data_backend === 'memory') dialog.querySelector('[role=status]').textContent = 'チームテスト用：記録はサーバーを再起動すると消えます';
   const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
   const houses = await api('/houses');
   const items = houses.items || houses;
@@ -75,8 +76,8 @@ export async function start(onUpdate, onError) {
 }
 function subscribe() {
   const sync = () => refresh().catch(report);
+  if (client.auth) subscriptions.push(onAuthStateChanged(client.auth, user => { if (!user) location.reload(); }));
   if (client.db) {
-    subscriptions.push(onAuthStateChanged(client.auth, user => { if (!user) location.reload(); }));
     subscriptions.push(onSnapshot(doc(client.db, 'houses', client.house), sync, report));
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'days'), sync, report));
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'posts'), sync, report));
