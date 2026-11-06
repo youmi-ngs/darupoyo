@@ -215,6 +215,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .sheet-body { padding-top: 20px; padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)); display: flex; flex-direction: column; gap: 14px; }
 .sheet-title { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 22px; line-height: 1.3; text-wrap: balance; }
 .sheet-text { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.move-in { display: grid; gap: 14px; }
 .choice { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .btn { min-height: 56px; padding: 0 18px; border-radius: 999px; border: 2.5px solid var(--ink); font-weight: 900; font-size: 16px; color: var(--ink); }
 .btn-main { background: var(--glossy); box-shadow: var(--pop); }
