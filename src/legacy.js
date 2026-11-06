@@ -233,7 +233,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
   function renderBoard(snapId) {
     boardMagnets.replaceChildren();
-    if (!state.board.length) { const p = document.createElement('span'); p.className = 'board-empty'; p.textContent = 'ここにマグネットを貼ってね'; boardMagnets.append(p); }
+    if (!state.board.length) { const p = document.createElement('span'); p.className = 'board-empty'; p.textContent = '今日やる家事をここに貼る'; boardMagnets.append(p); }
     state.board.forEach((item) => {
       const wrap = document.createElement('span'); wrap.className = 'board-item';
       const m = magnetEl(item.id);
@@ -254,7 +254,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       boardMagnets.append(wrap);
     });
     const open = state.board.filter((b) => !b.done).length;
-    boardSub.textContent = !state.board.length ? '1個でいいよ〜' : open === 0 ? '今日のぶん終わり。えらすぎ。' : 'マグネットをタップしたらスタート';
+    boardSub.textContent = !state.board.length ? 'やる家事を貼ってね。1個でいいよ〜' : open === 0 ? '今日のぶん終わり。えらすぎ。' : 'タップでスタート。終わるとクリアがつくよ';
   }
   function renderTray() {
     trayEl.replaceChildren();
