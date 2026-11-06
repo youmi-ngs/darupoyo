@@ -44,6 +44,19 @@ GCP設定なしで試せる開発用ログイン・メモリ保存・定型ほ�
 **ローカルの記録はBackend再起動で消える。** 本番ではFirebase認証とFirestore/Storageを使う。
 共有更新はローカル2.5秒間隔、本番Firestore通知。
 
+### 起動のしかた（3種類）
+
+| コマンド | Backend | ログイン・データ | 使う場面 |
+|---|---|---|---|
+| `npm run dev:emu` | このリポジトリのBackend（無変更） | Firebase Emulator（Auth / Firestore / Storage）、プロジェクトID `demo-darupoyo` | 本番に近い確認。電気はFirestoreのリアルタイム通知でつく |
+| `npm run dev:all` | Backendのメモリ保存 | 開発用ログイン | いちばん手軽 |
+| `npm run dev:mock` | なし（`src/mock.js`がブラウザ内で返事） | このブラウザだけ。タブごとに別ユーザー | Backendが動かないとき |
+
+`dev:emu` にはJava 21（`brew install openjdk@21`）が必要。
+Emulatorの画面は http://127.0.0.1:4000 、ログインはEmulatorの偽Googleアカウントで行う。
+Emulatorのデータは `.emulator-data/` に残る（消すと最初から）。`demo-` で始まるIDなので本物のプロジェクトにはつながらない。
+`npm run dev` でもBackendが応答しなければ自動でモックになる（開発時のみ。本番ビルドにモックは入らない）。
+
 ## 機能
 
 - ハウス作成・最大6人の招待・マグネット・達成記録・部屋の点灯・アルバム・リアクション
@@ -68,6 +81,12 @@ npm run test:e2e
 VITE_API_BASE_URL=http://127.0.0.1:8080/api npm run test:e2e
 ```
 
+```sh
+npm run test:mock          # Backendなし・モックで2タブ
+npm run dev:emu            # 別ターミナルで起動してから
+npm run test:emu           # 2ユーザーでログインし、リアルタイムで電気がつくか
+```
+
 E2Eはこのリポジトリ内のBackendとFrontendを自動起動する。
 CIも同じリポジトリだけで単体テスト・Dockerビルド・接続テストを実行する。
 
@@ -88,7 +107,15 @@ bash backend/scripts/deploy.sh
 
 Frontendはdist/をFirebase Hostingなどへ、BackendはCloud Runへ配置する。
 詳細は[Backendのデプロイ手順](backend/docs/deploy.md)。
-Firestore/Storageのルールのデプロイはbackend/内のfirebase.jsonを使用する。
+ルートの `firebase.json` は Hosting と、backend/ の Firestore / Storage ルールをまとめて出す。
+
+### 凍結が解けたら（半日デプロイの手順）
+
+1. `.firebaserc` の `demo-darupoyo` を本物のプロジェクトIDに書きかえる。
+2. Firebaseコンソールで Auth（Google）・Firestore・Storage を有効にし、Webアプリを登録して apiKey / appId を控える。
+3. Backend：`backend/docs/deploy.md` の環境変数を設定して `bash backend/scripts/deploy.sh`（Cloud Run）。
+4. Frontend：`VITE_API_BASE_URL=https://（Cloud RunのURL）/api npm run build` → `npx firebase deploy`。
+5. Cloud Run の `CORS_ORIGINS` と Firebase Auth の承認済みドメインに Hosting のURLを登録する。
 公開時はBackendのCORS_ORIGINSとFirebase Authの承認済みドメインにFrontendを登録する。
 実際のGoogleサービスへの接続には対象プロジェクトの設定が必要。ローカルテストでは課金APIを呼ばない。
 
