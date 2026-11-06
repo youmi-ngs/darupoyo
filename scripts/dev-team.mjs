@@ -1,7 +1,8 @@
 // Share the local app with real Google sign-in and temporary in-memory records.
 // Credentials remain in gcloud's credential store, never in frontend code/files.
+import { readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-const project = 'darupoyo-ontama';
+const project = process.env.TEAM_FIREBASE_PROJECT || JSON.parse(readFileSync(new URL('../deploy/config.json', import.meta.url))).projectId;
 function gcloud(args) {
   const result = spawnSync('gcloud', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   if (result.status !== 0) throw new Error(result.stderr.trim() || 'gcloud authentication failed');

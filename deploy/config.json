@@ -1,0 +1,9 @@
+{
+  "projectId": "darupoyo-8ed91",
+  "region": "asia-northeast1",
+  "service": "darupoyo-backend",
+  "repository": "darupoyo",
+  "runtimeServiceAccount": "darupoyo-runtime",
+  "praiseBackend": "fallback",
+  "hostingSite": "darupoyo"
+}

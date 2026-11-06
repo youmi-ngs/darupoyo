@@ -1,5 +1,9 @@
 # Google Cloud / Firebase 接続
 
+現在の `darupoyo-8ed91` への公開は、ルートの [deploy/README.md](../../deploy/README.md) と
+`npm run setup:cloud` / `npm run deploy` を使用する。以下は個別構成用の参考。
+ルートの構成では画像に非公開 Cloud Storage を使い、Firebase Storage ルールではなく IAM で制御する。
+
 Backendは同じリポジトリのbackend/に置く。Vite FrontendはルートからFirebase Hostingなどに別途公開する。この手順のコマンドはbackend/内で実行する。
 同じGCP/FirebaseプロジェクトのFirebase Auth、Firestore(default)、Storageを利用する。
 クラウドリソースや課金はこのセットアップでは変更していない。
