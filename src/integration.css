@@ -45,3 +45,7 @@
 .invite-code{box-sizing:border-box;display:block;width:100%;margin:8px 0;padding:14px;border:2.5px solid #3b2560;border-radius:16px;background:#fff5fb;color:#3b2560;font:inherit;font-size:30px;font-weight:900;letter-spacing:.12em;text-align:center}
 .invite-copy{display:block;width:100%;margin-top:8px;background:#ffb3de}
 .onboarding-swap{display:block;margin:8px auto 0;min-height:44px;padding:8px 16px;border:0;background:transparent;color:#655575;font:inherit;font-size:14px;font-weight:700;text-decoration:underline;text-underline-offset:4px;cursor:pointer}
+
+/* The fridge board names itself so it reads as today's to-do list (#22). Other fridge copy stays hidden. */
+.whiteboard .board-title{display:block!important;font-size:20px;text-align:center}
+.whiteboard .board-empty{display:block!important;width:100%;text-align:center;font-size:14px}
