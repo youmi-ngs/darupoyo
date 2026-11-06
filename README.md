@@ -40,7 +40,7 @@ API仕様: http://127.0.0.1:8080/docs
 `uv pip sync --python backend/.venv/bin/python backend/requirements-dev.lock`。
 
 GCP設定なしで試せる開発用ログイン・メモリ保存・定型ほめコメントを使用する。
-ハウスを作成し、別ブラウザで招待リンクを開くと2人で試せる。
+ハウスを作成し、メニューの「友だちを招待する」で出る招待コードを別ブラウザの「招待コードで入る」に入れると2人で試せる。
 **ローカルの記録はBackend再起動で消える。** 本番ではFirebase認証とFirestore/Storageを使う。
 共有更新はローカル2.5秒間隔、本番Firestore通知。
 
@@ -83,7 +83,7 @@ Emulatorのデータは `.emulator-data/` に残る（消すと最初から）�
 
 1台のPCで `dev:all` を動かし、Cloudflareの一時的なhttps URL（無料・登録なし）をつける。
 スマホはhttpsでないとカメラ・マイクが使えないため。事前に `brew install cloudflared`。
-表示されたURLをチームに送り、1人目がハウスを作って招待リンクを配る。
+表示されたURLをチームに送り、1人目がハウスを作って招待コードを配る。
 
 - ログインは開発用の仮のもの。**URLを知っている人は誰でも入れる**ので、チーム内だけで共有する。
 - 試し終わったら Ctrl+C で止める。止めると記録は消え、URLも使えなくなる（毎回URLは変わる）。

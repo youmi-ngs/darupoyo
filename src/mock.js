@@ -37,7 +37,7 @@ export async function mockFetch(url, init = {}) {
     save(db); return json(db.houses[id], 201);
   }
   if (path === '/join') {
-    const invite = db.invites[body.token];
+    const compact = body.token.replace(/[\s-]/g, ''), invite = db.invites[compact.length === 8 ? compact.toUpperCase() : body.token];
     if (!invite || Date.parse(invite.expires_at) <= Date.now()) return fail(404, 'Invite not found or expired');
     const house = db.houses[invite.house_id];
     if (!house.member_ids.includes(uid)) {
@@ -57,7 +57,7 @@ export async function mockFetch(url, init = {}) {
 
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
   if (rest === '/invites') {
-    const token = crypto.randomUUID().replace(/-/g, ''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
+    const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', token = Array.from(crypto.getRandomValues(new Uint8Array(8)), n => abc[n % 32]).join(''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
     db.invites[token] = { house_id: houseId, expires_at }; save(db); return json({ token, expires_at }, 201);
   }
   if (rest === '/dashboard') {

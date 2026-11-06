@@ -1,3 +1,4 @@
+import re
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -387,3 +388,16 @@ def test_firebase_team_mode_uses_verified_identity_with_memory_data(client, monk
     assert all(check_revoked for _, check_revoked in seen)
     with pytest.raises(ValueError):
         replace(config, app_env="production").validate()
+
+
+def test_invite_is_a_short_code_typed_any_way(client):
+    h = house(client)
+    code = client.post(f"/api/houses/{h}/invites", headers=auth()).json()["token"]
+    assert re.fullmatch(r"[A-HJ-NP-Z2-9]{8}", code)
+    typed = (code[:4] + "-" + code[4:]).lower()
+    joined = client.post("/api/join", headers=auth("bob"), json={"token": typed, "display_name": "bob"})
+    assert joined.status_code == 200 and "bob" in joined.json()["member_ids"]
+    spaced = " " + code[:4] + " " + code[4:] + " "
+    assert client.post("/api/join", headers=auth("carol"), json={"token": spaced, "display_name": "c"}).status_code == 200
+    wrong = "ZZZZ-ZZZZ" if code != "ZZZZZZZZ" else "YYYY-YYYY"
+    assert client.post("/api/join", headers=auth("dave"), json={"token": wrong, "display_name": "d"}).status_code == 404
