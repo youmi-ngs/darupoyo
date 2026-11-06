@@ -83,7 +83,11 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
           setTimeout(() => tap.classList.remove('on'), 220);
         }, BEAT_MS); resources.push(() => clearInterval(tick));
       });
-      if (!hit.size) throw new Error(mic ? 'まだヒットがありません。音符が丸に重なったらバサッとはたいてみてね' : 'まだヒットがありません。音符が丸に重なったらタップしてみてね');
+      if (!hit.size) {
+        // Finished without a hit: the sheet shows a retry screen instead of silently going back.
+        const e = new Error(mic ? '音符が丸に重なったらバサッとはたいてね' : '音符が丸に重なったらタップしてね');
+        e.name = 'NoHitError'; e.totalBeats = TOTAL_BEATS; throw e;
+      }
       return { method: 'rhythm', hits: hit.size, total_beats: TOTAL_BEATS, duration_seconds: (performance.now()-start)/1000 };
 }
 

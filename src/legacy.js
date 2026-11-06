@@ -447,7 +447,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const { blob, kind, ...fields } = evidence;
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
       sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><p class="sheet-text"></p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
-      sheetBody.querySelector('p').textContent = fields.similarity !== undefined ? 'まねっこ度 ' + fields.similarity + '%' : 'できたことをお部屋に残そう。';
+      sheetBody.querySelector('p').textContent = fields.similarity !== undefined ? 'まねっこ度 ' + fields.similarity + '%'
+        : fields.method === 'rhythm' ? fields.hits + ' / ' + fields.total_beats + ' ヒット！お部屋に残そう。' : 'できたことをお部屋に残そう。';
       if (blob) { const img = document.createElement('img'); const url = URL.createObjectURL(blob); img.src = url; img.style.cssText = 'width:100%;max-height:30vh;object-fit:contain'; sheetBody.querySelector('p').after(img); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
@@ -464,8 +465,19 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       };
     } catch (e) {
       if (e.name === 'AbortError') return;
+      if (e.name === 'NoHitError') { showNoHit(id, c, e); return; }
       openSheet(id); toast(deviceMessage(e, id));
     }
+  }
+  // Rhythm ended with no hit: a gal cheers you on and offers another go (nothing is recorded).
+  function showNoHit(id, c, e) {
+    const gal = pickGal();
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">おしい〜！</h2><p class="sheet-text"></p><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="retry">もう一回</button><button class="btn btn-sub" id="other-way">ほかのやり方</button>';
+    sheetBody.querySelector('.sheet-text').textContent = '0 / ' + e.totalBeats + ' ヒット';
+    sheetBody.querySelector('.gal-text').textContent = e.message + '。もう一回いこ！';
+    $('retry').onclick = () => judge(id, c);
+    $('other-way').onclick = () => openSheet(id);
+    $('retry').focus();
   }
   sheet.addEventListener('cancel', e => { if ($('sheet-close').disabled) e.preventDefault(); });
   sheet.addEventListener('close', () => captureController?.abort());
