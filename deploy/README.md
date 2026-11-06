@@ -2,7 +2,7 @@
 
 このリポジトリだけで Frontend と Backend を公開する。
 
-- プロジェクト: `darupoyo-ontama`
+- プロジェクト: `darupoyo-8ed91`
 - Frontend: Firebase Hosting（Vite の `dist/`）
 - Backend: `backend/Dockerfile` → Cloud Build → Artifact Registry → Cloud Run
 - リージョン: 東京 `asia-northeast1`
@@ -32,11 +32,11 @@ Google Cloud の認証情報をファイルとしてリポジトリへ保存し�
 
 Firebase Console の Authentication → Sign-in method で Google を有効化する。
 サポートメールには管理者のメールを設定する。承認済みドメインに
-`darupoyo-ontama.web.app` と `darupoyo-ontama.firebaseapp.com` があることを確認する。
+`darupoyo.web.app` と `darupoyo.firebaseapp.com` があることを確認する。
 
 Cloud Build の既定サービスアカウントにはビルド元の読取・ログ記録・
 Artifact Registry への push 権限が必要。新規プロジェクトの既定権限で不足する場合は、
-`gcloud builds get-default-service-account --project darupoyo-ontama` で実際のアカウントを確認し、
+`gcloud builds get-default-service-account --project darupoyo-8ed91` で実際のアカウントを確認し、
 そのアカウントにだけ必要な権限を設定する。
 
 写真は Backend の認証付き API 経由で扱う。バケットには public access prevention と
@@ -56,7 +56,7 @@ Firestore ルール、Backend の Docker ビルドと Cloud Run 更新、Hosting
 最後に画面・ヘルスチェック・公開設定・未認証 API の 401 を確認する。
 Cloud Build を使うのでローカルで Docker Desktop を起動する必要はない。
 
-公開 URL: https://darupoyo-ontama.web.app
+公開 URL: https://darupoyo.web.app
 
 ほめコメントは初回は `fallback`（定型文）。Vertex AI を使う場合は、
 `deploy/config.json` の `praiseBackend` を `vertex` に変更し、利用可能な `geminiModel` を指定。
@@ -68,14 +68,8 @@ Frontend のみ:
 
 ```sh
 VITE_API_BASE_URL=/api npm run build
-npx firebase deploy --only hosting --project darupoyo-ontama
+npx firebase deploy --only hosting --project darupoyo-8ed91
 ```
 
 Backend のみは `backend/scripts/deploy.sh`（必要な環境変数は同ファイル参照）。
 通常は SDK 設定を自動取得する `npm run deploy` を使う。
-
-## ブランチ
-
-音声認識 UX の作業途中は `feature/voice-recognition` の `756b0ff` に保存。
-デプロイ作業は `feat/deploy-darupoyo`。音声認識の変更を公開する際は、
-レビュー後に同変更をマージして `npm run deploy` を再実行する。

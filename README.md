@@ -46,12 +46,12 @@ GCP設定なしで試せる開発用ログイン・メモリ保存・定型ほ�
 
 ## チームで Google ログインを試す（Cloud Run の課金設定不要）
 
-Firebase に既存の `darupoyo-ontama` を追加し、Web アプリ `darupoyo-web` を登録、
+Firebase に既存の `darupoyo-8ed91` を追加し、Web アプリ `darupoyo-web` を登録、
 Authentication の Google ログインを有効化する。
 バックエンドで ID token と失効状態を検証するため、管理者のローカル ADC を設定する。
 
 ```sh
-gcloud auth application-default login --project=darupoyo-ontama
+gcloud auth application-default login --project=darupoyo-8ed91
 # cloudflared の共有 URL を渡す。既存の dev:all は先に停止する。
 npm run dev:team -- https://YOUR-SHARED-URL.trycloudflare.com
 ```
@@ -65,6 +65,30 @@ Google の認証情報をリポジトリや共有端末へコピーしない。
 バックエンド再起動で消える。チームの更新は 2.5 秒間隔で反映する。
 Firestore と Cloud Storage は使わず、Mac とトンネルを動かしている間だけ利用できる。
 通常の `npm run dev:all` は引き続き開発用ログインで起動する。
+
+## その他のローカル起動
+
+| コマンド | Backend | ログイン・データ | 使う場面 |
+|---|---|---|---|
+| `npm run dev:emu` | このリポジトリのBackend（無変更） | Firebase Emulator（Auth / Firestore / Storage）、プロジェクトID `demo-darupoyo` | 本番に近い確認。電気はFirestoreのリアルタイム通知でつく |
+| `npm run dev:all` | Backendのメモリ保存 | 開発用ログイン | いちばん手軽 |
+| `npm run dev:mock` | なし（`src/mock.js`がブラウザ内で返事） | このブラウザだけ。タブごとに別ユーザー | Backendが動かないとき |
+
+`dev:emu` にはJava 21（`brew install openjdk@21`）が必要。
+Emulatorの画面は http://127.0.0.1:4000 、ログインはEmulatorの偽Googleアカウントで行う。
+Emulatorのデータは `.emulator-data/` に残る（消すと最初から）。`demo-` で始まるIDなので本物のプロジェクトにはつながらない。
+`npm run dev` でもBackendが応答しなければ自動でモックになる（開発時のみ。本番ビルドにモックは入らない）。
+
+## チームでスマホから試す（`npm run share`）
+
+1台のPCで `dev:all` を動かし、Cloudflareの一時的なhttps URL（無料・登録なし）をつける。
+スマホはhttpsでないとカメラ・マイクが使えないため。事前に `brew install cloudflared`。
+表示されたURLをチームに送り、1人目がハウスを作って招待リンクを配る。
+
+- ログインは開発用の仮のもの。**URLを知っている人は誰でも入れる**ので、チーム内だけで共有する。
+- 試し終わったら Ctrl+C で止める。止めると記録は消え、URLも使えなくなる（毎回URLは変わる）。
+- 電気は2.5秒ごとの更新で反映される。
+
 
 ## 機能
 
@@ -95,7 +119,7 @@ CIも同じリポジトリだけで単体テスト・Dockerビルド・接続テ
 
 ## ビルド・公開
 
-GCP プロジェクト `darupoyo-ontama` に同じリポジトリから公開する。
+GCP プロジェクト `darupoyo-8ed91` に同じリポジトリから公開する。
 Frontend は Firebase Hosting、Backend は Docker → Cloud Build → Cloud Run。
 詳しい初期設定・再公開手順は [deploy/README.md](deploy/README.md)。
 

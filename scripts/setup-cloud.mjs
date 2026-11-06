@@ -11,7 +11,7 @@ function run(command, args, json = false) {
   if (result.status !== 0) throw new Error(`${command} failed (${result.status})`);
   return json ? JSON.parse(result.stdout) : undefined;
 }
-const { projectId: project, region, repository, runtimeServiceAccount, storageBucket } = config;
+const { projectId: project, region, repository, runtimeServiceAccount } = config;
 const gcloud = (args, json = false) => run('gcloud', [...args, '--project', project, ...(json ? ['--format=json'] : ['--quiet'])], json);
 try {
   const billing = gcloud(['billing', 'projects', 'describe', project], true);
@@ -37,6 +37,12 @@ try {
   for (const role of ['roles/datastore.user', 'roles/firebaseauth.viewer']) {
     gcloud(['projects', 'add-iam-policy-binding', project, '--member', `serviceAccount:${email}`, '--role', role, '--condition=None']);
   }
+  const appList = run(firebase, ['apps:list', 'WEB', '--project', project, '--json'], true).result;
+  const app = config.webAppId ? appList.find(a => a.appId === config.webAppId) : appList.length === 1 ? appList[0] : null;
+  if (!app) throw new Error('Set webAppId in deploy/config.json');
+  const web = run(firebase, ['apps:sdkconfig', 'WEB', app.appId, '--project', project, '--json'], true).result.sdkConfig;
+  const storageBucket = config.storageBucket || web.storageBucket;
+  if (!storageBucket) throw new Error('Configure a storage bucket before setup');
   const buckets = gcloud(['storage', 'buckets', 'list'], true);
   if (!buckets.some(bucket => bucket.name === storageBucket || bucket.name === `gs://${storageBucket}/`)) {
     gcloud(['storage', 'buckets', 'create', `gs://${storageBucket}`, '--location', region, '--uniform-bucket-level-access', '--public-access-prevention']);

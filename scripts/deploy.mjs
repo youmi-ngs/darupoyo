@@ -13,6 +13,7 @@ function run(command, args, { json = false, env = {} } = {}) {
 }
 try {
   const project = config.projectId;
+  const site = config.hostingSite || project;
   const target = run('gcloud', ['projects', 'describe', project, '--format=json'], { json: true });
   if (target.projectId !== project || target.lifecycleState !== 'ACTIVE') throw new Error('Target project is not active');
   const apps = run(firebase, ['apps:list', 'WEB', '--project', project, '--json'], { json: true }).result;
@@ -22,6 +23,7 @@ try {
   const bucket = config.storageBucket || web.storageBucket;
   if (!bucket || !web.apiKey || !web.appId) throw new Error('Firebase Web config or Storage bucket is missing');
   const hosting = JSON.parse(readFileSync(new URL('../firebase.json', import.meta.url))).hosting;
+  if ((hosting.site || project) !== site) throw new Error('Hosting site must match deploy/config.json');
   if (hosting.rewrites.some(rule => rule.run && (rule.run.serviceId !== config.service || rule.run.region !== config.region))) throw new Error('firebase.json rewrites must match deploy/config.json');
   run('npm', ['test']);
   run('npm', ['run', 'build'], { env: { VITE_API_BASE_URL: '/api' } });
@@ -31,12 +33,12 @@ try {
     ARTIFACT_REPOSITORY: config.repository,
     SERVICE_ACCOUNT: `${config.runtimeServiceAccount}@${project}.iam.gserviceaccount.com`,
     STORAGE_BUCKET: bucket,
-    CORS_ORIGINS: `https://${project}.web.app,https://${project}.firebaseapp.com`,
+    CORS_ORIGINS: `https://${site}.web.app,https://${site}.firebaseapp.com`,
     FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId,
     PRAISE_BACKEND: config.praiseBackend, GEMINI_MODEL: config.geminiModel || '',
   } });
   run(firebase, ['deploy', '--only', 'hosting', '--project', project, '--non-interactive']);
-  const origin = `https://${project}.web.app`;
+  const origin = `https://${site}.web.app`;
   for (const [path, expected] of [['/healthz', 200], ['/api/config', 200], ['/api/houses', 401], ['/', 200]]) {
     const response = await fetch(origin + path);
     if (response.status !== expected) throw new Error(`${path}: expected ${expected}, got ${response.status}`);

@@ -1,9 +1,9 @@
 {
-  "projectId": "darupoyo-ontama",
+  "projectId": "darupoyo-8ed91",
   "region": "asia-northeast1",
   "service": "darupoyo-backend",
   "repository": "darupoyo",
   "runtimeServiceAccount": "darupoyo-runtime",
   "praiseBackend": "fallback",
-  "storageBucket": "darupoyo-ontama-media"
+  "hostingSite": "darupoyo"
 }

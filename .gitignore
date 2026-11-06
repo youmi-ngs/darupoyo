@@ -61,3 +61,6 @@ id_ed25519
 
 # Mac固有のシステムファイル
 .DS_Store
+
+*-debug.log
+.emulator-data/
