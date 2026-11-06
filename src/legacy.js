@@ -395,7 +395,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   function choicesFor(id) {
     if (id === 'laundry') return [{ kind: 'rhythm', mode: 'mic', title: 'バサバサでリズム', hint: 'マイクで音の立ち上がりを拾う・8拍' }, { kind: 'rhythm', mode: 'tap', title: '洗濯リズム', hint: 'はたくリズムで8拍タップ（手動モード）' }];
     const t = TASKS[id], list = [];
-    (t.presets || []).forEach((p) => list.push({ kind: 'pose', mode: 'preset', title: p.name + 'のポーズ', hint: p.hint, fig: p.fig, praise: p.praise }));
+    (t.presets || []).forEach((p) => list.push({ kind: 'pose', mode: 'preset', preset: p.id, title: p.name + 'のポーズ', hint: p.hint, fig: p.fig, praise: p.praise }));
     if (t.presets) {
       const o = state.originals[id];
       if (isFirstToday(id)) list.push({ kind: 'pose', mode: 'original-new', title: 'オリジナルのポーズ', hint: '今日最初だから作れる！みんなのお手本になる' });

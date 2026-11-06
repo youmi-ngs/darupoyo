@@ -1,7 +1,7 @@
 // Runs one chore check inside the sheet and returns the evidence for the completion API.
 import { action, blobOf, check, onAbort, openCamera, snapshot } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
-import { createPoseLandmarker, hasFullBody, poseSimilarity } from './pose.js';
+import { createPoseLandmarker, hasFullBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
 import { applyMask } from './segment.js';
 export { poseSimilarity };
 
@@ -23,19 +23,42 @@ async function mealVoice(box, status, evidence, signal, resources) {
   return evidence;
 }
 
-async function poseCutout(box, status, canvas, ctx, choice, reference, signal, resources) {
+// Shows how close the live camera pose is while the person gets ready.
+function livePreview(video, landmarker, choice, reference, status, resources) {
+  let frame, last = 0;
+  const loop = now => {
+    frame = requestAnimationFrame(loop);
+    if (now - last < 150 || video.readyState < 2) return;
+    last = now;
+    const result = landmarker.detectForVideo(video, now), landmarks = result.landmarks[0];
+    result.close();
+    if (!hasFullBody(landmarks)) status.textContent = '全身が入るように、少し離れてね';
+    else if (choice.preset) status.textContent = choice.title + ' ' + presetScore(choice.preset, landmarks) + '%';
+    else if (choice.mode === 'original-copy' && reference?.landmarks) status.textContent = 'まねっこ度 ' + poseSimilarity(landmarks, reference.landmarks) + '%';
+    else status.textContent = '全身OK。好きなポーズで撮ってね';
+  };
+  frame = requestAnimationFrame(loop);
+  const stop = () => cancelAnimationFrame(frame);
+  resources.push(stop);
+  return stop;
+}
+
+async function poseCutout(box, status, canvas, ctx, landmarker, choice, reference, signal) {
   status.textContent = 'ポーズと背景を端末内で処理しています…';
-  const landmarker = await createPoseLandmarker({ outputSegmentationMasks: true });
-  resources.push(() => landmarker.close()); check(signal);
-  const result = landmarker.detect(canvas); resources.push(() => result.close());
-  const landmarks = result.landmarks[0], mask = result.segmentationMasks?.[0];
-  if (!mask || !hasFullBody(landmarks)) throw new Error('全身を見つけられませんでした。明るい場所で少し離れて撮ってね');
-  applyMask(canvas, ctx, mask);
-  status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
-  await action(box, 'この切り抜きを使う', signal); check(signal);
-  const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x, y, z, visibility }) => ({ x, y, z, visibility })), pose_name: choice.title };
-  if (choice.mode === 'original-copy' && reference) { evidence.reference_post_id = reference.post_id; evidence.similarity = poseSimilarity(landmarks, reference.landmarks); }
-  return evidence;
+  await landmarker.setOptions({ runningMode: 'IMAGE' }); check(signal);
+  const result = landmarker.detect(canvas);
+  try {
+    const landmarks = result.landmarks[0], mask = result.segmentationMasks?.[0];
+    if (!mask || !hasFullBody(landmarks)) throw new Error('全身を見つけられませんでした。明るい場所で少し離れて撮ってね');
+    const score = choice.preset ? presetScore(choice.preset, landmarks) : null;
+    if (score !== null && score < PRESET_PASS) throw new Error(choice.title + 'に見えなかったかも（' + score + '%）。もう一度撮ってね');
+    applyMask(canvas, ctx, mask);
+    status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
+    await action(box, 'この切り抜きを使う', signal); check(signal);
+    const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x, y, z, visibility }) => ({ x, y, z, visibility })), pose_name: choice.title };
+    if (choice.mode === 'original-copy' && reference) { evidence.reference_post_id = reference.post_id; evidence.similarity = poseSimilarity(landmarks, reference.landmarks); }
+    return evidence;
+  } finally { result.close(); }
 }
 
 export async function capture(root, chore, choice, reference, signal) {
@@ -52,10 +75,17 @@ export async function capture(root, chore, choice, reference, signal) {
     status.textContent = chore === 'meal' ? 'ごはんを撮影してください。写真だけで記録できます。' : '全身を枠に入れて撮影。背景は端末内で切り抜いてから送ります。';
     if (reference?.image && choice.mode === 'original-copy') { const img = document.createElement('img'); img.src = reference.image; img.alt = '今日のお手本'; img.style.maxHeight = '150px'; box.append(img); }
     const stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal);
+    let landmarker, stopPreview = () => {};
+    if (chore !== 'meal') {
+      landmarker = await createPoseLandmarker({ runningMode: 'VIDEO', outputSegmentationMasks: true });
+      resources.push(() => landmarker.close()); check(signal);
+      stopPreview = livePreview(video, landmarker, choice, reference, status, resources);
+    }
     await action(box, 'この写真を撮る', signal); check(signal);
+    stopPreview();
     const { canvas, ctx } = snapshot(video);
     stream.getTracks().forEach(t => t.stop()); video.remove(); box.append(canvas);
     if (chore === 'meal') return await mealVoice(box, status, { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' }, signal, resources);
-    return await poseCutout(box, status, canvas, ctx, choice, reference, signal, resources);
+    return await poseCutout(box, status, canvas, ctx, landmarker, choice, reference, signal);
   } finally { cleanup(); signal.removeEventListener('abort', cleanup); }
 }
