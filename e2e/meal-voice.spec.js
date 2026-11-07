@@ -11,7 +11,10 @@ async function setup(page) {
     const real = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = async c => { window.testMic = await real(c); return testMic; };
     const { recordMealVoice } = await import('/src/meal-voice.js');
-    recordMealVoice(box, 'いただきます', controller.signal).then(v => { window.voiceSize = v.voice?.size || 0; window.outcome = v.matched; }, e => window.outcome = e.name);
+    // #120: stands in for the server check; tests set window.heard to what Gemini "hears".
+    window.heard = [true]; window.checked = 0;
+    const verify = async () => { window.checked++; const heard = window.heard.shift(); if (heard instanceof Error) throw heard; return { heard, id: 'voice-' + window.checked }; };
+    recordMealVoice(box, 'いただきます', controller.signal, verify).then(v => { window.voiceSize = v.voice?.size || 0; window.voiceId = v.voiceMediaId; window.outcome = v.matched; }, e => window.outcome = e.name);
   });
 }
 test('records on iPhone without competing recognition, previews, and saves only on confirmation', async ({ page }) => {
@@ -58,4 +61,21 @@ test('ten second limit stops recording and retake discards the old preview', asy
   await page.evaluate(() => controller.abort());
   await expect.poll(() => page.evaluate(() => outcome)).toBe('AbortError');
   expect(await page.evaluate(() => testMic.getTracks().every(t => t.readyState === 'ended'))).toBe(true);
+});
+
+test('a recording without 「いただきます」 is not used: record again, then it counts (#120)', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => { window.heard = [false, true]; });
+  await page.getByRole('button', { name: 'マイクをオンにする' }).click();
+  await expect.poll(() => page.evaluate(() => audioBytes)).toBeGreaterThan(200);
+  await page.getByRole('button', { name: '録音を止める' }).click();
+  await page.getByRole('button', { name: 'この音声を使う' }).click();
+  await expect(page.locator('.meal-voice [role=status]')).toHaveText('「いただきます」が聞き取れなかったよ。もう一度録音してね');
+  expect(await page.evaluate(() => outcome)).toBe('pending');
+  await page.getByRole('button', { name: '録音し直す' }).click();
+  await expect.poll(() => page.evaluate(() => audioBytes)).toBeGreaterThan(400);
+  await page.getByRole('button', { name: '録音を止める' }).click();
+  await page.getByRole('button', { name: 'この音声を使う' }).click();
+  await expect.poll(() => page.evaluate(() => outcome)).toBe(true);
+  expect(await page.evaluate(() => [window.checked, window.voiceId])).toEqual([2, 'voice-2']);
 });

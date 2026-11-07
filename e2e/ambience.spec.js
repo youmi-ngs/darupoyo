@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 test.beforeEach(async({context,page})=>{
   await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
-  await page.route('https://api.open-meteo.com/**',route=>route.fulfill({json:{current:{weather_code:61}}}));
+  await page.route('**/api/weather',route=>route.fulfill({json:{kind:'rain',source:'google'}}));
 });
 async function enter(page) {
  await page.goto('/');await page.getByLabel('あなたの名前').fill('空');await page.getByLabel('新しいハウスの名前').fill('東京');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);

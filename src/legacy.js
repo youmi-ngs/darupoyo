@@ -6,8 +6,7 @@ import { setupCritters } from './critters.js';
 import { startAmbience } from './ambience.js';
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
 import { capture } from './media.js';
-import { recordMealVoice } from './meal-voice.js';
-import { renderActivities } from './resident-activities.js';
+import { renderActivities, roomGal, nextReturn } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
 import { setAppIcon } from './app-icon.js';
 import { sfx, galVoice, soundOn, setSound } from './sfx.js';
@@ -59,7 +58,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       : p.kind === 'photo' ? '<span class="mini-sun"></span>' + MEAL_SVG
       : '<span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
     if (p.image) { const img = document.createElement('img'); img.src = p.image; img.alt = TASKS[p.task].label + 'の記録'; d.replaceChildren(img); }
-    if (p.voice_media_id || p.finished_voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
+    if (p.voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
     return d;
   }
 
@@ -141,7 +140,6 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       const sound = id => p.foreign ? p.loadMedia(id) : voiceOf(id);
       if (p.foreign) sl.querySelector('.pm-meta').textContent += '（別のハウスでの記録）';
       if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => sound(p.voice_media_id)));
-      if (p.finished_voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => sound(p.finished_voice_media_id), 'ごちそうさま'));
       if (!p.foreign) {
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
       ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
@@ -280,7 +278,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       b.style.background = 'linear-gradient(135deg, ' + t.wall[1] + ' 0 50%, ' + t.accent + ' 50%)';
       b.setAttribute('aria-label', t.name + (owner ? '（' + nameOf(owner.who) + 'の色）' : '')); b.setAttribute('aria-pressed', roomTheme(ME) === k ? 'true' : 'false');
       b.disabled = !!owner; // one color per resident in a house
-      b.addEventListener('click', () => { houseApi('/profile', { theme: k }, 'PUT').then(refresh).catch(e => toast(e.message)); });
+      // #98: the new color shows at once; the saved state follows (and corrects it on failure).
+      b.addEventListener('click', () => { if (dashboard) { dashboard.house.members[ME].theme = k; receive(dashboard); } houseApi('/profile', { theme: k }, 'PUT').then(refresh).catch(e => { toast(e.message); void refresh(); }); });
       pop.append(b);
     });
   }
@@ -306,6 +305,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
         '<span class="mr-rug" aria-hidden="true"></span>' +
         '<svg class="mr-bed" data-furniture="room-bed" viewBox="0 0 170 100" aria-hidden="true"><use href="/furniture/room-bed.svg#art"/></svg>' +
         '<svg class="mr-desk" data-furniture="room-desk" viewBox="0 0 120 110" aria-hidden="true"><use href="/furniture/room-desk.svg#art"/></svg>' +
+        roomGal(dashboard, who) +
         '<div class="mr-dark"><p></p></div>' +
       '</div>';
     $('room-view').style.background = 'repeating-linear-gradient(90deg, ' + theme.wall[0] + ' 0 18px, ' + theme.wall[1] + ' 18px 36px)';
@@ -392,46 +392,11 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       b.addEventListener('click', () => judge(id, c));
       choice.append(b);
     });
-    if (id === 'meal') {
-      const meal = state.posts.find(p => p.who === ME && p.task === 'meal' && !p.finished_at);
-      if (meal) {
-        const finish = document.createElement('button'); finish.type = 'button'; finish.className = 'btn btn-sub';
-        finish.textContent = 'ごちそうさまを録音（' + meal.time + 'のごはん）';
-        finish.onclick = () => finishMeal(meal); choice.append(finish);
-      }
-    }
     darupoyoRecords.addChoice(choice, toApi(id), () => sheet.close());
     if (!sheet.open) sheet.showModal();
     choice.querySelector('button').focus();
   }
   let captureController;
-  async function finishMeal(meal) {
-    captureController?.abort(); captureController = new AbortController();
-    const signal = captureController.signal;
-    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">食べ終わった？</h2>';
-    try {
-      const recording = await recordMealVoice(sheetBody, 'ごちそうさま', signal, { optional: false });
-      if (!recording.voice) { openSheet('meal'); return; }
-      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">この食事に声を残す？</h2><p></p><button class="btn btn-main" type="button" id="save-meal-finish">ごちそうさまを保存</button><button class="btn btn-sub" type="button" id="retry-meal-finish">録音し直す</button><p role="status"></p>';
-      sheetBody.querySelector('p').textContent = meal.time + 'のごはんに追加します。';
-      const url = URL.createObjectURL(recording.voice);
-      sheetBody.querySelector('p').after(voiceButton(() => url, 'ごちそうさま'));
-      signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true });
-      let mediaId;
-      $('retry-meal-finish').onclick = () => finishMeal(meal);
-      $('save-meal-finish').onclick = async () => {
-        const save = $('save-meal-finish'), retry = $('retry-meal-finish');
-        save.disabled = retry.disabled = $('sheet-close').disabled = true;
-        try {
-          mediaId ||= (await houseApi('/media?kind=voice', recording.voice)).id;
-          await houseApi('/posts/' + meal.id + '/meal-finish', { voice_media_id: mediaId }, 'PUT');
-          await refresh(); sheet.close(); showHouse(); toast('ごちそうさま、残したよ！');
-        } catch (e) { sheetBody.querySelector('[role=status]').textContent = e.message; save.disabled = retry.disabled = false; }
-        finally { $('sheet-close').disabled = false; }
-      };
-    } catch (e) { if (e.name !== 'AbortError') { openSheet('meal'); toast(e.message); } }
-  }
-
   // When the camera or mic cannot be used, ask for access in plain words.
   function deviceMessage(e, id) {
     const device = id === 'dryer' ? 'マイク' : 'カメラ';
@@ -473,7 +438,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
           // A confirmed recording must not disappear silently on upload failure.
           if (voice && !body.voice_media_id) body.voice_media_id = (await houseApi('/media?kind=voice', voice)).id;
           const result = await houseApi('/completions', body);
-          await refresh();
+          void refresh().catch(e => toast(e.message)); // #98: show the result now; the house catches up
           sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
           sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
@@ -574,10 +539,20 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     forgetHistory(); renderSocial();
     renderAccountForm();
     renderAll();
-    renderActivities(data);
+    placeGals();
     darupoyoRecords.update(data);
     furniturePlay.update(data);
     if (!greeted) { greeted = true; greet(); }
+  }
+  // #121: gals stand where their resident last finished a chore, and walk back to their room after 5 minutes.
+  let galTimer;
+  function placeGals() {
+    clearTimeout(galTimer);
+    if (!dashboard) return;
+    renderActivities(dashboard);
+    if (!$('room-view').hidden) showRoom(currentRoom, true);
+    const wait = nextReturn(dashboard);
+    if (wait !== null) galTimer = setTimeout(placeGals, wait);
   }
   // 招待で入居したときに、誰と住むのかを見せる
   window.addEventListener('darupoyo:joined', () => {

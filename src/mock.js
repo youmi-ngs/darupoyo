@@ -66,6 +66,8 @@ export async function mockFetch(url, init = {}) {
     save(db); return new Response(null, {status: 204});
   }
   if (path === '/me') return json({ uid, deletion_pending: false });
+  // #125: no Google key in the mock; the house simply shows no weather.
+  if (path === '/weather') return fail(503, 'Weather is not configured');
   if (path === '/houses' && method === 'GET') return json({ items: Object.values(db.houses).filter(h => h.member_ids.includes(uid)) });
   if (path === '/houses' && method === 'POST') {
     const id = crypto.randomUUID();
@@ -129,6 +131,13 @@ export async function mockFetch(url, init = {}) {
     // Images are large; keep them in localStorage only while there is room.
     try { localStorage.setItem(KEY + '-media-' + id, data); } catch {}
     return json({ id, kind: db.media[id].kind }, 201);
+  }
+  // #120: the mock has no Gemini, so any own recording counts as 「いただきます」.
+  const itadakimasu = rest.match(/^\/media\/([^/]+)\/itadakimasu$/);
+  if (itadakimasu && method === 'POST') {
+    const voice = db.media[itadakimasu[1]];
+    if (!voice || voice.house_id !== houseId || voice.owner_id !== uid || voice.kind !== 'voice') return fail(404, 'Own voice recording not found');
+    voice.itadakimasu = true; save(db); return json({ heard: true });
   }
   const mediaMatch = rest.match(/^\/media\/(.+)$/);
   if (mediaMatch) {

@@ -181,6 +181,9 @@ class Domain:
                 voice = tx.get(f"houses/{house_id}/media/{body.voice_media_id}")
                 if not voice or voice["owner_id"] != uid or voice["kind"] != "voice":
                     raise HTTPException(422, "Missing or incompatible owned voice")
+                # #120: only a recording in which Gemini heard 「いただきます」 counts.
+                if voice.get("itadakimasu") is not True:
+                    raise HTTPException(422, "いただきます was not heard in this recording")
             # Ignore a departed resident's template while their deletion cleans
             # up historical records; never create a new dangling reference.
             state['poses'] = {k: p for k, p in state['poses'].items() if p['user_id'] in house['member_ids']}

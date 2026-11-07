@@ -213,9 +213,8 @@ def test_meals_repeat_and_media_is_private(client):
     body = {
         "request_id": str(uuid4()),
         "chore": "meal",
-        "method": "photo_voice",
+        "method": "photo",
         "media_id": media_id,
-        "itadakimasu": True,
     }
     for _ in range(2):
         body["request_id"] = str(uuid4())
@@ -500,6 +499,7 @@ def test_itadakimasu_voice_is_kept_with_the_meal_and_private(client):
     r = client.post(f"/api/houses/{h}/media?kind=voice", headers=auth(), content=webm)
     assert r.status_code == 201, r.text
     voice = r.json()["id"]
+    assert client.post(f"/api/houses/{h}/media/{voice}/itadakimasu", headers=auth()).json() == {"heard": True}
     body = {
         "request_id": str(uuid4()),
         "chore": "meal",

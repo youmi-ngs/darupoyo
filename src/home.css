@@ -146,3 +146,7 @@ dialog.pin-viewer .pin-photo .resident-character { transform: scale(1.6); }
 /* Prizes from furniture play: the longer names (ネイルチップ, ピアスのキャッチ) fit. */
 .sv .furniture-prize, .myroom .furniture-prize { width: max-content; min-width: 76px; padding: 4px 10px; left: 50%; transform: translateX(-50%); }
 .sv .furniture-prize span, .myroom .furniture-prize span { white-space: nowrap; }
+
+/* #121: a gal resting in her own room, 5 minutes after her last chore. */
+.room-gal { position: absolute; z-index: 2; left: 50%; bottom: 14%; margin: 0; translate: -50% 0; pointer-events: none; }
+.room-gal .resident-character { transform: scale(1.15); transform-origin: 50% 100%; }

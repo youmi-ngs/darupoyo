@@ -43,3 +43,7 @@ dialog.album-calendar::backdrop { background: rgba(59, 37, 96, .45); }
 .cal-day:disabled { opacity: .5; }
 .cal-note { margin: 0 0 10px; font-size: 12px; color: var(--ink-soft); }
 .cal-close { width: 100%; }
+
+/* ---------- photo library (#117) ---------- */
+.capture .capture-library { display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; }
+.capture .capture-library:focus-within { outline: 3px solid var(--ink); outline-offset: 2px; }

@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, doc, collection, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore, doc, collection, onSnapshot, query, orderBy, limit, connectFirestoreEmulator } from 'firebase/firestore';
 
 export const client = { uid: '', house: '', config: null, auth: null };
 // All Backend calls go through here. VITE_API_BASE_URL set → that Backend.
@@ -30,7 +30,9 @@ async function useMock() {
   ({ mockFetch } = await import('./mock.js'));
   return (await mockFetch(API_BASE + '/config')).json();
 }
-let update, report, timer, subscriptions = [], refreshing, refreshQueued = false, images = new Map();
+let update, report, timer, subscriptions = [], refreshing, refreshQueued = false, watchedDay = '', stopDay = null;
+// Photos: object URL once loaded; the promise while loading (#98: each photo is fetched once).
+const images = new Map(), loadingImages = new Map();
 const token = () => client.auth ? client.auth.currentUser.getIdToken() : Promise.resolve('dev:' + client.uid);
 export async function api(path, body, method = 'POST') {
   const response = await send(API_BASE + path, {
@@ -42,23 +44,39 @@ export async function api(path, body, method = 'POST') {
   return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.blob();
 }
 export const houseApi = (path, body, method) => api('/houses/' + client.house + path, body, method);
-async function imageUrl(id) {
-  if (!id) return null;
-  if (!images.has(id)) images.set(id, await houseApi('/media/' + id).then(URL.createObjectURL));
-  return images.get(id);
+function loadImage(id) {
+  if (!id || images.has(id)) return Promise.resolve(images.get(id) || null);
+  if (!loadingImages.has(id)) loadingImages.set(id, houseApi('/media/' + id).then(blob => {
+    const url = URL.createObjectURL(blob); images.set(id, url); loadingImages.delete(id); return url;
+  }, error => { loadingImages.delete(id); throw error; }));
+  return loadingImages.get(id);
+}
+// A few downloads at a time, so many photos do not queue behind each other on a phone.
+async function loadImages(ids, parallel = 6) {
+  const queue = [...new Set(ids)].filter(id => id && !images.has(id));
+  await Promise.all(Array.from({ length: Math.min(parallel, queue.length) }, async () => {
+    while (queue.length) await loadImage(queue.shift()).catch(() => null);
+  }));
 }
 export async function refresh() {
   if (!client.house) return;
   if (refreshing) { refreshQueued = true; return refreshing; }
   refreshing = (async () => {
     const dashboard = await houseApi('/dashboard');
+    watchDay(dashboard.state.day);
     const posts = []; let cursor;
     do { const page = await houseApi('/posts?limit=100' + (cursor ? '&before=' + cursor : '')); posts.push(...page.items); cursor = page.next_cursor; } while (cursor);
-    await Promise.all(posts.map(async p => { p.image = await imageUrl(p.media_id); }));
-    for (const pose of Object.values(dashboard.state.poses)) pose.image = await imageUrl(pose.media_id);
+    const poses = Object.values(dashboard.state.poses), members = Object.values(dashboard.house.members);
     // Profile photos (#96) are house media like any other photo.
-    await Promise.all(Object.values(dashboard.house.members).map(async m => { m.avatar = await imageUrl(m.avatar_media_id).catch(() => null); }));
-    update({ ...dashboard, posts });
+    const fill = () => {
+      posts.forEach(p => { p.image = images.get(p.media_id) || null; });
+      poses.forEach(p => { p.image = images.get(p.media_id) || null; });
+      members.forEach(m => { m.avatar = images.get(m.avatar_media_id) || null; });
+    };
+    // #98: show the house at once with the photos already here, then add the new ones.
+    fill(); update({ ...dashboard, posts });
+    const missing = [...posts, ...poses].map(p => p.media_id).concat(members.map(m => m.avatar_media_id)).filter(id => id && !images.has(id));
+    if (missing.length) { await loadImages(missing); fill(); update({ ...dashboard, posts }); }
   })().finally(() => { refreshing = null; if (refreshQueued) { refreshQueued = false; void refresh().catch(report); } });
   return refreshing;
 }
@@ -126,13 +144,22 @@ export async function start(onUpdate, onError) {
   swap.onclick = () => { field.value = ''; dialog.querySelector('[role=status]').textContent = ''; setMode(!joining); field.focus(); };
   setMode(joining); if (invite) field.value = invite;
 }
+const sync = () => refresh().catch(report);
+// The first snapshot is the state we just loaded; only later changes need a refresh (#98).
+const changes = () => { let first = true; return () => { if (first) { first = false; return; } sync(); }; };
+// #98: watch today's record only (not every day of the house); a new day re-subscribes.
+function watchDay(day) {
+  if (!client.db || !day || day === watchedDay) return;
+  stopDay?.(); watchedDay = day;
+  stopDay = onSnapshot(doc(client.db, 'houses', client.house, 'days', day), changes(), report);
+}
 function subscribe() {
-  const sync = () => refresh().catch(report);
   if (client.auth) subscriptions.push(onAuthStateChanged(client.auth, user => { if (!user) location.reload(); }));
   if (client.db) {
-    subscriptions.push(onSnapshot(doc(client.db, 'houses', client.house), sync, report));
-    subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'days'), sync, report));
-    subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'posts'), sync, report));
+    subscriptions.push(onSnapshot(doc(client.db, 'houses', client.house), changes(), report));
+    // New posts and reactions/comments on recent ones; older ones are picked up by the minute refresh.
+    subscriptions.push(onSnapshot(query(collection(client.db, 'houses', client.house, 'posts'), orderBy('id', 'desc'), limit(30)), changes(), report));
+    subscriptions.push(() => { stopDay?.(); stopDay = null; watchedDay = ''; });
   }
   // Also handles the 04:00 day boundary and recovery from missed notifications. Local mode polls.
   timer = setInterval(() => { if (!document.hidden) sync(); }, client.db ? 60000 : 2500);

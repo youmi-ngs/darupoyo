@@ -29,28 +29,24 @@ export function startAmbience() {
   }, { passive: true });
 }
 
-export function weatherKind(code) {
-  if ([71, 73, 75, 77, 85, 86].includes(code)) return 'snow';
-  if (code >= 51) return 'rain';
-  if (code >= 2) return 'cloudy';
-  return 'clear';
-}
 function startWeather() {
   let busy = false, refreshed = 0;
   const refresh = async () => {
     if (busy || document.hidden || Date.now() - refreshed < 15 * 60 * 1000) return;
     busy = true; refreshed = Date.now();
     try {
-      // Fixed Tokyo location; no device location is requested or stored.
-      const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=35.68&longitude=139.76&current=weather_code', { signal: AbortSignal.timeout(8000) });
-      if (!response.ok) throw new Error('weather unavailable');
-      const code = (await response.json()).current?.weather_code;
-      if (!Number.isInteger(code) || code < 0 || code > 99) throw new Error('invalid weather');
-      document.body.dataset.weather = weatherKind(code);
+      // #125: Google's Weather API through our server (the key stays there). Fixed Tokyo
+      // location; no device location is requested or stored. Needs a signed-in resident.
+      const { api } = await import('./api.js'); // loaded lazily so this module stays plain for unit tests
+      const { kind } = await api('/weather');
+      if (!['clear', 'cloudy', 'rain', 'snow'].includes(kind)) throw new Error('invalid weather');
+      document.body.dataset.weather = kind;
     } catch {
       delete document.body.dataset.weather;
     } finally { busy = false; }
   };
-  void refresh(); setInterval(refresh, 15 * 60 * 1000);
+  // The weather needs a signed-in resident, so it starts once they are in the house.
+  window.addEventListener('darupoyo:entered', () => { refreshed = 0; void refresh(); });
+  setInterval(refresh, 15 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) void refresh(); });
 }

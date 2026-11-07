@@ -39,6 +39,7 @@ try {
     FIREBASE_VAPID_KEY: config.webPushKey || '',
     SCHEDULER_EMAIL: config.schedulerServiceAccount ? `${config.schedulerServiceAccount}@${project}.iam.gserviceaccount.com` : '',
     SCHEDULER_AUDIENCE: config.schedulerAudience || '',
+    WEATHER_SECRET: config.weatherSecret || '',
   } });
   run(firebase, ['deploy', '--only', 'hosting', '--project', project, '--non-interactive']);
   const origin = `https://${site}.web.app`;

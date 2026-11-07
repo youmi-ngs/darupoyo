@@ -5,6 +5,11 @@ import { playSparkle, sparkle, sparkleOutline } from './sparkle.js';
 import { sfx } from './sfx.js';
 
 const UPPER_HINT = '顔・肩・腕が映るようにしてね（上半身だけでOK）';
+// #124: once the upper body was found, a retry ("もう一回") starts right away with the same
+// area instead of checking again (the second check could fail and leave the button dead).
+let knownUpperRows = null;
+// If the check cannot confirm the upper body in time, the game can still be started.
+const UPPER_TIMEOUT_MS = 8000;
 // 開始前だけ Pose で上半身が映っているかを見る（#106）。3回続けて見えたら ready を呼んで、モデルをすぐ閉じる。
 // ゲーム中は軽いフレーム差分だけを使うので、推論で判定が遅れることはない。
 function watchUpperBody(video, status, ready, resources) {
@@ -43,8 +48,8 @@ function watchUpperBody(video, status, ready, resources) {
 export async function laundryRhythm(box, status, choice, signal, resources) {
   status.textContent = 'カメラに上半身を映してね。音符が丸に重なったら洗濯物をバサッ！映像は端末の中だけで使い、保存も送信もしません。';
   const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } } });
-  resources.push(() => stream.getTracks().forEach((t) => t.stop())); check(signal);
-  const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true; video.srcObject = stream;
+  const video = document.createElement('video');
+  resources.push(() => { stream.getTracks().forEach((t) => t.stop()); video.srcObject = null; }); check(signal); video.autoplay = true; video.muted = true; video.playsInline = true; video.srcObject = stream;
   const stage = document.createElement('div'); stage.className = 'rhythm-camera'; stage.append(video); box.append(stage);
   await video.play(); check(signal);
   const lane = document.createElement('div'); lane.className = 'rhythm-lane'; lane.setAttribute('aria-hidden', 'true');
@@ -67,11 +72,17 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
   let rows = UPPER_FALLBACK;
   const markReady = (bottom, message = '上半身OK！洗濯物を持って「リズムをはじめる」') => {
     if (!startButton.disabled) return;
-    rows = bottom; startButton.disabled = false; status.textContent = message;
+    rows = bottom; knownUpperRows = bottom; startButton.disabled = false; status.textContent = message;
   };
   // 開発中だけ：テストの偽カメラには人が映らないので、上半身OKをイベントで起こせるようにする。
   if (import.meta.env.DEV) box.addEventListener('test-upper-body', () => markReady(UPPER_FALLBACK));
-  const stopCheck = watchUpperBody(video, status, markReady, resources);
+  let stopCheck = () => {};
+  if (knownUpperRows !== null) markReady(knownUpperRows, 'もう一回いこ！洗濯物を持って「リズムをはじめる」');
+  else {
+    stopCheck = watchUpperBody(video, status, markReady, resources);
+    const giveUp = setTimeout(() => markReady(UPPER_FALLBACK, '上半身がうまく見えなくても大丈夫。顔・肩・腕が映るようにして「リズムをはじめる」'), UPPER_TIMEOUT_MS);
+    resources.push(() => clearTimeout(giveUp));
+  }
   await started; check(signal); stopCheck();
   const context = new AudioContext(); resources.push(() => { void context.close(); }); void context.resume();
   // 3・2・1 の猶予（#107）。洗濯物を構える時間。カウント中の動きはヒットに数えない。
