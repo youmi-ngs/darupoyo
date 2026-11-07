@@ -1,3 +1,5 @@
+import { setupDarupoyoRecords } from './darupoyo-records.js';
+import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
 import { startAmbience } from './ambience.js';
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
@@ -24,6 +26,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   const dayLabel = off => { const d = new Date((dashboard?.state.day || new Date().toISOString().slice(0,10)) + 'T12:00:00+09:00'); d.setUTCDate(d.getUTCDate()+off); return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+'（'+WD[d.getUTCDay()]+'）'; };
   const $ = (id) => document.getElementById(id);
   const sheet = $('sheet'), sheetBody = $('sheet-body');
+  const darupoyoRecords = setupDarupoyoRecords();
+  const furniturePlay = setupFurniturePlay();
   const cleared = () => new Set(state.posts.map((p) => p.who));
   const isFirstToday = (id) => !(state.doneToday[id] || []).length;
   const kindText = { pose: 'のポーズ写真（切り抜き）', photo: 'の写真', sound: 'の検出記録', rhythm: 'のリズム記録' };
@@ -249,7 +253,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       m.setAttribute('aria-label', TASKS[item.id].label + (item.done ? '（クリア済み）' : '（タップして始める）'));
       if (item.done) {
         m.classList.add('is-done');
-        const mark = document.createElement('span'); mark.className = 'done-mark'; mark.textContent = 'クリア'; m.append(mark);
+        const mark = document.createElement('span'); mark.className = 'completion-sticker'; mark.textContent = 'かんりょ〜'; wrap.append(mark);
         m.addEventListener('click', () => item.id === 'meal' ? openSheet('meal') : toast('今日の' + TASKS[item.id].label + 'はクリア済み'));
       } else m.addEventListener('click', () => openSheet(item.id));
       if (item.id === snapId) m.classList.add('snap');
@@ -263,7 +267,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       boardMagnets.append(wrap);
     });
     const open = state.board.filter((b) => !b.done).length;
-    boardSub.textContent = !state.board.length ? 'やる家事を貼ってね。1個でいいよ〜' : open === 0 ? '今日のぶん終わり。えらすぎ。' : 'タップでスタート。終わるとクリアがつくよ';
+    boardSub.textContent = !state.board.length ? 'やる家事を貼ってね。1個でいいよ〜' : open === 0 ? '今日のぶん終わり。えらすぎ。' : 'タップでスタート。終わると「かんりょ〜」シールがつくよ';
   }
   function renderTray() {
     trayEl.replaceChildren();
@@ -440,6 +444,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
         finish.onclick = () => finishMeal(meal); choice.append(finish);
       }
     }
+    darupoyoRecords.addChoice(choice, toApi(id), () => sheet.close());
     if (!sheet.open) sheet.showModal();
     choice.querySelector('button').focus();
   }
@@ -606,7 +611,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
     state.doneToday = {};
     Object.entries(data.state.completed).forEach(([uid,chores])=>chores.forEach(t=>{ (state.doneToday[fromApi(t)] ||= []).push(uid); }));
-    if (!pendingGoals) state.board = (data.state.goals[ME] || []).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
+    if (!pendingGoals) state.board = [...new Set([...(data.state.goals[ME] || []), ...(data.state.completed[ME] || [])])].map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
     state.originals = Object.fromEntries(Object.entries(data.state.poses).map(([t,p])=>[fromApi(t),{ ...p, fig:0, by:p.user_id }]));
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
     document.querySelector('.account-row b').textContent = nameOf(ME);
@@ -615,6 +620,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     renderAccountForm();
     renderAll();
     renderActivities(data);
+    darupoyoRecords.update(data);
+    furniturePlay.update(data);
   }
   // 招待で入居したときに、誰と住むのかを見せる
   window.addEventListener('darupoyo:joined', () => {

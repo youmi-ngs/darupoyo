@@ -1,3 +1,4 @@
+import { mockDarupoyo, deleteMockDarupoyo } from './mock-darupoyo.js';
 // In-browser stand-in for the Backend API (backend/docs/api.md), used only in development
 // when no Backend answers. Same paths and response shapes; data stays in this browser.
 // Tabs of the same browser share it through localStorage, so two tabs can play two users.
@@ -56,6 +57,7 @@ export async function mockFetch(url, init = {}) {
     }
     for (const [key, id] of Object.entries(db.requests)) if (key.startsWith(uid + ':') || removedPosts.has(id)) delete db.requests[key];
     for (const [key, invite] of Object.entries(db.invites)) if (invite.created_by === uid || removedHouses.has(invite.house_id)) delete db.invites[key];
+    deleteMockDarupoyo(db, uid, removedHouses);
     save(db); return new Response(null, {status: 204});
   }
   if (path === '/me') return json({ uid, deletion_pending: false });
@@ -83,6 +85,8 @@ export async function mockFetch(url, init = {}) {
   const day = today(), dayKey = houseId + '/' + day;
   const state = db.days[dayKey] || newDay(day);
   const posts = Object.values(db.posts).filter(p => p.house_id === houseId);
+  const darupoyo = mockDarupoyo({ db, houseId, uid, rest, method, body, searchParams, day, state, postId, save });
+  if (darupoyo) return darupoyo;
 
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
   if (rest === '/invites') {

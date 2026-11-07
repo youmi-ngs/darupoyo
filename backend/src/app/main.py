@@ -13,6 +13,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
 from .accounts import delete_account, require_active
+from .darupoyo import register_darupoyo_routes
 from .domain import Domain, require_member
 from .models import (
     Completion,
@@ -213,7 +214,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     @app.post("/api/houses/{house_id}/media", status_code=201)
     async def upload(
-        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie"],
+        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie", "darupoyo"],
         uid=Depends(current_user),
     ):
         house = str(house_id)
@@ -309,6 +310,8 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         if not re.fullmatch(r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}", post_id):
             raise HTTPException(422, "Invalid post id")
         return app.state.domain.react(uid, str(house_id), post_id, body.emoji)
+
+    register_darupoyo_routes(app, current_user)
 
     @app.api_route("/api/{unknown:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     def unknown_api(unknown: str):
