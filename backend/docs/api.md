@@ -31,6 +31,8 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
 | POST / GET | /api/houses | ハウス作成 / 自分のハウス一覧（最大50） |
 | POST | /api/houses/{id}/invites | 招待コード作成（8文字、7日有効）。`token` に入る |
 | POST | /api/join | 招待コードで参加、6人上限。大文字小文字・ハイフン・空白は区別しない |
+| PUT | /api/notifications | この端末の通知 `{token, enabled, gal}`。`token` は Firebase Cloud Messaging の登録トークン（最大5台）、`gal` は通知の口調（heisei/reiwa/kuro/hime/random） |
+| POST | /api/tasks/evening | 19時の声かけ。Cloud Scheduler の OIDC トークン（`SCHEDULER_EMAIL` / `SCHEDULER_AUDIENCE`）だけ受け付ける |
 | GET | /api/houses/{id}/dashboard?day=2026-11-05 | 電気・掲示板・今日のポーズ・日次状態 |
 | PUT | /api/houses/{id}/goals | 今日やる家事マグネット（空でもOK） |
 | PUT | /api/houses/{id} | 家の名前を変更 `{name}`（1〜60文字）。住人なら誰でも |
@@ -128,3 +130,11 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 `media/{uuid}`: 所有者、非公開オブジェクト名。
 `requests/{hash}`: ユーザーとrequest_idごとの再送管理。
 `invites/{token_hash}`: 所属先と有効期限。招待token自体はDBに保存しない。
+
+## 通知（スマホ）
+
+- 家事が記録されると、同じハウスのほかの住人の端末へ、各自が選んだギャルの口調で知らせる（応答のあとに送信）
+- 毎日19:00（Asia/Tokyo）に、その日どのハウスでも家事をしていない人へ、責めない口調で声をかける（1日1回）
+- 送信は data のみの web push（`title` / `body` / `link`）。表示は `public/push-sw.js`。アプリを開いているときは画面内に出す
+- 端末トークンは `notify/{uid}` に保存し、ブラウザからは読めない。届かなくなったトークンは自動で消す
+- `/api/config` の `push.vapid_key` が空なら通知はオフ（画面に設定を出さない）

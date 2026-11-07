@@ -51,7 +51,13 @@ def test_rhythm_profile_and_public_config(client):
         client.put(base + "/profile", headers=auth("outsider"), json={"theme": "pink"}).status_code
         == 404
     )
-    assert set(client.get("/api/config").json()) == {"auth_mode", "data_backend", "timezone", "firebase"}
+    assert set(client.get("/api/config").json()) == {
+        "auth_mode",
+        "data_backend",
+        "timezone",
+        "push",
+        "firebase",
+    }
 
 
 def auth(uid="alice"):
@@ -438,3 +444,50 @@ def test_gal_praise_voice_meal_rule_and_retry():
     p.client = Client()
     out = p.generate("meal", "hime")
     assert out == {"text": "ちゃんと食べたの優勝♡", "source": "gemini"} and len(calls) == 2
+
+
+def test_notifications_friend_cleared_and_evening(client):
+    from src.app import notify
+
+    h = house(client)
+    assert join(client, h, "bob").status_code == 200
+    assert join(client, h, "carol").status_code == 200
+    token = "t" * 40
+    saved = client.put("/api/notifications", headers=auth("bob"), json={"token": token, "gal": "hime"})
+    assert saved.json() == {"enabled": True, "devices": 1, "gal": "hime"}
+    # Same device again does not duplicate; gal can change without a token.
+    client.put("/api/notifications", headers=auth("bob"), json={"token": token})
+    assert client.put("/api/notifications", headers=auth("bob"), json={"gal": "kuro"}).json()["devices"] == 1
+    for bad in ({"token": "short"}, {"gal": "gold"}, {"token": token, "extra": 1}):
+        assert client.put("/api/notifications", headers=auth("bob"), json=bad).status_code == 422
+    sent = client.app.state.notify.sent
+    sent.clear()
+
+    body = {"request_id": str(uuid4()), "chore": "dryer", "method": "sound", "duration_seconds": 12}
+    assert client.post(f"/api/houses/{h}/completions", headers=auth(), json=body).status_code == 200
+    # Only bob has a device; alice (who cleared) and carol (no device) get nothing.
+    assert [m["uid"] for m in sent] == ["bob"]
+    assert sent[0]["body"] in {
+        line.format(name="Alice", chore="ドライヤー", reward="美髪") for line in notify.FRIEND_FALLBACK["kuro"]
+    }
+
+    # 19:00: alice already did a chore; bob has not and has a device; carol has no device.
+    sent.clear()
+    assert client.post("/api/tasks/evening").json() == {"nudged": 1}
+    assert [m["uid"] for m in sent] == ["bob"] and "休み" in sent[0]["body"]
+    # Once a day per person.
+    assert client.post("/api/tasks/evening").json() == {"nudged": 0}
+
+    # Turning it off removes this device.
+    off = client.put("/api/notifications", headers=auth("bob"), json={"token": token, "enabled": False})
+    assert off.json()["devices"] == 0
+
+
+def test_evening_task_rejects_callers_without_scheduler_token(client, monkeypatch):
+    client.app.state.settings = replace(LOCAL, auth_mode="firebase", project="demo-x")
+    assert client.post("/api/tasks/evening").status_code == 403
+    monkeypatch.setenv("SCHEDULER_EMAIL", "scheduler@demo-x.iam.gserviceaccount.com")
+    monkeypatch.setenv("SCHEDULER_AUDIENCE", "https://backend.example/api/tasks/evening")
+    assert client.post("/api/tasks/evening").status_code == 403
+    bad = {"Authorization": "Bearer not-a-google-token"}
+    assert client.post("/api/tasks/evening", headers=bad).status_code == 403

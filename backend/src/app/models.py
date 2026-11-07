@@ -113,3 +113,10 @@ class Profile(Model):
 
 class HouseUpdate(Model):
     name: str = Field(min_length=1, max_length=60, pattern=r"\S")
+
+
+class NotifySettings(Model):
+    # FCM registration token of this device; omit to only change the gal.
+    token: str | None = Field(default=None, min_length=20, max_length=4096)
+    enabled: bool = True
+    gal: Literal["heisei", "reiwa", "kuro", "hime", "random"] | None = None

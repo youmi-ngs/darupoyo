@@ -11,6 +11,10 @@ if [[ "$PRAISE_BACKEND" == vertex ]]; then
   : "${GEMINI_MODEL:?Set an available Vertex Gemini model ID}"
 fi
 GEMINI_MODEL="${GEMINI_MODEL:-}"
+# Optional: phone notifications (public web push key) and the 19:00 Cloud Scheduler caller.
+FIREBASE_VAPID_KEY="${FIREBASE_VAPID_KEY:-}"
+SCHEDULER_EMAIL="${SCHEDULER_EMAIL:-}"
+SCHEDULER_AUDIENCE="${SCHEDULER_AUDIENCE:-}"
 if [[ "$PRAISE_BACKEND" != fallback && "$PRAISE_BACKEND" != vertex ]]; then
   echo "PRAISE_BACKEND must be fallback or vertex" >&2; exit 1
 fi
@@ -23,7 +27,7 @@ repository="${ARTIFACT_REPOSITORY:-darupoyo}"
 tag="$(date -u +%Y%m%dT%H%M%SZ)"
 image="${REGION}-docker.pkg.dev/${PROJECT_ID}/${repository}/${service}:${tag}"
 # Refuse values that would break the gcloud custom separator.
-for value in "$PROJECT_ID" "$REGION" "$STORAGE_BUCKET" "$CORS_ORIGINS" "$GEMINI_MODEL" "$FIREBASE_WEB_API_KEY" "$FIREBASE_AUTH_DOMAIN" "$FIREBASE_APP_ID"; do
+for value in "$PROJECT_ID" "$REGION" "$STORAGE_BUCKET" "$CORS_ORIGINS" "$GEMINI_MODEL" "$FIREBASE_WEB_API_KEY" "$FIREBASE_AUTH_DOMAIN" "$FIREBASE_APP_ID" "$FIREBASE_VAPID_KEY" "$SCHEDULER_EMAIL" "$SCHEDULER_AUDIENCE"; do
   if [[ "$value" == *"|"* ]]; then echo "Environment values must not contain |" >&2; exit 1; fi
 done
 # Query build status separately; log streaming requires unrelated bucket permissions.
@@ -45,4 +49,4 @@ gcloud run deploy "$service" --project "$PROJECT_ID" --region "$REGION" \
   --image "$image" --service-account "$SERVICE_ACCOUNT" --allow-unauthenticated \
   --port 8080 --memory 1Gi --cpu 1 --concurrency 4 --timeout 60 \
   --min-instances 0 --max-instances 3 \
-  --set-env-vars "^|^APP_ENV=production|AUTH_MODE=firebase|DATA_BACKEND=firestore|PRAISE_BACKEND=${PRAISE_BACKEND}|GOOGLE_CLOUD_PROJECT=${PROJECT_ID}|GOOGLE_CLOUD_LOCATION=global|STORAGE_BUCKET=${STORAGE_BUCKET}|GEMINI_MODEL=${GEMINI_MODEL}|CORS_ORIGINS=${CORS_ORIGINS}|DAY_TIMEZONE=Asia/Tokyo|SYNC_WINDOW_SECONDS=300|FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}|FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}|FIREBASE_APP_ID=${FIREBASE_APP_ID}"
+  --set-env-vars "^|^APP_ENV=production|AUTH_MODE=firebase|DATA_BACKEND=firestore|PRAISE_BACKEND=${PRAISE_BACKEND}|GOOGLE_CLOUD_PROJECT=${PROJECT_ID}|GOOGLE_CLOUD_LOCATION=global|STORAGE_BUCKET=${STORAGE_BUCKET}|GEMINI_MODEL=${GEMINI_MODEL}|CORS_ORIGINS=${CORS_ORIGINS}|DAY_TIMEZONE=Asia/Tokyo|SYNC_WINDOW_SECONDS=300|FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}|FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}|FIREBASE_APP_ID=${FIREBASE_APP_ID}|FIREBASE_VAPID_KEY=${FIREBASE_VAPID_KEY}|SCHEDULER_EMAIL=${SCHEDULER_EMAIL}|SCHEDULER_AUDIENCE=${SCHEDULER_AUDIENCE}"

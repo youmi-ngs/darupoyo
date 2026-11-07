@@ -49,3 +49,12 @@
 /* The fridge board names itself so it reads as today's to-do list (#22). Other fridge copy stays hidden. */
 .whiteboard .board-title{display:block!important;font-size:20px;text-align:center}
 .whiteboard .board-empty{display:block!important;width:100%;text-align:center;font-size:14px}
+
+/* Settings: phone notifications (#58). */
+.push-card[hidden],.push-note[hidden]{display:none}
+.push-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.push-row .drawer-h{margin:0}
+.push-toggle{min-width:76px;min-height:44px;padding:0 16px;border:2px solid #3b2560;border-radius:999px;background:white;color:#3b2560;font:inherit;font-weight:900;cursor:pointer}
+.push-toggle[aria-pressed="true"]{background:#ffb3de}
+.push-toggle:disabled{opacity:.5;cursor:default}
+.push-note{margin:0;font-size:12px;line-height:1.5;color:#655575}

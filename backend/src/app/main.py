@@ -7,13 +7,23 @@ from datetime import date
 from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
 from .domain import Domain, require_member
-from .models import Completion, Goals, HouseCreate, HouseUpdate, Join, Profile, Reaction
+from .models import (
+    Completion,
+    Goals,
+    HouseCreate,
+    HouseUpdate,
+    Join,
+    NotifySettings,
+    Profile,
+    Reaction,
+)
+from .notify import Notifier
 from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image
 from .store import FirestoreStore, MemoryStore
 
@@ -57,6 +67,9 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             application.state.firebase = firebase_admin.initialize_app(
                 options={"projectId": config.project}, name="ontama-" + uuid4().hex
             )
+        application.state.notify = Notifier(
+            config, getattr(application.state, "firebase", None), application.state.praise
+        )
         yield
         application.state.praise.close()
         if config.auth_mode == "firebase":
@@ -100,6 +113,8 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             "auth_mode": config.auth_mode,
             "data_backend": config.data_backend,
             "timezone": config.timezone,
+            # Public web push key (Firebase console → Cloud Messaging); empty = notifications off.
+            "push": {"vapid_key": os.getenv("FIREBASE_VAPID_KEY", "")},
             "firebase": {
                 "apiKey": os.getenv("FIREBASE_WEB_API_KEY", ""),
                 "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN", ""),
@@ -107,6 +122,32 @@ def create_app(settings=None, store=None, praise=None, clock=None):
                 "appId": os.getenv("FIREBASE_APP_ID", ""),
             },
         }
+
+    @app.put("/api/notifications")
+    def notifications(body: NotifySettings, uid=Depends(current_user)):
+        return Notifier.save(app.state.store, uid, body.token, body.enabled, body.gal)
+
+    @app.post("/api/tasks/evening")
+    def evening(authorization: str | None = Header(default=None)):
+        # Called by Cloud Scheduler at 19:00 with a Google-signed OIDC token.
+        config = app.state.settings
+        if config.auth_mode != "dev":
+            expected = os.getenv("SCHEDULER_EMAIL", "")
+            audience = os.getenv("SCHEDULER_AUDIENCE", "")
+            if not expected or not audience or not (authorization or "").startswith("Bearer "):
+                raise HTTPException(403, "Scheduler only")
+            from google.auth.transport import requests as google_requests
+            from google.oauth2 import id_token
+
+            try:
+                claims = id_token.verify_oauth2_token(
+                    authorization[7:], google_requests.Request(), audience=audience
+                )
+            except ValueError:
+                raise HTTPException(403, "Scheduler only") from None
+            if claims.get("email") != expected or not claims.get("email_verified"):
+                raise HTTPException(403, "Scheduler only")
+        return {"nudged": app.state.notify.evening(app.state.store, app.state.domain.day())}
 
     @app.get("/api/me")
     def me(uid=Depends(current_user)):
@@ -176,12 +217,23 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         return Response(app.state.media.read(meta["object_name"]), media_type=meta["content_type"])
 
     @app.post("/api/houses/{house_id}/completions")
-    def complete(house_id: UUID, body: Completion, uid=Depends(current_user)):
+    def complete(
+        house_id: UUID, body: Completion, tasks: BackgroundTasks, uid=Depends(current_user)
+    ):
         house = str(house_id)
         post, created = app.state.domain.complete(uid, house, body)
         if created:
             post = app.state.domain.set_praise(
                 house, post["id"], app.state.praise.generate(body.chore.value, body.gal, post)
+            )
+            # Tell the other members after the response is sent.
+            store = app.state.store
+            tasks.add_task(
+                app.state.notify.friend_cleared,
+                store,
+                require_member(store, house, uid),
+                uid,
+                body.chore.value,
             )
         return {"post": post, "created": created}
 

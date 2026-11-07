@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>だるぽよ</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#D9C2FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="だるぽよ">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Hachi+Maru+Pop&family=Zen+Maru+Gothic:wght@400;700;900&display=swap">
 <link rel="stylesheet" href="/src/style.css">
 <link rel="stylesheet" href="/src/integration.css">
@@ -237,6 +243,10 @@
       <summary><span class="drawer-h">ほめてくれるギャル</span><span class="gal-current" id="gal-current"></span><span class="toggle-ic" aria-hidden="true"></span></summary>
       <div class="gal-picker" id="gal-picker"></div>
     </details>
+    <section class="set-card push-card" id="push-card" hidden>
+      <div class="push-row"><h3 class="drawer-h" id="push-title">通知</h3><button class="push-toggle" type="button" id="push-toggle" aria-labelledby="push-title" aria-pressed="false">オフ</button></div>
+      <p class="push-note" id="push-note" hidden></p>
+    </section>
     <button class="next-day" type="button" disabled>ログアウト（デモ）</button>
   </div>
 </dialog>
