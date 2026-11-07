@@ -532,6 +532,13 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sheetBody.querySelector('.result-sub').hidden = !shown.sub;
       if (voice) { const url = URL.createObjectURL(voice); sheetBody.querySelector('.result-card').append(voiceButton(() => url)); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       if (blob) { const img = document.createElement('img'); const url = URL.createObjectURL(blob); img.src = url; img.style.cssText = 'width:100%;max-height:30vh;object-fit:contain'; sheetBody.querySelector('p').after(img); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
+      // 「この切り抜きを使う」の直後に、ギャルが切り抜きをほめる（#109）。記録後のほめ言葉とは別。端末内の定型文で通信なし。
+      if (kind === 'cutout' && GALS[gal].lines.cutout) {
+        const praise = document.createElement('div'); praise.className = 'verdict cutout-praise'; praise.innerHTML = galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p>';
+        praise.querySelector('.gal-text').textContent = GALS[gal].lines.cutout;
+        sheetBody.querySelector('.result-card').after(praise);
+        galVoice(gal, GALS[gal].lines.cutout);
+      }
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
         const button = $('post'); button.disabled = true; $('redo').disabled = true; $('sheet-close').disabled = true;
@@ -575,7 +582,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
   // 「記録する？」に出す結果（#33）。家事ごとに、何がどれだけできたかを1行で。
   function resultOf(c, fields, result) {
-    if (fields.method === 'rhythm') return { label: 'リズム', main: fields.hits + ' / ' + fields.total_beats + ' ヒット', sub: '良 ' + (result.good || 0) + '・可 ' + (fields.hits - (result.good || 0)) };
+    if (fields.method === 'rhythm') return { label: 'リズム', main: fields.hits + ' / ' + fields.total_beats + ' ヒット', sub: 'よき ' + (result.good || 0) + '・まあまあ ' + (fields.hits - (result.good || 0)) };
     if (fields.method === 'sound') return { label: 'ドライヤーの音', main: Math.floor(fields.duration_seconds) + '秒 聞こえた', sub: '10秒でクリア' };
     if (fields.method === 'photo_voice') return { label: 'ごはん', main: 'いただきますを記録！', sub: '写真といっしょに残すよ' };
     if (fields.method === 'photo') return { label: 'ごはん', main: '写真で記録', sub: 'ちゃんと食べてえらい' };

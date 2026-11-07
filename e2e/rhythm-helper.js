@@ -1,13 +1,23 @@
 // Plays the laundry rhythm in tests: the camera cannot see a real slap here, so the dev-only
 // "test-slap" event stands in for one at each beat. Times are driven by Playwright's fake clock.
-export const BEAT_MS = 800, TOTAL_BEATS = 8, OK_MS = 320;
+export const BEAT_MS = 800, TOTAL_BEATS = 8, OK_MS = 320, COUNTDOWN_MS = 3000;
 
-export async function playRhythm(page, hits) {
+// The still test camera shows no person, so the dev-only "test-upper-body" event stands in for
+// the upper-body check that unlocks the start button (#106).
+export async function unlockStart(page) {
   const start = page.getByRole('button', { name: 'リズムをはじめる' });
   await start.waitFor({ timeout: 20000 });
+  await page.locator('.capture').dispatchEvent('test-upper-body');
+  await start.click({ trial: true });
+  return start;
+}
+
+export async function playRhythm(page, hits) {
+  const start = await unlockStart(page);
   await page.clock.install();
   await page.clock.pauseAt(new Date());
   await start.click();
+  await page.clock.runFor(COUNTDOWN_MS); // 3・2・1 (#107)
   for (let k = 0; k < TOTAL_BEATS; k++) {
     await page.clock.runFor(BEAT_MS);
     if (k < hits) await page.locator('.capture').dispatchEvent('test-slap');
