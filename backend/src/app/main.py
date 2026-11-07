@@ -12,9 +12,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
+from .accounts import delete_account, require_active
 from .domain import Domain, require_member
 from .models import (
     Completion,
+    MealFinish,
     Goals,
     HouseCreate,
     HouseUpdate,
@@ -38,13 +40,19 @@ def current_user(request: Request, authorization: str | None = Header(default=No
     if request.app.state.settings.auth_mode == "dev":
         if not re.fullmatch(r"dev:[a-zA-Z0-9_-]{1,64}", token):
             raise HTTPException(401, "Local token format: dev:alice")
-        return token[4:]
+        uid = token[4:]
+        if request.url.path != "/api/me":
+            require_active(request.app.state.store, uid)
+        return uid
     from firebase_admin import auth
 
     try:
         claims = auth.verify_id_token(token, app=request.app.state.firebase, check_revoked=True)
+        request.state.auth_claims = claims
+        if request.url.path != "/api/me":
+            require_active(request.app.state.store, claims["uid"])
         return claims["uid"]
-    except (auth.InvalidIdTokenError, auth.RevokedIdTokenError, auth.UserDisabledError, ValueError):
+    except (auth.InvalidIdTokenError, auth.RevokedIdTokenError, auth.UserDisabledError, auth.UserNotFoundError, ValueError):
         raise HTTPException(401, "Invalid Firebase ID token") from None
 
 
@@ -83,7 +91,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[s.strip() for s in origins.split(",") if s.strip()],
-        allow_methods=["GET", "POST", "PUT"],
+        allow_methods=["GET", "POST", "PUT", "DELETE"],
         allow_headers=["Authorization", "Content-Type"],
     )
 
@@ -153,7 +161,23 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     @app.get("/api/me")
     def me(uid=Depends(current_user)):
-        return {"uid": uid}
+        return {"uid": uid, "deletion_pending": bool(app.state.store.get(f"account_deletions/{uid}"))}
+
+    @app.delete("/api/me", status_code=204)
+    def remove_account(request: Request, uid=Depends(current_user)):
+        if app.state.settings.auth_mode == "firebase":
+            import time
+            if time.time() - getattr(request.state, 'auth_claims', {}).get('auth_time', 0) > 300:
+                raise HTTPException(401, "Sign in again before deleting your account")
+        def remove_login(user_id):
+            if app.state.settings.auth_mode == "firebase":
+                from firebase_admin import auth
+                try:
+                    auth.delete_user(user_id, app=app.state.firebase)
+                except auth.UserNotFoundError:
+                    pass
+        delete_account(app.state.store, app.state.media, uid, remove_login)
+        return Response(status_code=204)
 
     @app.post("/api/houses", status_code=201)
     def create_house(body: HouseCreate, uid=Depends(current_user)):
@@ -209,9 +233,14 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             "kind": kind,
             "content_type": content_type,
         }
-        await run_in_threadpool(
-            app.state.store.atomic, lambda tx: tx.set(f"houses/{house}/media/{media_id}", meta)
-        )
+        def save_media(tx):
+            require_member(tx, house, uid)
+            tx.set(f"houses/{house}/media/{media_id}", meta)
+        try:
+            await run_in_threadpool(app.state.store.atomic, save_media)
+        except Exception:
+            await run_in_threadpool(app.state.media.delete, name)
+            raise
         return {"id": media_id, "kind": kind}
 
     @app.get("/api/houses/{house_id}/media/{media_id}")
@@ -268,6 +297,12 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         require_member(app.state.store, house, uid)
         items = app.state.store.list(f"houses/{house}/posts", limit=limit, before=before)
         return {"items": items, "next_cursor": items[-1]["id"] if len(items) == limit else None}
+
+    @app.put("/api/houses/{house_id}/posts/{post_id}/meal-finish")
+    def finish_meal(house_id: UUID, post_id: str, body: MealFinish, uid=Depends(current_user)):
+        if not re.fullmatch(r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}", post_id):
+            raise HTTPException(422, "Invalid post id")
+        return app.state.domain.finish_meal(uid, str(house_id), post_id, body)
 
     @app.put("/api/houses/{house_id}/posts/{post_id}/reaction")
     def react(house_id: UUID, post_id: str, body: Reaction, uid=Depends(current_user)):

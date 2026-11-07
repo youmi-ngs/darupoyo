@@ -16,7 +16,7 @@ async function enter(page) {
 }
 test('picking a gal plays her voice, and the setting turns every sound off', async ({ page }) => {
   await enter(page);
-  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+   await page.locator('#open-settings').click();
   await expect(page.locator('#sound-toggle')).toHaveText('オン');
   await page.locator('#gal-toggle > summary').click();
   await page.getByRole('button', { name: '姫ギャル' }).click();
@@ -30,7 +30,7 @@ test('picking a gal plays her voice, and the setting turns every sound off', asy
   expect(await page.evaluate(() => window.tones)).toBe(before);
   // 端末に覚えておく
   await page.reload();
-  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+   await page.locator('#open-settings').click();
   await expect(page.locator('#sound-toggle')).toHaveText('オフ');
 });
 test('sticking a magnet pops', async ({ page }) => {

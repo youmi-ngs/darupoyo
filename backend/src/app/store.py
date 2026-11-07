@@ -16,6 +16,14 @@ class MemoryStore:
     def set(self, path, value):
         self.docs[path] = deepcopy(value)
 
+    def delete(self, path):
+        self.docs.pop(path, None)
+
+    def scan(self, collection):
+        with self.lock:
+            return [(k, deepcopy(v)) for k, v in self.docs.items()
+                    if k.startswith(collection + "/") and k.count("/") == collection.count("/") + 1]
+
     def atomic(self, callback):
         with self.lock:
             before = deepcopy(self.docs)
@@ -48,6 +56,9 @@ class FirestoreStore:
     def get(self, path):
         return self.client.document(path).get().to_dict()
 
+    def scan(self, collection):
+        return [(s.reference.path, s.to_dict()) for s in self.client.collection(collection).stream()]
+
     def atomic(self, callback):
         from google.cloud import firestore
 
@@ -78,3 +89,6 @@ class FirestoreTransaction:
 
     def set(self, path, value):
         self.transaction.set(self.client.document(path), value)
+
+    def delete(self, path):
+        self.transaction.delete(self.client.document(path))

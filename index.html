@@ -22,11 +22,15 @@
 </div>
 
 <main class="stage">
+<div class="utility-actions"><button class="settings-row" type="button" id="next-day">招待</button>
+    <button class="settings-row" type="button" id="open-settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="#FFF4A8"/><path d="M12 2.5l1.6 2.6 3-.6.7 3 2.7 1.4-1.2 2.8 1.2 2.8-2.7 1.4-.7 3-3-.6L12 21.5l-1.6-2.6-3 .6-.7-3-2.7-1.4L5.2 12 4 9.2l2.7-1.4.7-3 3 .6z"/></svg>せって～<span aria-hidden="true">›</span></button>
+    <button class="settings-row" type="button" id="open-howto"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" fill="#A8E6FF"/><path d="M4 21.5V5.5M8 7.5h8M8 11h6"/></svg>あそびかた<span aria-hidden="true">›</span></button>
+</div>
   <section class="house" id="house-view" aria-label="だるぽよ">
     <div class="walk">
       <div class="top-ui">
-        <button class="ham" type="button" id="open-menu" aria-label="メニュー（タイトル・間取り・掲示板）" aria-haspopup="dialog"><span></span><span></span><span></span></button>
-        <div class="tab-row"><div class="scene-tabs" id="scene-tabs" aria-label="場所"><button class="scene-tab" type="button" data-go="0">玄関</button><button class="scene-tab" type="button" data-go="1">リビング</button><button class="scene-tab" type="button" data-go="2">おふろば</button><button class="scene-tab" type="button" data-go="3">ベランダ</button><button class="scene-tab" type="button" data-go="4">みんなの部屋</button></div></div>
+
+        <div class="tab-row"><div class="scene-tabs" id="scene-tabs" aria-label="場所"><button class="scene-tab" type="button" data-go="0">玄関</button><button class="scene-tab" type="button" data-go="1">リビング</button><button class="scene-tab" type="button" data-go="2">おふろば</button><button class="scene-tab" type="button" data-go="3">ベランダ</button><button class="scene-tab" type="button" data-go="4">みんなの部屋</button><button class="scene-tab" type="button" data-go="5">け〜じばん</button></div></div>
       </div>
       <button class="walk-arrow left" type="button" id="walk-left" aria-label="左の部屋へ">‹</button>
       <div class="plan" id="plan">
@@ -75,7 +79,17 @@
           <span class="sv-sun" aria-hidden="true"></span>
           <svg class="balcony-weather" viewBox="0 0 320 220" preserveAspectRatio="none" aria-hidden="true"><g class="balcony-clouds" fill="#C8CDDF"><path d="M20 60q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/><path d="M190 40q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/></g><path class="balcony-rain" d="M30 85l-8 18m46-12l-8 18m46-24l-8 18m110-40l-8 18m46-12l-8 18m46-24l-8 18M55 145l-8 18m70-12l-8 18m105-37l-8 18m65-7l-8 18" fill="none" stroke="#9ABED8" stroke-width="3" stroke-linecap="round"/></svg>
           <button class="sv-hit sv-laundry" type="button" data-chore="laundry" style="left:4%;top:20%;width:92%">
-            <svg viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M6 14h308" stroke-width="4"/><path d="M40 14l-8 12h16zM120 14l-8 12h16zM200 14l-8 12h16zM280 14l-8 12h16z" fill="#FFFFFF" stroke-width="2"/><path d="M14 28q10-3 18-6q8 10 16 0q8 3 18 6l-6 18q-5 1-9-2l1 41q-20 8-44 0l1-41q-5 3-9 2z" fill="#A8E6FF"/><path d="M96 26q24 4 48 0l-2 58q-11 6-22 1q-13 5-25 0z" fill="#FFB3DE"/><path d="M96 46h48" stroke-width="2"/><path d="M177 26q23 4 46 0l-5 70q-7 4-14 0l-4-48l-4 48q-7 4-14 0z" fill="#E6F7A0"/><path d="M257 28q10-2 13-5q10 8 20 0q4 3 13 5l-3 17q-2 5-9 3l1 44q-12 6-24 0l1-44q-7 2-10-3z" fill="#D9C2FF"/></g></svg>
+            <svg viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+              <path d="M6 14h308" stroke-width="4"/>
+              <path d="M40 14l-15 12h30zM120 14l-15 12h30zM200 14l-15 12h30zM280 14l-15 12h30z" fill="#FFFDF6" stroke-width="2"/>
+              <path d="M29 25q11 11 22 0l17 9-7 20-12-5 2 44q-22 5-43 0l3-44-11 5-7-20z" transform="translate(10 0)" fill="#A8E6FF"/>
+              <path d="M98 27q22 4 44 0l2 65q-10 5-22 1-12 5-25 0z" fill="#FFB3DE"/>
+              <path d="M100 38h40M101 82q19 4 39 0" fill="none" stroke="#DA80AE" stroke-width="1.5"/>
+              <path d="M177 27q23 4 46 0l-5 73q-9 4-18 0l-1-43-4 43q-9 4-18 0z" fill="#E6F7A0"/>
+              <path d="M179 37h41M199 39v16" fill="none" stroke="#9FAE6D" stroke-width="1.5"/>
+              <path d="M269 27q11 10 22 0l18 9-7 19-10-6 2 47q-14 6-28 0l2-47-10 6-7-19z" fill="#D9C2FF"/>
+              <path d="M276 29q4 4 8 0M270 87q10 3 20 0" fill="none" stroke="#A082C6" stroke-width="1.5"/>
+            </g></svg>
             <span class="area-task">洗濯</span><span class="who-dots"></span>
           </button>
           <span class="sv-rail" aria-hidden="true"></span>
@@ -96,6 +110,35 @@
           <div class="door-chips" id="door-chips"></div>
         </div>
       </div>
+      <div class="scene" data-scene="board" aria-label="け〜じばん"><div class="sv sv-board"><h2>け〜じばん</h2>    <div class="board-panel">
+      <p class="board-panel-title">リビングの掲示板</p>
+      <div class="memo">
+        <div class="memo-top"><span>今日のクリア</span><strong id="count">2 / 4人</strong></div>
+        <em id="count-note">あと2人〜！</em>
+        <span>ハウスのハピネス <b id="gauge-text">2 / 6</b></span>
+        <div class="gauge" id="gauge" role="progressbar" aria-label="ハウスのハピネスゲージ" aria-valuemin="0" aria-valuemax="6" aria-valuenow="2"><i id="gauge-fill"></i></div>
+      </div>
+      <div class="timeline-box">
+        <p class="tl-title">タイムライン</p>
+        <ol class="timeline" id="timeline" aria-live="polite"></ol>
+      </div>
+      <div class="wall-notes">
+        <div class="pose-card" id="pose-card">
+          <div class="pose-shot" id="pose-shot"></div>
+          <div class="pose-text">
+            <p class="pose-label">今日のオリジナルポーズ</p>
+            <p class="pose-name" id="pose-name"></p>
+            <p class="pose-by" id="pose-by"></p>
+          </div>
+        </div>
+        <div class="sticky" id="sync" hidden>
+          <p>え、うちら<br>シンクロしてんじゃん！！</p>
+          <small id="sync-detail"></small>
+        </div>
+      </div>
+    </div>
+
+</div></div>
       </div>
       <button class="walk-arrow right" type="button" id="walk-right" aria-label="右の部屋へ">›</button>
     </div>
@@ -151,67 +194,7 @@
 
 
 
-<dialog class="drawer" id="menu" aria-label="メニュー">
-  <div class="drawer-inner">
-    <button class="sheet-close drawer-close" type="button" id="menu-close" aria-label="閉じる">×</button>
-    <div class="roof">
-      <span class="chimney" aria-hidden="true"></span>
-      <span class="smoke" aria-hidden="true"><i></i><i></i></span>
-      <div class="roof-text">
-        <p class="house-name">ＳＨＡＲＥＨＯＵＳＥ</p>
-        <h1>だるぽよ</h1>
-      </div>
-    </div>
-    <p class="plan-meta"><span>左右にスワイプして移動。ゆれてる物をタップすると家事がはじまる</span></p>
-    <h2 class="drawer-h">間取り図<small>タップでその場所へ</small></h2>
-    <div class="map-plan" id="map-plan">
-      <button class="map-cell" type="button" style="grid-area:balcony" data-go="3" data-chore-map="laundry">ベランダ<small>お洋服お日様にあてる</small></button>
-      <button class="map-cell map-room" type="button" style="grid-area:ra" data-go="4" data-who-map="mochi">mochiのへや</button>
-      <button class="map-cell map-room" type="button" style="grid-area:rb" data-go="4" data-who-map="[メンバー2]">[メンバー2]のへや</button>
-      <button class="map-cell map-room" type="button" style="grid-area:rc" data-go="4" data-who-map="[メンバー3]">[メンバー3]のへや</button>
-      <button class="map-cell map-room" type="button" style="grid-area:rd" data-go="4" data-who-map="[メンバー4]">[メンバー4]のへや</button>
-      <button class="map-cell map-room" type="button" style="grid-area:re" data-go="4" data-who-map="[メンバー5]" hidden>[メンバー5]のへや</button>
-      <button class="map-cell map-room" type="button" style="grid-area:rf" data-go="4" data-who-map="[メンバー6]" hidden>[メンバー6]のへや</button>
-      <button class="map-cell" type="button" style="grid-area:ldk" data-go="1" data-chore-map="meal">リビング<small>冷蔵庫にTODO貼っつける・ごはん</small></button>
-      <button class="map-cell" type="button" style="grid-area:wash" data-go="2" data-chore-map="dryer">おふろば<small>ドライヤーかます</small></button>
-      <button class="map-cell" type="button" style="grid-area:entry" data-go="0" data-chore-map="trash">玄関<small>ゴミとおさらば</small></button>
-    </div>
-    <button class="btn btn-main" type="button" id="open-moments">みんなの今 📷</button>
-    <h2 class="drawer-h">け〜じばん</h2>
-    <div class="board-panel">
-      <p class="board-panel-title">リビングの掲示板</p>
-      <div class="memo">
-        <div class="memo-top"><span>今日のクリア</span><strong id="count">2 / 4人</strong></div>
-        <em id="count-note">あと2人〜！</em>
-        <span>ハウスのハピネス <b id="gauge-text">2 / 6</b></span>
-        <div class="gauge" id="gauge" role="progressbar" aria-label="ハウスのハピネスゲージ" aria-valuemin="0" aria-valuemax="6" aria-valuenow="2"><i id="gauge-fill"></i></div>
-      </div>
-      <div class="timeline-box">
-        <p class="tl-title">タイムライン</p>
-        <ol class="timeline" id="timeline" aria-live="polite"></ol>
-      </div>
-      <div class="wall-notes">
-        <div class="pose-card" id="pose-card">
-          <div class="pose-shot" id="pose-shot"></div>
-          <div class="pose-text">
-            <p class="pose-label">今日のオリジナルポーズ</p>
-            <p class="pose-name" id="pose-name"></p>
-            <p class="pose-by" id="pose-by"></p>
-          </div>
-        </div>
-        <div class="sticky" id="sync" hidden>
-          <p>え、うちら<br>シンクロしてんじゃん！！</p>
-          <small id="sync-detail"></small>
-        </div>
-      </div>
-    </div>
-    <details class="data-credits"><summary>データ提供元</summary><p>天気データ：<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></p></details>
-    <button class="next-day" type="button" id="next-day">次の日にする（デモ）</button>
-    <button class="settings-row" type="button" id="switch-house"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5" /><path d="M5.5 10v10h13V10" fill="#FFB3DE"/><path d="M9.5 15h5M12.5 13l2 2-2 2"/></svg>ハウスを切り替える<span aria-hidden="true">›</span></button>
-    <button class="settings-row" type="button" id="open-settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="#FFF4A8"/><path d="M12 2.5l1.6 2.6 3-.6.7 3 2.7 1.4-1.2 2.8 1.2 2.8-2.7 1.4-.7 3-3-.6L12 21.5l-1.6-2.6-3 .6-.7-3-2.7-1.4L5.2 12 4 9.2l2.7-1.4.7-3 3 .6z"/></svg>せって～<span aria-hidden="true">›</span></button>
-    <button class="settings-row" type="button" id="open-howto"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" fill="#A8E6FF"/><path d="M4 21.5V5.5M8 7.5h8M8 11h6"/></svg>あそびかた<span aria-hidden="true">›</span></button>
-  </div>
-</dialog>
+
 
 
 
@@ -256,6 +239,8 @@
       <div class="push-row"><h3 class="drawer-h" id="sound-title">効果音</h3><button class="push-toggle" type="button" id="sound-toggle" aria-labelledby="sound-title" aria-pressed="true">オン</button></div>
     </section>
     <details class="data-credits"><summary>データ提供元</summary><p>天気データ：<a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a></p></details>
+<button class="settings-row" type="button" id="switch-house"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M3 11.5L12 4l9 7.5" /><path d="M5.5 10v10h13V10" fill="#FFB3DE"/><path d="M9.5 15h5M12.5 13l2 2-2 2"/></svg>ハウスを切り替える<span aria-hidden="true">›</span></button>
+    <button type="button" class="delete-account" id="delete-account">アカウントを削除</button>
     <button class="next-day" type="button" disabled>ログアウト（デモ）</button>
   </div>
 </dialog>
@@ -271,7 +256,7 @@
       <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 16h6l3-4h10l3 4h4v18H4z" fill="#A8E6FF"/><circle cx="17" cy="25" r="5"/><rect x="34" y="8" width="8" height="16" rx="4" fill="#FFF4A8"/><path d="M31 20a7 7 0 0 0 14 0M38 27v6"/></svg><b>ポーズ・写真・音</b><span>カメラかマイクでクリア</span></li>
       <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="15" y="10" width="18" height="32" rx="1" fill="#FFF4A8"/><circle cx="28" cy="27" r="1.5" fill="#3B2560"/><path d="M9 8l3 3M39 8l-3 3M24 3v4M6 20h4M38 20h4"/></svg><b>部屋の電気がつく</b><span>1つやれば明るくなる</span></li>
       <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="11" y="4" width="26" height="40" rx="5" fill="#FFFFFF"/><path d="M11 20h26M32 9v6"/><rect x="15" y="25" width="12" height="6" rx="3" fill="#FFB3DE"/><rect x="18" y="34" width="12" height="6" rx="3" fill="#A8E6FF"/></svg><b>冷蔵庫に貼る</b><span>今日やることを選ぶ</span></li>
-      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="6" y="8" width="36" height="32" rx="8" fill="#E9DDFF"/><path d="M15 18h18M15 24h18M15 30h18" stroke-width="3"/></svg><b>≡ メニュー</b><span>間取り・招待・せって～</span></li>
+      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="6" y="8" width="36" height="32" rx="8" fill="#E9DDFF"/><path d="M15 18h18M15 24h18M15 30h18" stroke-width="3"/></svg><b>け〜じばん</b><span>横スワイプでみんなの記録</span></li>
     </ul>
     <button class="btn btn-main howto-start" type="button" id="howto-start">はじめる</button>
   </div>

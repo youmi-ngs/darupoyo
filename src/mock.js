@@ -15,7 +15,7 @@ function save(db) {
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 const fail = (status, detail) => json({ detail }, status);
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date(Date.now() - 4 * 60 * 60 * 1000));
-const newDay = day => ({ day, goals: {}, completed: {}, poses: {}, recent: [], latest: {} });
+const newDay = day => ({ day, goals: {}, completed: {}, poses: {}, recent: [], latest: {}, activity: {} });
 const postId = now => now.toISOString().replace(/[-:Z]/g, '').replace('.', '') + '000_' + crypto.randomUUID().replace(/-/g, '');
 const blobToDataUrl = blob => new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });
 
@@ -29,7 +29,36 @@ export async function mockFetch(url, init = {}) {
 
   if (path === '/config') return json({ auth_mode: 'dev', timezone: 'Asia/Tokyo', firebase: {}, mock: true });
   if (!uid) return fail(401, 'Local token format: dev:alice');
-  if (path === '/me') return json({ uid });
+  if (path === '/me' && method === 'DELETE') {
+    const removedHouses = new Set();
+    for (const [id, h] of Object.entries(db.houses)) {
+      if (!h.member_ids.includes(uid)) continue;
+      h.member_ids = h.member_ids.filter(m => m !== uid); delete h.members[uid];
+      if (!h.member_ids.length) { removedHouses.add(id); delete db.houses[id]; }
+      else if (h.owner_id === uid) h.owner_id = h.member_ids[0];
+    }
+    const removedPosts = new Set();
+    for (const [id, post] of Object.entries(db.posts)) {
+      if (post.user_id === uid || removedHouses.has(post.house_id)) { removedPosts.add(id); delete db.posts[id]; }
+      else { delete post.reactions[uid]; post.sync_with = (post.sync_with || []).filter(m => m !== uid); }
+    }
+    for (const post of Object.values(db.posts)) if (removedPosts.has(post.pose_template_post_id)) post.pose_template_post_id = null;
+    for (const [id, moment] of Object.entries(db.moments)) if (moment.user_id === uid || removedHouses.has(moment.house_id)) delete db.moments[id];
+    for (const [id, meta] of Object.entries(db.media)) {
+      if (meta.owner_id === uid || removedHouses.has(meta.house_id)) { media.delete(id); try { localStorage.removeItem(KEY + '-media-' + id); } catch {} delete db.media[id]; }
+    }
+    for (const [key, state] of Object.entries(db.days)) {
+      if (removedHouses.has(key.split('/')[0])) { delete db.days[key]; continue; }
+      delete state.goals[uid]; delete state.completed[uid]; if (state.activity) delete state.activity[uid];
+      for (const [chore, pose] of Object.entries(state.poses)) if (pose.user_id === uid) delete state.poses[chore];
+      Object.values(state.latest).forEach(v => delete v[uid]);
+      state.recent = state.recent.filter(p => p.user_id !== uid).map(p => ({...p, sync_with: p.sync_with.filter(m => m !== uid)}));
+    }
+    for (const [key, id] of Object.entries(db.requests)) if (key.startsWith(uid + ':') || removedPosts.has(id)) delete db.requests[key];
+    for (const [key, invite] of Object.entries(db.invites)) if (invite.created_by === uid || removedHouses.has(invite.house_id)) delete db.invites[key];
+    save(db); return new Response(null, {status: 204});
+  }
+  if (path === '/me') return json({ uid, deletion_pending: false });
   if (path === '/houses' && method === 'GET') return json({ items: Object.values(db.houses).filter(h => h.member_ids.includes(uid)) });
   if (path === '/houses' && method === 'POST') {
     const id = crypto.randomUUID();
@@ -58,7 +87,7 @@ export async function mockFetch(url, init = {}) {
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
   if (rest === '/invites') {
     const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', token = Array.from(crypto.getRandomValues(new Uint8Array(8)), n => abc[n % 32]).join(''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
-    db.invites[token] = { house_id: houseId, expires_at }; save(db); return json({ token, expires_at }, 201);
+    db.invites[token] = { house_id: houseId, expires_at, created_by: uid }; save(db); return json({ token, expires_at }, 201);
   }
   if (rest === '/dashboard') {
     const shown = db.days[houseId + '/' + (searchParams.get('day') || day)] || newDay(searchParams.get('day') || day);
@@ -67,6 +96,7 @@ export async function mockFetch(url, init = {}) {
   }
   if (rest === '/goals') { state.goals[uid] = [...new Set(body.chores)]; db.days[dayKey] = state; save(db); return json(state); }
   if (rest === '/profile') {
+    if (body.gal) house.members[uid].gal = body.gal;
     if (body.theme) house.members[uid].theme = body.theme;
     if (body.display_name) house.members[uid].display_name = body.display_name.trim();
     save(db); return json(house);
@@ -83,6 +113,7 @@ export async function mockFetch(url, init = {}) {
   const mediaMatch = rest.match(/^\/media\/(.+)$/);
   if (mediaMatch) {
     const id = mediaMatch[1];
+    if (db.media[id]?.house_id !== houseId) return fail(404, 'Image not found');
     if (media.has(id)) return new Response(media.get(id));
     let data = null; try { data = localStorage.getItem(KEY + '-media-' + id); } catch {}
     return data ? fetch(data) : fail(404, 'Image not found');
@@ -116,6 +147,7 @@ export async function mockFetch(url, init = {}) {
     const done = state.completed[uid] ||= [];
     if (!done.includes(chore)) done.push(chore);
     (state.latest[chore] ||= {})[uid] = post.created_at;
+    (state.activity ||= {})[uid] = { chore, phase: chore === 'meal' ? 'eating' : 'done', gal: post.gal, at: post.created_at, post_id: id };
     state.recent = [{ id, user_id: uid, chore, created_at: post.created_at, reward: post.reward, sync_with: sync }, ...state.recent.slice(0, 49)];
     db.posts[id] = post; db.days[dayKey] = state; db.requests[uid + ':' + body.request_id] = id; save(db);
     return json({ post, created: true });
@@ -124,6 +156,17 @@ export async function mockFetch(url, init = {}) {
     const limit = Number(searchParams.get('limit') || 30), before = searchParams.get('before');
     const items = posts.sort((a, b) => b.id.localeCompare(a.id)).filter(p => !before || p.id < before).slice(0, limit);
     return json({ items, next_cursor: items.length === limit ? items.at(-1).id : null });
+  }
+  const mealFinish = rest.match(/^\/posts\/([^/]+)\/meal-finish$/);
+  if (mealFinish && method === 'PUT') {
+    const post = db.posts[mealFinish[1]], voice = db.media[body.voice_media_id];
+    if (!post || post.house_id !== houseId || post.user_id !== uid || post.chore !== 'meal') return fail(404, 'Own meal not found');
+    if (post.day !== day) return fail(409, 'This meal belongs to a previous day');
+    if (!voice || voice.house_id !== houseId || voice.owner_id !== uid || voice.kind !== 'voice') return fail(422, 'Missing owned voice');
+    if (post.finished_voice_media_id) return post.finished_voice_media_id === body.voice_media_id ? json(post) : fail(409, 'Already finished');
+    post.finished_voice_media_id = body.voice_media_id; post.finished_at = new Date().toISOString();
+    (state.activity ||= {})[uid] = {chore:'meal', phase:'finished', gal:post.gal, at:post.finished_at, post_id:post.id};
+    db.days[dayKey] = state; save(db); return json(post);
   }
   const reaction = rest.match(/^\/posts\/([^/]+)\/reaction$/);
   if (reaction) {

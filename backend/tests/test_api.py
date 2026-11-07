@@ -112,7 +112,7 @@ def test_health_auth_and_legacy_removed(client):
     assert client.get("/api/houses").status_code == 401
     assert client.get("/api/houses", headers={"Authorization": "Bearer garbage"}).status_code == 401
     assert client.post("/api/input", json={}).status_code == 404
-    assert client.get("/api/me", headers=auth()).json() == {"uid": "alice"}
+    assert client.get("/api/me", headers=auth()).json() == {"uid": "alice", "deletion_pending": False}
 
 
 def test_group_capacity_and_idempotent_join(client):

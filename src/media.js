@@ -120,7 +120,6 @@ export async function capture(root, chore, choice, reference, signal) {
       if (chore === 'selfie') return { blob: await blobOf(canvas, 'image/jpeg'), kind: 'selfie' };
       const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
-      if (!Speech) return evidence;
       status.hidden = true;
       const heard = await confirmMealVoice(box, Speech, signal);
       if (heard.matched) {

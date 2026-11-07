@@ -50,6 +50,7 @@ try {
   for (const role of ['roles/storage.objectCreator', 'roles/storage.objectViewer']) {
     gcloud(['storage', 'buckets', 'add-iam-policy-binding', `gs://${storageBucket}`, '--member', `serviceAccount:${email}`, '--role', role]);
   }
+  await import('./setup-account-deletion.mjs');
   console.log(`Cloud resources ready. Enable Google sign-in in https://console.firebase.google.com/project/${project}/authentication/providers then run npm run deploy.`);
 } catch (error) {
   console.error(error.message);

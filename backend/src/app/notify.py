@@ -11,6 +11,7 @@ import logging
 import random
 
 from . import gals
+from .accounts import require_active
 
 MAX_TOKENS = 5
 GAL_CHOICES = (*gals.GALS, "random")
@@ -117,7 +118,9 @@ class Notifier:
 
     @staticmethod
     def _drop(tx, uid, gone):
-        record = tx.get(f"notify/{uid}") or {}
+        record = tx.get(f"notify/{uid}")
+        if not record:
+            return
         record["tokens"] = [t for t in record.get("tokens", []) if t not in gone]
         tx.set(f"notify/{uid}", record)
 
@@ -147,7 +150,9 @@ class Notifier:
 
     @staticmethod
     def _mark_evening(tx, uid, day):
-        record = tx.get(f"notify/{uid}") or {}
+        record = tx.get(f"notify/{uid}")
+        if not record:
+            return
         record["last_evening"] = day
         tx.set(f"notify/{uid}", record)
 
@@ -155,6 +160,7 @@ class Notifier:
     @staticmethod
     def save(store, uid, token=None, enabled=True, gal=None):
         def run(tx):
+            require_active(tx, uid)
             record = tx.get(f"notify/{uid}") or {"uid": uid, "tokens": []}
             tokens = [t for t in record.get("tokens", []) if t != token]
             if token and enabled:
