@@ -82,7 +82,8 @@ COMMON_RULES = (
     "話し方の例はそのまま使わず、毎回ちがう言い回しにする。✨などの絵文字を毎回文末に付けない。"
 )
 MEAL_RULE = (
-    "ごはんのときは「ちゃんとごはんを食べたこと」そのものだけをほめる。写真は見えていないので、何を食べたかは分からない。"
+    "ごはんのときは「ちゃんとごはんを食べたこと」そのものだけを、まっすぐ「がんばったね、おつかれさま」とほめる。写真は見えていないので、何を食べたかは分からない。"
+    "#134: だるい・面倒・しんどい・サボりたい気分を前提にしない（「だるいのに」のような言い方をしない）。"
     "自炊・外食・手作り・料理・作った・作れる・おうちごはん・家で・お店・コンビニ・出前・テイクアウトなど、"
     "誰が作ったか、どこで食べたか、何を食べたかには一切触れない。"
 )
@@ -91,7 +92,11 @@ MEAL_BANNED = (
     "自炊", "外食", "手作り", "手料理", "料理", "作っ", "作れ", "作る", "つくっ", "つくれ", "調理", "クッキング", "レシピ",
     "おうち", "家で", "家ごはん", "家飯", "うちごはん", "自分で", "お店", "店で", "コンビニ", "出前", "デリバリー",
     "テイクアウト", "持ち帰り", "外で", "キッチン", "シェフ",
+    # #134: a meal is praised as it is, not as something done in spite of feeling lazy.
+    "だる", "ダル", "面倒", "めんど", "しんど", "サボ",
 )
+# Angles that assume the chore was a drag do not fit meals (#134).
+MEAL_ANGLE_SKIP = ("だるいのにやったことを、全力でねぎらう",)
 
 FALLBACK = {
     "heisei": {
@@ -151,9 +156,10 @@ def prompt(chore, gal, context=None, rng=random):
             MEAL_RULE if chore == "meal" else "",
         ]
     )
+    angles = [a for a in ANGLES if not (chore == "meal" and a in MEAL_ANGLE_SKIP)]
     lines = [
         f"家事：{CHORES[chore]}（ごほうび：{REWARDS[chore]}）",
-        f"今回の切り口：{rng.choice(ANGLES)}",
+        f"今回の切り口：{rng.choice(angles)}",
     ]
     if facts := details(context):
         lines.append(f"今回のこと：{facts}")

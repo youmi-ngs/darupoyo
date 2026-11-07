@@ -1,3 +1,4 @@
+import { setBusy } from './busy.js';
 // Recording and speech recognition must not compete for the microphone on iOS, so the
 // resident records and reviews 「いただきます」 here, and the server checks the recording
 // with Gemini (#120). verify(blob) → { heard, id }; only a recording that passed is used.
@@ -35,7 +36,7 @@ export function recordMealVoice(box, phrase, signal, verify) {
     next.onclick = () => { checked = null; settle(); };
     use.onclick = async () => {
       if (!blob) return;
-      const current = attempt; use.disabled = toggle.disabled = true; show('checking', '「' + phrase + '」が聞こえるか確認しています…');
+      const current = attempt; toggle.disabled = true; setBusy(use, true, '確認中…'); show('checking', '「' + phrase + '」が聞こえるか確認しています…');
       try {
         const result = await verify(blob);
         if (done || current !== attempt) return;
@@ -45,7 +46,7 @@ export function recordMealVoice(box, phrase, signal, verify) {
       } catch (error) {
         if (done || current !== attempt) return;
         show('error', '確認できませんでした。もう一度試すか、写真だけで進んでね');
-      } finally { if (!done && !checked) { use.disabled = toggle.disabled = false; } }
+      } finally { if (!done && !checked) { setBusy(use, false); use.disabled = toggle.disabled = false; } }
     };
     const fail = message => {
       clearTimeout(timer); clearTimeout(stopTimer); release();

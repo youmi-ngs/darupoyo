@@ -34,11 +34,15 @@ export function setupBoardView(ctx) {
   }
   async function loadExtra() {
     const version = ++loading, house = client.house;
+    // #144: say that the selfies and だるぽよ records are still on their way.
+    const waiting = document.createElement('p'); waiting.className = 'loading-row pin-loading'; waiting.textContent = 'みんなの記録を読み込み中…';
+    view.querySelector('.pin-loading')?.remove(); grid.before(waiting);
     try {
       const [moments, darupoyo] = await Promise.all([all('/moments'), all('/darupoyo').catch(() => [])]);
       if (version !== loading || house !== client.house) return;
       extra = { moments, darupoyo }; render();
     } catch (e) { if (version === loading) status.textContent = e.message; }
+    finally { if (version === loading) waiting.remove(); }
   }
 
   // One list for both boards, newest first.

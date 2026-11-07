@@ -20,9 +20,9 @@ test('darupoyo shares text, preserves completion state and survives reload',asyn
   await friend.getByLabel('あなたの名前').fill('友だち'); await friend.getByLabel('招待コード').fill(token);
   await friend.getByRole('button',{name:'招待に参加する'}).click(); await friend.getByRole('button',{name:'おじゃまします！'}).click();
   await compose(page);
-  await expect(page.getByRole('button',{name:'このだるぽよを共有'})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'このだるぽよを共有'})).toBeEnabled(); // #142: 「だるぽよ」 alone can be shared
   await page.getByLabel('ひとこと（任意・140文字まで）').fill('  ');
-  await expect(page.getByRole('button',{name:'このだるぽよを共有'})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'このだるぽよを共有'})).toBeEnabled();
   await page.getByLabel('ひとこと（任意・140文字まで）').fill('今日は洗い物、そのまま〜');
   await page.getByRole('button',{name:'このだるぽよを共有'}).click(); await page.getByRole('button',{name:'お部屋へ',exact:true}).click();
   const after=await state(page); expect(after.state.completed).toEqual(before.state.completed); expect(after.happiness).toBe(0);
@@ -38,7 +38,7 @@ test('photo-only records preview before sharing and display in the board',async(
   const png=await page.evaluate(()=>{ const c=document.createElement('canvas');c.width=50;c.height=60;return c.toDataURL('image/png').split(',')[1]; });
   await page.locator('.darupoyo-dialog input[type=file]').setInputFiles({name:'today.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   await expect(page.locator('.darupoyo-preview')).toBeVisible();
-  await page.getByRole('button',{name:'写真を外す'}).click(); await expect(page.getByRole('button',{name:'このだるぽよを共有'})).toBeDisabled();
+  await page.getByRole('button',{name:'写真を外す'}).click(); await expect(page.getByRole('button',{name:'このだるぽよを共有'})).toBeEnabled();
   await page.locator('.darupoyo-dialog input[type=file]').setInputFiles({name:'today.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   await page.getByRole('button',{name:'このだるぽよを共有'}).click(); await page.getByRole('button',{name:'お部屋へ',exact:true}).click();
   await page.locator('.scene-dot').nth(1).click(); await page.locator('#open-board').click();

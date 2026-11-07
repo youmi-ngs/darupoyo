@@ -1,0 +1,11 @@
+/* #144: spinner inside a button that is waiting for the network. */
+.is-busy { cursor: progress; opacity: .85; }
+.is-busy::before { content: ""; display: inline-block; width: .95em; height: .95em; margin-right: .45em; vertical-align: -.12em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: busy-spin .8s linear infinite; }
+.loading-row { display: flex; align-items: center; justify-content: center; gap: .5em; margin: 10px 0; font-size: 13px; color: var(--ink-soft, #6A5590); }
+.loading-row::before { content: ""; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: busy-spin .8s linear infinite; }
+@keyframes busy-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .is-busy::before, .loading-row::before { animation-duration: 2.4s; } }
+/* #133: the first screen is a short loading screen until sign-in or a house is needed. */
+.onboarding.is-loading { text-align: center; }
+.onboarding.is-loading h2 { font-family: var(--font-hand, inherit); font-size: 28px; margin: 6px 0; }
+.onboarding [hidden] { display: none !important; }

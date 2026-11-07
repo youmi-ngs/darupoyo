@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { setBusy } from './busy.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, collection, onSnapshot, query, orderBy, limit, connectFirestoreEmulator } from 'firebase/firestore';
 
@@ -58,7 +59,7 @@ async function loadImages(ids, parallel = 6) {
     while (queue.length) await loadImage(queue.shift()).catch(() => null);
   }));
 }
-export async function refresh() {
+export async function refresh({ onPaint } = {}) {
   if (!client.house) return;
   if (refreshing) { refreshQueued = true; return refreshing; }
   refreshing = (async () => {
@@ -74,7 +75,7 @@ export async function refresh() {
       members.forEach(m => { m.avatar = images.get(m.avatar_media_id) || null; });
     };
     // #98: show the house at once with the photos already here, then add the new ones.
-    fill(); update({ ...dashboard, posts });
+    fill(); update({ ...dashboard, posts }); onPaint?.();
     const missing = [...posts, ...poses].map(p => p.media_id).concat(members.map(m => m.avatar_media_id)).filter(id => id && !images.has(id));
     if (missing.length) { await loadImages(missing); fill(); update({ ...dashboard, posts }); }
   })().finally(() => { refreshing = null; if (refreshQueued) { refreshQueued = false; void refresh().catch(report); } });
@@ -82,7 +83,7 @@ export async function refresh() {
 }
 function button(label, action, parent) {
   const b = document.createElement('button'); b.className = 'btn btn-main'; b.textContent = label;
-  b.onclick = async () => { b.disabled = true; try { await action(); } catch (e) { parent.querySelector('[role=status]').textContent = e.message; } finally { b.disabled = false; } }; parent.append(b); return b;
+  b.onclick = async () => { setBusy(b, true); try { await action(); } catch (e) { parent.querySelector('[role=status]').textContent = e.message; } finally { setBusy(b, false); b.disabled = false; } }; parent.append(b); return b;
 }
 export async function start(onUpdate, onError) {
   update = onUpdate; report = onError;
@@ -101,8 +102,17 @@ export async function start(onUpdate, onError) {
     client.uid = read('darupoyo-uid', userStore()) || crypto.randomUUID(); write('darupoyo-uid', client.uid, userStore());
   }
   const dialog = document.createElement('dialog'); dialog.className = 'onboarding'; dialog.setAttribute('aria-label', 'だるぽよへようこそ');
-  dialog.innerHTML = '<h2>だるぽよへようこそ</h2><p>今日の「できた」を、みんなのお部屋に。</p><p role="status" aria-live="polite"></p>';
+  // #133: opening the app first shows a short loading screen; the welcome appears only
+  // when the person has to sign in or choose a house.
+  dialog.classList.add('is-loading'); dialog.setAttribute('aria-label', 'だるぽよ 読み込み中');
+  dialog.innerHTML = '<h2>だるぽよ</h2><p class="onboarding-welcome" hidden>今日の「できた」を、みんなのお部屋に。</p><p class="loading-row onboarding-loading">よみこみ中…</p><p role="status" aria-live="polite"></p>';
+  const welcome = () => {
+    dialog.classList.remove('is-loading'); dialog.setAttribute('aria-label', 'だるぽよへようこそ');
+    dialog.querySelector('h2').textContent = 'だるぽよへようこそ';
+    dialog.querySelector('.onboarding-welcome').hidden = false; dialog.querySelector('.onboarding-loading').hidden = true;
+  };
   dialog.addEventListener('cancel', e => e.preventDefault()); document.body.append(dialog); dialog.showModal();
+  if (client.auth && !client.auth.currentUser) welcome();
   if (client.auth && !client.auth.currentUser) await new Promise(resolve => button('Googleでログイン', async () => { await signInWithPopup(client.auth, new GoogleAuthProvider()); resolve(); }, dialog));
   client.uid = client.auth?.currentUser?.uid || client.uid;
   dialog.querySelectorAll('button').forEach(b => b.remove());
@@ -111,16 +121,20 @@ export async function start(onUpdate, onError) {
   const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
   const me = await api('/me');
   if (me.deletion_pending) {
+    welcome();
     dialog.querySelector('[role=status]').textContent = 'アカウント削除が途中です。再開して残りのデータを削除してください。';
     button('削除を再開', deleteAccount, dialog);
     return;
   }
   const houses = await api('/houses');
   const items = houses.items || houses;
-  const enter = async id => { client.house = id; await refresh(); write('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
+  const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
   if (!invite) {
     const saved = read('darupoyo-house-' + client.uid);
     if (items.some(h => h.id === saved)) { await enter(saved); return; }
+  }
+  welcome();
+  if (!invite) {
     items.forEach(h => button(h.name + 'に入る', () => enter(h.id), dialog));
   }
   const name = document.createElement('input'); name.placeholder = 'あなたの名前'; name.setAttribute('aria-label', 'あなたの名前'); name.maxLength = 40; name.value = client.auth?.currentUser?.displayName || ''; dialog.append(name);
