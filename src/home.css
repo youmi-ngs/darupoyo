@@ -55,7 +55,7 @@
 .rooms-page .door { height: auto; aspect-ratio: 3 / 5; padding-top: 30px; justify-content: flex-start; }
 .door-hanger { position: absolute; top: 30%; left: 50%; width: 30px; height: 16px; transform: translateX(-50%); border: solid var(--ink); border-width: 2px 2px 0; border-radius: 0; clip-path: polygon(50% 0, 100% 100%, 0 100%); background: linear-gradient(to bottom right, transparent calc(50% - 1px), var(--ink) 50%, transparent calc(50% + 1px)) left / 50% 100% no-repeat, linear-gradient(to bottom left, transparent calc(50% - 1px), var(--ink) 50%, transparent calc(50% + 1px)) right / 50% 100% no-repeat; border: 0; }
 .door-hanger::before { content: ""; position: absolute; top: -4px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--ink); }
-.rooms-page .door-plate { position: absolute; top: calc(30% + 15px); left: 50%; transform: translateX(-50%) rotate(-2deg); max-width: 92%; padding: 6px 10px; font-size: 16px; line-height: 1.2; border-radius: 8px; border-width: 2.5px; box-shadow: var(--soft-shadow); }
+.rooms-page .door-plate { position: absolute; top: calc(30% + 15px); left: 50%; transform: translateX(-50%) rotate(-2deg); max-width: 96%; padding: 6px 10px; font-size: 21px; line-height: 1.2; border-radius: 8px; border-width: 2.5px; box-shadow: var(--soft-shadow); }
 .rooms-page .door.is-me .door-plate { background: var(--note); }
 .hall-bar { position: absolute; z-index: 4; left: 0; right: 0; bottom: var(--dots-h); display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 12px; pointer-events: none; }
 .hall-bar[hidden] { display: none; }
@@ -113,9 +113,9 @@ dialog.pin-viewer .pin-photo .resident-character { transform: scale(1.6); }
 
 /* Doors keep their bright resident color; a room without light shows it in the dark door window only. */
 .rooms-page .door:not(.is-lit) { filter: none; }
-.rooms-page .door { background: linear-gradient(90deg, rgba(255, 255, 255, .45) 0 7%, transparent 7% 100%), var(--tint); }
 
-/* Balcony: the pole stands on two posts, and a bird keeps it company. */
+/* Balcony: the pole stands still on two posts, and a bird keeps it company. */
+.plan.is-swaying .balcony-pole { animation: none; }
 .pole-post { position: absolute; z-index: 0; top: calc(16% + min(4vw, 19px) - 4px); bottom: calc(var(--fl) - 8px); width: 11px; border: 2.5px solid var(--ink); border-radius: 5px 5px 0 0; background: linear-gradient(90deg, #FFFFFF 0 40%, #E9DDFF 40%); }
 .pole-post.left { left: calc(8% - 5px); }
 .pole-post.right { right: calc(8% - 5px); }
@@ -123,9 +123,4 @@ dialog.pin-viewer .pin-photo .resident-character { transform: scale(1.6); }
 .pole-bird { transform-box: fill-box; transform-origin: 50% 100%; animation: bird-hop 5s ease-in-out infinite; }
 @keyframes bird-hop { 0%, 70%, 100% { transform: none; } 76% { transform: translateY(-5px) rotate(-6deg); } 82% { transform: none; } 88% { transform: rotate(8deg); } }
 
-/* Garbage: flies buzz and the smell wobbles until you take it out. */
-.trash-flies { transform-box: fill-box; animation: buzz 1.6s ease-in-out infinite alternate; }
-.trash-smell { animation: smell 2.4s ease-in-out infinite; }
-@keyframes buzz { from { transform: translate(-2px, 1px); } to { transform: translate(3px, -2px); } }
-@keyframes smell { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .pole-bird, .trash-flies, .trash-smell { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .pole-bird { animation: none; } }
