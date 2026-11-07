@@ -43,7 +43,13 @@ try {
   run(firebase, ['deploy', '--only', 'hosting', '--project', project, '--non-interactive']);
   const origin = `https://${site}.web.app`;
   for (const [path, expected] of [['/api/healthz', 200], ['/api/config', 200], ['/api/houses', 401], ['/', 200]]) {
-    const response = await fetch(origin + path);
+    // A fresh Hosting release can answer 404 for a few seconds, so retry before failing.
+    let response;
+    for (let attempt = 1; attempt <= 6; attempt += 1) {
+      response = await fetch(origin + path);
+      if (response.status === expected || attempt === 6) break;
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
     if (response.status !== expected) throw new Error(`${path}: expected ${expected}, got ${response.status}`);
     if (path === '/api/config') {
       const publicConfig = await response.json();
