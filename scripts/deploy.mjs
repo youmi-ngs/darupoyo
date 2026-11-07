@@ -36,6 +36,9 @@ try {
     CORS_ORIGINS: `https://${site}.web.app,https://${site}.firebaseapp.com`,
     FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId,
     PRAISE_BACKEND: config.praiseBackend, GEMINI_MODEL: config.geminiModel || '',
+    FIREBASE_VAPID_KEY: config.webPushKey || '',
+    SCHEDULER_EMAIL: config.schedulerServiceAccount ? `${config.schedulerServiceAccount}@${project}.iam.gserviceaccount.com` : '',
+    SCHEDULER_AUDIENCE: config.schedulerAudience || '',
   } });
   run(firebase, ['deploy', '--only', 'hosting', '--project', project, '--non-interactive']);
   const origin = `https://${site}.web.app`;

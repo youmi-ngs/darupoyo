@@ -56,6 +56,14 @@ GitHub から Google Cloud へは鍵ファイルなしでログインする（Wo
 `youmi-ngs/darupoyo` の main からの実行だけが、デプロイ専用アカウント `github-deployer` を使える。
 最初の1回だけ、プロジェクトのオーナーが `bash scripts/setup-github-deploy.sh` を実行して準備する（何度実行しても安全）。
 
+## スマホの通知（最初の1回だけ）
+
+1. Firebase コンソール → プロジェクトの設定 → Cloud Messaging →「ウェブプッシュ証明書」で鍵ペアを生成し、公開鍵を `deploy/config.json` の `webPushKey` に入れる（公開してよい値）
+2. プロジェクトのオーナーが `bash scripts/setup-notifications.sh` を実行（Backend に送信権限、19:00 の Cloud Scheduler ジョブ）
+3. main にマージ → 自動デプロイ
+
+iPhone はホーム画面に追加したときだけ通知が届く（`public/manifest.webmanifest`）。
+
 ## 更新の公開（手動）
 
 ```sh

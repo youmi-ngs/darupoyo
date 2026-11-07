@@ -1,5 +1,6 @@
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
+import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
   const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -114,7 +115,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); });
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); });
       return b;
     };
     GAL_IDS.forEach((g) => box.append(mk(g)));
@@ -571,7 +572,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     } catch (err) { toast(err.message); } finally { save.disabled = false; }
   });
   $('settings').addEventListener('close', () => toggleAccountForm(false));
-  const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => logout().catch(e=>toast(e.message));
+  const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => disablePush().finally(() => logout().catch(e=>toast(e.message)));
   $('switch-house').addEventListener('click', switchHouse);
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
@@ -602,7 +603,26 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('open-menu').addEventListener('click', () => { document.querySelectorAll('.map-cell').forEach((c) => c.classList.toggle('is-here', Number(c.dataset.go) === sceneIdx)); menu.showModal(); });
   $('menu-close').addEventListener('click', () => menu.close());
   const settings = $('settings');
-  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); settings.showModal(); });
+  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); renderPush(); settings.showModal(); });
+  // ---------- phone notifications (#58) ----------
+  const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
+  async function renderPush() {
+    const state = await pushState().catch(() => 'unsupported');
+    const card = $('push-card'), button = $('push-toggle'), note = $('push-note');
+    card.hidden = state === 'unsupported';
+    const on = state === 'ready' && pushOn();
+    button.disabled = state !== 'ready'; button.textContent = on ? 'オン' : 'オフ'; button.setAttribute('aria-pressed', String(on));
+    note.hidden = !PUSH_NOTES[state]; note.textContent = PUSH_NOTES[state] || '';
+  }
+  $('push-toggle').addEventListener('click', async () => {
+    const button = $('push-toggle'); button.disabled = true;
+    try {
+      if (pushOn()) { await disablePush(); toast('通知をオフにしたよ'); }
+      else { await enablePush(galPref); toast('通知をオンにしたよ'); }
+    } catch (e) { toast(e.message); }
+    await renderPush();
+  });
+  listenInApp((body) => toast(body));
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
