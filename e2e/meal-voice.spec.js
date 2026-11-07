@@ -72,8 +72,9 @@ test('a recording without 「いただきます」 is not used: record again, th
   await page.getByRole('button', { name: 'この音声を使う' }).click();
   await expect(page.locator('.meal-voice [role=status]')).toHaveText('「いただきます」が聞き取れなかったよ。もう一度録音してね');
   expect(await page.evaluate(() => outcome)).toBe('pending');
+  await page.evaluate(() => { window.audioBytes = 0; });
   await page.getByRole('button', { name: '録音し直す' }).click();
-  await expect.poll(() => page.evaluate(() => audioBytes)).toBeGreaterThan(400);
+  await expect.poll(() => page.evaluate(() => audioBytes)).toBeGreaterThan(200);
   await page.getByRole('button', { name: '録音を止める' }).click();
   await page.getByRole('button', { name: 'この音声を使う' }).click();
   await expect.poll(() => page.evaluate(() => outcome)).toBe(true);
