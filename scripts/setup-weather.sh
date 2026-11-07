@@ -13,7 +13,11 @@ gcloud services enable weather.googleapis.com secretmanager.googleapis.com --pro
 
 echo "== API key"
 read -rsp "Weather API のキーを貼り付けて Enter（画面には表示されません）: " KEY; echo
-[[ -n "$KEY" ]] || { echo "キーが空です" >&2; exit 1; }
+KEY="$(printf %s "$KEY" | tr -d '[:space:]')"
+# A Google API key is 39 characters starting with AIza; anything else is not stored.
+if [[ ! "$KEY" =~ ^AIza[0-9A-Za-z_-]{35}$ ]]; then
+  echo "キーの形が違います（AIza で始まる39文字のはず。いまは ${#KEY} 文字）。キーだけをコピーし直してね" >&2; unset KEY; exit 1
+fi
 if gcloud secrets describe "$SECRET" --project "$PROJECT" >/dev/null 2>&1; then
   printf %s "$KEY" | gcloud secrets versions add "$SECRET" --project "$PROJECT" --data-file=- >/dev/null
 else
@@ -29,5 +33,5 @@ echo "== Check the key works"
 VALUE="$(gcloud secrets versions access latest --secret "$SECRET" --project "$PROJECT")"
 CODE="$(curl -s -o /dev/null -w '%{http_code}' "https://weather.googleapis.com/v1/currentConditions:lookup?key=${VALUE}&location.latitude=35.68&location.longitude=139.76")"
 unset VALUE
-echo "Weather API の応答: HTTP $CODE（200 なら OK）"
-echo "Done: secret $SECRET is ready. deploy/config.json の weatherSecret に \"$SECRET\" を入れると本番で使われます。"
+echo "Weather API の応答: HTTP ${CODE}（200 なら OK）"
+echo "Done: secret ${SECRET} is ready. deploy/config.json の weatherSecret に \"${SECRET}\" を入れると本番で使われます。"
