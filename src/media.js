@@ -1,5 +1,5 @@
 import { confirmMealVoice } from './meal-voice.js';
-import { action, blobOf, check, openCamera } from './camera.js';
+import { action, blobOf, check, openCamera, photoCrop } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
 import { createPoseLandmarker, hasFullBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
 import { createSegmenter, cutout } from './segment.js';
@@ -72,7 +72,8 @@ export async function capture(root, chore, choice, reference, signal) {
     check(signal);
     if (chore === 'laundry') return await laundryRhythm(box, status, choice, signal, resources);
     if (chore === 'dryer') return await dryerSound(box, status, signal, resources);
-    const live = document.createElement('div'); live.className = 'capture-live';
+    const isPhoto = chore === 'meal' || chore === 'selfie';
+    const live = document.createElement('div'); live.className = 'capture-live' + (isPhoto ? ' is-photo-frame' : '');
     const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true;
     const count = document.createElement('span'); count.className = 'capture-count'; count.setAttribute('aria-hidden', 'true'); count.hidden = true;
     live.append(video, count); box.append(live);
@@ -81,7 +82,7 @@ export async function capture(root, chore, choice, reference, signal) {
     if (reference?.image && choice.mode === 'original-copy') { const img = document.createElement('img'); img.src = reference.image; img.alt = '今日のお手本'; img.style.maxHeight = '150px'; box.append(img); }
     const stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal);
     let landmarker, segmenter, stopPreview = () => {};
-    const canvas = document.createElement('canvas'); canvas.hidden = true; box.append(canvas);
+    const canvas = document.createElement('canvas'); canvas.hidden = true; canvas.classList.toggle('is-photo-frame', isPhoto); box.append(canvas);
     // Mirror only the preview; retain raw pixels/landmarks for pose scoring and storage.
     const facing = stream.getVideoTracks()[0]?.getSettings().facingMode;
     const mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
@@ -100,7 +101,12 @@ export async function capture(root, chore, choice, reference, signal) {
       if (seconds) {
         await countdown(seconds, left => { count.hidden = !left; count.textContent = left; if (left) status.textContent = left + '秒後に撮るよ'; }, signal);
       }
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); sfx.shutter();
+      if (isPhoto) {
+        const crop = photoCrop(video.videoWidth, video.videoHeight);
+        canvas.width = Math.floor(crop.width / 5) * 5; canvas.height = canvas.width * 6 / 5;
+        ctx.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+      } else { canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); }
+      sfx.shutter();
       live.hidden = true; canvas.hidden = false;
     };
     const stopCamera = () => { stream.getTracks().forEach(t => t.stop()); live.remove(); };
@@ -114,7 +120,6 @@ export async function capture(root, chore, choice, reference, signal) {
       if (chore === 'selfie') return { blob: await blobOf(canvas, 'image/jpeg'), kind: 'selfie' };
       const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
-      if (!Speech) return evidence;
       status.hidden = true;
       const heard = await confirmMealVoice(box, Speech, signal);
       if (heard.matched) {

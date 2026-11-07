@@ -13,8 +13,8 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
   await page.getByLabel('新しいハウスの名前').fill('モックハウス');
   await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('#open-menu').click();
-  await page.getByRole('button', { name: '友だちを招待する' }).click();
+
+  await page.getByRole('button', { name: '招待', exact: true }).click();
   const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
 
   await stillCamera(context);

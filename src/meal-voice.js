@@ -1,148 +1,81 @@
-// 「いただきます」を聞いている間、声も録音しておく（#9）。言えたときだけ残して、アルバムで再生できる。
-// iOSでは録音用ストリームが音声認識を中断するため、聞き取りだけを使う。
-const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-function startRecording() {
-  if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) return null;
-  const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported?.(t));
-  let recorder, stream, stopping = false, endPromise;
-  const chunks = [];
-  const release = () => stream?.getTracks().forEach(t => t.stop());
-  const ready = navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
-    stream = s;
-    if (stopping) { release(); return; }
-    try {
-      recorder = new MediaRecorder(s, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
-      recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-      recorder.onerror = release;
-      recorder.start();
-    } catch { release(); }
-  }).catch(() => {});
-  return keep => {
-    if (endPromise) return endPromise;
-    stopping = true;
-    // A permission prompt may never resolve. Closing the UI must not wait for it.
-    if (!recorder) { void ready.then(release); return Promise.resolve(null); }
-    endPromise = new Promise(resolve => {
-      let timer;
-      const finish = () => {
-        clearTimeout(timer); release();
-        const blob = keep && chunks.length ? new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' }) : null;
-        resolve(blob && blob.size <= 512 * 1024 ? blob : null);
-      };
-      recorder.onstop = finish;
-      recorder.onerror = finish;
-      timer = setTimeout(finish, 1000);
-      try { if (recorder.state !== 'inactive') recorder.stop(); else finish(); } catch { finish(); }
-      release();
-    });
-    return endPromise;
-  };
-}
-
-// Keep microphone state visible until the user chooses to continue.
-export function confirmMealVoice(box, Speech, signal) {
-  const panel = document.createElement('section');
-  panel.className = 'meal-voice';
-  panel.innerHTML = `<button type="button" class="meal-voice-toggle" aria-describedby="meal-voice-title">
-      <svg class="voice-mic" viewBox="0 0 32 32" aria-hidden="true"><rect x="12" y="3" width="8" height="16" rx="4"/><path d="M7 14v2a9 9 0 0 0 18 0v-2M16 25v5M11 30h10"/></svg>
-      <span class="voice-stop" aria-hidden="true"></span>
-      <svg class="voice-check" viewBox="0 0 32 32" aria-hidden="true"><path d="m7 16 6 6L26 9"/></svg>
-    </button>
-    <div class="meal-voice-status" role="status" aria-live="polite" aria-atomic="true">
-      <strong id="meal-voice-title"></strong><p></p>
-    </div>
-    <button type="button" class="meal-voice-next">写真だけで進む</button>
-    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>音声はブラウザの音声認識サービスに送信される場合があります。録音に対応した端末では、「いただきます」が聞こえたときだけ、その声をハウスのアルバムに残して、住人が再生できます。</p></details>`;
+// Recording and speech recognition must not compete for the microphone on iOS.
+// Let the resident review and confirm the recording instead of running both.
+export function recordMealVoice(box, phrase, signal, { optional = true } = {}) {
+  const panel = document.createElement('section'); panel.className = 'meal-voice';
+  panel.innerHTML = `<h3 class="meal-voice-heading"></h3><p role="status" aria-live="polite"></p>
+    <button type="button" class="btn btn-main meal-voice-toggle">マイクをオンにする</button>
+    <audio controls hidden aria-label="録音した声を確認"></audio>
+    <button type="button" class="btn btn-main meal-voice-use" hidden>この音声を使う</button>
+    <button type="button" class="btn btn-sub meal-voice-next"></button>
+    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>最大10秒録音します。内容を確認して保存した声だけを、ハウスの住人が再生できます。音声認識サービスには送信しません。</p></details>`;
+  panel.querySelector('h3').textContent = phrase + 'を残そう';
   box.insertBefore(panel, box.querySelector('canvas'));
-  const title = panel.querySelector('strong'), hint = panel.querySelector('.meal-voice-status p');
-  const toggle = panel.querySelector('.meal-voice-toggle'), next = panel.querySelector('.meal-voice-next');
-  let active, timer, done = false, matched = false, stopRecording = null, voice = Promise.resolve(null), misses = 0;
-  function show(state, heading, detail) {
-    panel.dataset.state = state;
-    title.textContent = heading;
-    hint.textContent = detail;
-    hint.hidden = !detail;
-    toggle.setAttribute('aria-label', matched ? '聞き取り完了' : active ? '音声認識をやめる' : state === 'idle' ? 'マイクをオンにする' : 'もう一度試す');
-    toggle.disabled = matched;
-    next.className = matched ? 'meal-voice-next btn btn-main' : 'meal-voice-next';
-    next.textContent = matched ? '次へ' : '写真だけで進む';
-  }
-  function stop() {
-    clearTimeout(timer);
-    const previous = active;
-    active = null;
-    if (previous) {
-      previous.onstart = previous.onaudiostart = previous.onspeechstart = previous.onaudioend = previous.onspeechend = previous.onresult = previous.onnomatch = previous.onerror = previous.onend = null;
-      try { previous.abort(); } catch { /* Already stopped. */ }
-    }
-  }
-  function finish(state, heading, detail) {
-    stop();
-    if (stopRecording) { const end = stopRecording; stopRecording = null; voice = end(matched); if (!matched) misses++; }
-    show(state, heading, detail);
-    // Do not reopen the microphone while the previous recorder is releasing it.
-    toggle.disabled = true;
-    void voice.finally(() => { if (!done) toggle.disabled = matched; });
-    if (matched) next.focus();
-  }
-  show('idle', 'いただきます、しよう', 'マイクをタップ');
+  const status = panel.querySelector('[role=status]'), toggle = panel.querySelector('.meal-voice-toggle');
+  const use = panel.querySelector('.meal-voice-use'), next = panel.querySelector('.meal-voice-next'), audio = panel.querySelector('audio');
+  next.textContent = optional ? '写真だけで進む' : 'やめる';
+  let done = false, stream, recorder, blob, url, timer, stopTimer, attempt = 0;
+  const release = () => { stream?.getTracks().forEach(t => t.stop()); stream = null; };
+  const clearPreview = () => { audio.pause(); audio.removeAttribute('src'); audio.hidden = use.hidden = true; if (url) URL.revokeObjectURL(url); url = null; blob = null; };
+  const show = (state, text) => { panel.dataset.state = state; status.textContent = text; };
+  show('idle', 'マイクをタップして「' + phrase + '」と言ってね');
   return new Promise((resolve, reject) => {
-    const settle = (error) => {
+    const settle = error => {
       if (done) return;
-      done = true;
-      stop();
-      if (stopRecording) { voice = stopRecording(false); stopRecording = null; }
+      done = true; attempt++; clearTimeout(timer); clearTimeout(stopTimer);
+      if (recorder?.state === 'recording') { try { recorder.stop(); } catch {} }
+      release(); audio.pause(); if (url) URL.revokeObjectURL(url);
       signal.removeEventListener('abort', abort);
-      toggle.onclick = next.onclick = null;
-      if (error) { voice.then(() => reject(error)); return; }
-      resolve(voice.then(blob => ({ matched, voice: matched ? blob : null })));
+      toggle.onclick = use.onclick = next.onclick = null;
+      if (error) reject(error); else resolve({ matched: Boolean(blob), voice: blob || null });
     };
     const abort = () => settle(new DOMException('中止しました', 'AbortError'));
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) { abort(); return; }
-    next.onclick = () => settle();
-    toggle.onclick = () => {
-      if (active) {
-        finish('idle', 'いただきます、しよう', 'マイクをタップ');
-        return;
-      }
+    next.onclick = () => { blob = null; settle(); };
+    use.onclick = () => settle();
+    const fail = message => {
+      clearTimeout(timer); clearTimeout(stopTimer); release();
+      toggle.disabled = false; toggle.textContent = 'もう一度録音する';
+      show('error', message);
+    };
+    const stop = () => {
+      if (recorder?.state !== 'recording') return;
+      clearTimeout(timer); toggle.disabled = true; show('processing', '録音を準備しています…');
+      stopTimer = setTimeout(() => { attempt++; fail('録音を保存できませんでした。もう一度試してね'); }, 2000);
+      try { recorder.stop(); } catch { attempt++; fail('録音を保存できませんでした。もう一度試してね'); }
+    };
+    toggle.onclick = async () => {
+      if (recorder?.state === 'recording') { stop(); return; }
+      const current = ++attempt; clearPreview(); toggle.disabled = true;
+      show('starting', 'マイクの許可が出たら「許可」を選んでね');
       try {
-        const speech = new Speech();
-        active = speech;
-        speech.lang = 'ja-JP';
-        speech.continuous = false;
-        speech.interimResults = false;
-        show('starting', '準備中…', 'マイクの許可が出たら「許可」');
-        const current = fn => (...args) => { if (!done && active === speech) fn(...args); };
-        speech.onstart = current(() => show('starting', '準備中…', 'もうすぐ聞き取るよ'));
-        speech.onaudiostart = current(() => {
-          show('listening', '「いただきます」と言ってね', '聞いてるよ');
-          if (!isIOS() && misses < 2 && !stopRecording) stopRecording = startRecording();
-        });
-        speech.onspeechstart = current(() => show('listening', 'うん、聞いてるよ', ''));
-        const processing = current(() => show('processing', '確認中…', 'もう話さなくてOK'));
-        speech.onspeechend = processing;
-        speech.onaudioend = processing;
-        const retry = () => finish('error', 'もう一回、言ってみて', 'マイクをタップで再開');
-        speech.onresult = current(event => {
-          matched = Array.from(event.results).some(result => result[0].transcript.replace(/\s/g, '').includes('いただきます'));
-          if (matched) finish('success', '聞こえた！', '');
-          else retry();
-        });
-        speech.onnomatch = current(retry);
-        speech.onend = current(retry);
-        speech.onerror = current(event => {
-          const detail = event.error === 'not-allowed' || event.error === 'service-not-allowed'
-            ? 'ブラウザでマイクを許可してね'
-            : event.error === 'no-speech' ? 'マイクをタップで再開'
-            : '接続やマイクを確認してね';
-          finish('error', 'マイクがおやすみ中', detail);
-        });
-        timer = setTimeout(current(() => finish('error', 'もう一回、言ってみて', 'マイクをタップで再開')), 15000);
-        speech.start();
-      } catch {
-        finish('error', 'マイクが使えないみたい', 'ブラウザのマイク設定を確認してね');
+        if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) throw new Error('このブラウザでは録音できません。別のブラウザで試してね');
+        const acquired = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        if (done || current !== attempt) { acquired.getTracks().forEach(t => t.stop()); return; }
+        stream = acquired;
+        const type = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported(t));
+        recorder = new MediaRecorder(stream, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
+        const chunks = []; const currentRecorder = recorder;
+        recorder.ondataavailable = event => { if (!done && current === attempt && event.data.size) chunks.push(event.data); };
+        recorder.onerror = () => { if (!done && current === attempt) { attempt++; fail('録音が止まりました。もう一度試してね'); } };
+        recorder.onstop = () => {
+          if (done || current !== attempt) return;
+          clearTimeout(timer); clearTimeout(stopTimer); release();
+          const recorded = new Blob(chunks, { type: currentRecorder.mimeType || type });
+          if (!recorded.size || recorded.size > 512 * 1024) { fail('声を保存できませんでした。短く録音し直してね'); return; }
+          blob = recorded; url = URL.createObjectURL(blob); audio.src = url; audio.hidden = use.hidden = false;
+          toggle.disabled = false; toggle.textContent = '録音し直す';
+          show('review', '録音できたよ。聞き直してから保存してね');
+        };
+        recorder.start(250); toggle.disabled = false; toggle.textContent = '録音を止める';
+        show('recording', '「' + phrase + '」と言ってね（最大10秒）');
+        timer = setTimeout(stop, 10000);
+      } catch (error) {
+        if (done || current !== attempt) return;
+        fail(error.name === 'NotAllowedError' ? 'マイクを許可してから、もう一度試してね' : error.message || 'マイクを使えませんでした');
       }
     };
   });
 }
+
+export const confirmMealVoice = (box, _Speech, signal) => recordMealVoice(box, 'いただきます', signal);

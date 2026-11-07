@@ -73,6 +73,16 @@ class MediaStorage:
                 data, content_type=content_type, if_generation_match=0, timeout=30
             )
 
+    def delete(self, name):
+        if self.memory is not None:
+            self.memory.pop(name, None)
+        else:
+            from google.api_core.exceptions import NotFound
+            try:
+                self.bucket.blob(name).delete(timeout=30)
+            except NotFound:
+                pass
+
     def read(self, name):
         if self.memory is not None:
             return self.memory[name]

@@ -1,7 +1,9 @@
 import { setupMoments } from './moments.js';
 import { startAmbience } from './ambience.js';
-import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
+import { client, start, houseApi, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
 import { capture } from './media.js';
+import { recordMealVoice } from './meal-voice.js';
+import { renderActivities } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
 import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
@@ -35,7 +37,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       : p.kind === 'photo' ? '<span class="mini-sun"></span>' + MEAL_SVG
       : '<span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
     if (p.image) { const img = document.createElement('img'); img.src = p.image; img.alt = TASKS[p.task].label + 'の記録'; d.replaceChildren(img); }
-    if (p.voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
+    if (p.voice_media_id || p.finished_voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
     return d;
   }
 
@@ -84,6 +86,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sl.querySelector('.gal-text').textContent = postLine(p);
       sl.querySelector('.tl-get').textContent = REWARD[p.task].item;
       if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => voiceOf(p.voice_media_id)));
+      if (p.finished_voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => voiceOf(p.finished_voice_media_id), 'ごちそうさま'));
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
       ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
       track.append(sl);
@@ -121,7 +124,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); if (GALS[id]) galVoice(id, GALS[id].title); });
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
       return b;
     };
     GAL_IDS.forEach((g) => box.append(mk(g)));
@@ -429,10 +432,45 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       b.addEventListener('click', () => judge(id, c));
       choice.append(b);
     });
+    if (id === 'meal') {
+      const meal = state.posts.find(p => p.who === ME && p.task === 'meal' && !p.finished_at);
+      if (meal) {
+        const finish = document.createElement('button'); finish.type = 'button'; finish.className = 'btn btn-sub';
+        finish.textContent = 'ごちそうさまを録音（' + meal.time + 'のごはん）';
+        finish.onclick = () => finishMeal(meal); choice.append(finish);
+      }
+    }
     if (!sheet.open) sheet.showModal();
     choice.querySelector('button').focus();
   }
   let captureController;
+  async function finishMeal(meal) {
+    captureController?.abort(); captureController = new AbortController();
+    const signal = captureController.signal;
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">食べ終わった？</h2>';
+    try {
+      const recording = await recordMealVoice(sheetBody, 'ごちそうさま', signal, { optional: false });
+      if (!recording.voice) { openSheet('meal'); return; }
+      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">この食事に声を残す？</h2><p></p><button class="btn btn-main" type="button" id="save-meal-finish">ごちそうさまを保存</button><button class="btn btn-sub" type="button" id="retry-meal-finish">録音し直す</button><p role="status"></p>';
+      sheetBody.querySelector('p').textContent = meal.time + 'のごはんに追加します。';
+      const url = URL.createObjectURL(recording.voice);
+      sheetBody.querySelector('p').after(voiceButton(() => url, 'ごちそうさま'));
+      signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true });
+      let mediaId;
+      $('retry-meal-finish').onclick = () => finishMeal(meal);
+      $('save-meal-finish').onclick = async () => {
+        const save = $('save-meal-finish'), retry = $('retry-meal-finish');
+        save.disabled = retry.disabled = $('sheet-close').disabled = true;
+        try {
+          mediaId ||= (await houseApi('/media?kind=voice', recording.voice)).id;
+          await houseApi('/posts/' + meal.id + '/meal-finish', { voice_media_id: mediaId }, 'PUT');
+          await refresh(); sheet.close(); showHouse(); toast('ごちそうさま、残したよ！');
+        } catch (e) { sheetBody.querySelector('[role=status]').textContent = e.message; save.disabled = retry.disabled = false; }
+        finally { $('sheet-close').disabled = false; }
+      };
+    } catch (e) { if (e.name !== 'AbortError') { openSheet('meal'); toast(e.message); } }
+  }
+
   // When the camera or mic cannot be used, ask for access in plain words.
   function deviceMessage(e, id) {
     const device = id === 'dryer' ? 'マイク' : 'カメラ';
@@ -464,8 +502,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
         const button = $('post'); button.disabled = true; $('redo').disabled = true; $('sheet-close').disabled = true;
         try {
           if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
-          // 声が送れなくても、ごはんの記録はできるようにする。
-          if (voice && !body.voice_media_id) body.voice_media_id = await houseApi('/media?kind=voice', voice).then(r => r.id, () => undefined);
+          // A confirmed recording must not disappear silently on upload failure.
+          if (voice && !body.voice_media_id) body.voice_media_id = (await houseApi('/media?kind=voice', voice)).id;
           const result = await houseApi('/completions', body);
           await refresh();
           sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
@@ -485,9 +523,10 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   const voiceUrls = new Map();
   const voiceOf = (id) => { if (!voiceUrls.has(id)) voiceUrls.set(id, houseApi('/media/' + id).then(URL.createObjectURL).catch((e) => { voiceUrls.delete(id); throw e; })); return voiceUrls.get(id); };
   let playing = null;
-  function voiceButton(src) {
+  function voiceButton(src, phrase = 'いただきます') {
     const b = document.createElement('button'); b.type = 'button'; b.className = 'voice-play';
     b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>いただきます を聞く</span>';
+    b.querySelector('span').textContent = phrase + ' を聞く';
     b.addEventListener('click', async (e) => {
       e.stopPropagation();
       try {
@@ -503,7 +542,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   function resultOf(c, fields, result) {
     if (fields.method === 'rhythm') return { label: 'リズム', main: fields.hits + ' / ' + fields.total_beats + ' ヒット', sub: '良 ' + (result.good || 0) + '・可 ' + (fields.hits - (result.good || 0)) };
     if (fields.method === 'sound') return { label: 'ドライヤーの音', main: Math.floor(fields.duration_seconds) + '秒 聞こえた', sub: '10秒でクリア' };
-    if (fields.method === 'photo_voice') return { label: 'ごはん', main: 'いただきます 言えた！', sub: '写真といっしょに残すよ' };
+    if (fields.method === 'photo_voice') return { label: 'ごはん', main: 'いただきますを記録！', sub: '写真といっしょに残すよ' };
     if (fields.method === 'photo') return { label: 'ごはん', main: '写真で記録', sub: 'ちゃんと食べてえらい' };
     if (fields.similarity !== undefined) return { label: 'まねっこ度', main: fields.similarity + '%', sub: 'お手本：' + c.title.replace(/のオリジナル$/, '') };
     if (c.mode === 'original-new') return { label: 'オリジナルのポーズ', main: '今日の一番乗り！', sub: 'みんなのお手本になるよ' };
@@ -534,10 +573,10 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     if (next) openSheet(next.id);
     else { showFridge(); boardSub.textContent = 'まずマグネットを1個貼ってね'; toast('冷蔵庫にマグネットを貼ると始められるよ'); }
   });
-  $('next-day').textContent = '友だちを招待する';
+  $('next-day').textContent = '招待';
   $('next-day').addEventListener('click', async () => {
     try {
-      const code = await inviteCode(); $('menu').close();
+      const code = await inviteCode();
       sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待コード貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input class="invite-code" aria-label="招待コード" readonly><button class="btn invite-copy" type="button">コピー</button>';
       const input = sheetBody.querySelector('.invite-code'); input.value = code; input.onclick = () => input.select();
       sheetBody.querySelector('.invite-copy').onclick = () => navigator.clipboard.writeText(code).then(() => toast('コピーしたよ'), () => { input.select(); toast('長押しでコピーしてね'); });
@@ -555,13 +594,13 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
 
   function receive(data) {
     dashboard = data; ME = client.uid;
+    if (data.house.members[ME]?.gal) { galPref = data.house.members[ME].gal; try { localStorage.setItem('cyl-gal', galPref); } catch {} }
     RESIDENTS = data.house.member_ids.map((who,i) => ({ who, color: ['pink','cyan','lilac','lime','pink','cyan'][i] }));
     const doors = document.querySelector('.doors'); doors.replaceChildren();
     RESIDENTS.forEach(r => { ROOM_COLORS[r.who] = r.color; const slot = document.createElement('div'); slot.className = 'door-slot'; slot.dataset.who = r.who; doors.append(slot); });
     doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,1fr))';
     $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
     document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who) + 'のへや'; } });
-    $('map-plan').classList.toggle('many-rooms', RESIDENTS.length > 4);
     const convert = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:data.timezone, hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise.text, galLine:p.praise.text });
     state.posts = data.posts.filter(p=>p.day===data.state.day).map(convert);
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
@@ -575,6 +614,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     document.querySelector('.account-icon').textContent = nameOf(ME).slice(0,1);
     renderAccountForm();
     renderAll();
+    renderActivities(data);
   }
   // 招待で入居したときに、誰と住むのかを見せる
   window.addEventListener('darupoyo:joined', () => {
@@ -614,6 +654,23 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('settings').addEventListener('close', () => toggleAccountForm(false));
   const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => disablePush().finally(() => logout().catch(e=>toast(e.message)));
   $('switch-house').addEventListener('click', switchHouse);
+  const deleteDialog = document.createElement('dialog'); deleteDialog.className = 'delete-dialog';
+  deleteDialog.setAttribute('aria-label', 'アカウント削除の確認');
+  deleteDialog.innerHTML = '<h2>アカウントを削除しますか？</h2><p>本人の写真・音声・投稿・リアクション・通知登録を削除し、すべてのハウスから退去します。他の住人の記録は残ります。最後の住人の場合はハウスも削除します。</p><p>この操作は元に戻せません。本人確認のため、Googleへの再ログインが必要です。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="btn btn-sub" data-cancel>やめる</button><button type="button" class="btn btn-main" data-confirm disabled>アカウントとデータを削除</button>';
+  document.body.append(deleteDialog);
+  const confirmDelete = deleteDialog.querySelector('[data-confirm]'), cancelDelete = deleteDialog.querySelector('[data-cancel]'), acknowledged = deleteDialog.querySelector('input');
+  let deleting = false;
+  $('delete-account').onclick = () => { acknowledged.checked = false; confirmDelete.disabled = true; deleteDialog.querySelector('[role=status]').textContent = ''; deleteDialog.showModal(); };
+  acknowledged.onchange = () => { confirmDelete.disabled = !acknowledged.checked; };
+  cancelDelete.onclick = () => deleteDialog.close();
+  deleteDialog.addEventListener('cancel', e => { if (deleting) e.preventDefault(); });
+  confirmDelete.onclick = async () => {
+    deleting = true; confirmDelete.disabled = cancelDelete.disabled = acknowledged.disabled = true;
+    deleteDialog.querySelector('[role=status]').textContent = '本人確認とデータの削除をしています…';
+    try { await deleteAccount(); }
+    catch (e) { deleteDialog.querySelector('[role=status]').textContent = '削除を完了できませんでした。再試行できます。' + e.message; }
+    finally { deleting = false; confirmDelete.disabled = cancelDelete.disabled = acknowledged.disabled = false; }
+  };
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
   document.body.classList.add('no-scroll');
@@ -641,11 +698,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   document.addEventListener('keydown', (e) => { if ($('house-view').hidden || document.querySelector('dialog[open]')) return; if (e.key === 'ArrowLeft') goScene(sceneIdx - 1); if (e.key === 'ArrowRight') goScene(sceneIdx + 1); });
   window.addEventListener('resize', () => goScene(sceneIdx, true));
   new MutationObserver(markScene).observe(plan, { subtree: true, attributes: true, attributeFilter: ['class'] });
-  const menu = $('menu');
-  $('open-menu').addEventListener('click', () => { document.querySelectorAll('.map-cell').forEach((c) => c.classList.toggle('is-here', Number(c.dataset.go) === sceneIdx)); menu.showModal(); });
-  $('menu-close').addEventListener('click', () => menu.close());
   const settings = $('settings');
-  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
+  $('open-settings').addEventListener('click', () => { renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
   // ---------- phone notifications (#58) ----------
   const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
   async function renderPush() {
@@ -672,7 +726,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.textContent = on ? 'オン' : 'オフ'; b.setAttribute('aria-pressed', String(on)); }
   $('sound-toggle').addEventListener('click', () => { setSound(!soundOn()); renderSound(); sfx.pop(); });
   $('settings-close').addEventListener('click', () => settings.close());
-  $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
+  $('open-howto').addEventListener('click', () => { $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
   $('howto-start').addEventListener('click', () => $('howto-page').close());
   // 初めて家に入ったときだけ、あそびかたを自動で開く
@@ -681,8 +735,6 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, '1'); } catch (e) { return; }
     $('howto-page').showModal();
   });
-  menu.addEventListener('click', (e) => { if (e.target === menu) menu.close(); });
-  document.querySelectorAll('.map-cell').forEach((c) => c.addEventListener('click', () => { menu.close(); if (c.dataset.whoMap) { goScene(4, true); showRoom(c.dataset.whoMap); } else goScene(Number(c.dataset.go)); }));
   window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = 4; window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
   window.__goLdk = () => goScene(1);
   requestAnimationFrame(() => goScene(1, true));

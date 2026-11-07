@@ -103,15 +103,20 @@ class Reaction(Model):
     emoji: Literal["heart", "clap", "sparkles"]
 
 
+class MealFinish(Model):
+    voice_media_id: UUID
+
+
 class Profile(Model):
     # Send either or both; omitted fields stay as they are.
+    gal: Literal["heisei", "reiwa", "kuro", "hime", "random"] | None = None
     theme: Literal["pink", "lilac", "cyan", "lime", "peach", "mint", "cream", "night"] | None = None
     display_name: str | None = Field(default=None, min_length=1, max_length=40, pattern=r"\S")
 
     @model_validator(mode="after")
     def any_field(self):
-        if self.theme is None and self.display_name is None:
-            raise ValueError("Send theme or display_name")
+        if self.theme is None and self.display_name is None and self.gal is None:
+            raise ValueError("Send theme, display_name or gal")
         return self
 
 

@@ -112,7 +112,7 @@ def test_health_auth_and_legacy_removed(client):
     assert client.get("/api/houses").status_code == 401
     assert client.get("/api/houses", headers={"Authorization": "Bearer garbage"}).status_code == 401
     assert client.post("/api/input", json={}).status_code == 404
-    assert client.get("/api/me", headers=auth()).json() == {"uid": "alice"}
+    assert client.get("/api/me", headers=auth()).json() == {"uid": "alice", "deletion_pending": False}
 
 
 def test_group_capacity_and_idempotent_join(client):
@@ -290,8 +290,8 @@ def test_first_pose_concurrent_and_reference_guard(client):
     assert e.value.status_code == 409
 
 
-def test_midnight_reset_and_expired_invitation():
-    now = [datetime(2026, 11, 5, 14, 59, tzinfo=UTC)]
+def test_four_am_reset_and_expired_invitation():
+    now = [datetime(2026, 11, 5, 18, 59, tzinfo=UTC)]
     domain = Domain(MemoryStore(), LOCAL, clock=lambda: now[0])
     h = domain.create_house("alice", HouseCreate(name="home", display_name="a"))["id"]
     token = domain.invite("alice", h)["token"]
@@ -560,3 +560,19 @@ def test_selfie_is_member_only_idempotent_and_not_a_chore(client):
 def test_public_config_includes_messaging_sender_id(client, monkeypatch):
     monkeypatch.setenv("FIREBASE_MESSAGING_SENDER_ID", "324099635682")
     assert client.get("/api/config").json()["firebase"]["messagingSenderId"] == "324099635682"
+
+
+@pytest.mark.parametrize("instant,expected", [
+    (datetime(2026, 11, 5, 15, 0, tzinfo=UTC), "2026-11-05"),
+    (datetime(2026, 11, 5, 18, 59, 59, tzinfo=UTC), "2026-11-05"),
+    (datetime(2026, 11, 5, 19, 0, tzinfo=UTC), "2026-11-06"),
+    (datetime(2026, 12, 31, 18, 59, tzinfo=UTC), "2026-12-31"),
+    (datetime(2026, 12, 31, 19, 0, tzinfo=UTC), "2027-01-01"),
+])
+def test_household_day_boundaries(instant, expected):
+    domain = Domain(MemoryStore(), LOCAL, clock=lambda: instant)
+    assert domain.day() == expected
+    house = domain.create_house("alice", HouseCreate(name="home", display_name="a"))["id"]
+    post, _ = domain.complete("alice", house, Completion(**sound()))
+    assert post["day"] == expected
+    assert domain.dashboard("alice", house)["state"]["day"] == expected

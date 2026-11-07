@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, collection, onSnapshot, connectFirestoreEmulator } from 'firebase/firestore';
 
 export const client = { uid: '', house: '', config: null, auth: null };
@@ -34,7 +34,7 @@ let update, report, timer, subscriptions = [], refreshing, refreshQueued = false
 const token = () => client.auth ? client.auth.currentUser.getIdToken() : Promise.resolve('dev:' + client.uid);
 export async function api(path, body, method = 'POST') {
   const response = await send(API_BASE + path, {
-    method: body === undefined ? 'GET' : method,
+    method: body === undefined && method === 'POST' ? 'GET' : method,
     headers: { Authorization: 'Bearer ' + await token(), ...(body instanceof Blob ? { 'Content-Type': body.type } : body === undefined ? {} : { 'Content-Type': 'application/json' }) },
     body: body instanceof Blob ? body : body === undefined ? undefined : JSON.stringify(body),
   });
@@ -89,6 +89,12 @@ export async function start(onUpdate, onError) {
   if (mockFetch) dialog.querySelector('[role=status]').textContent = 'モックで動いています（Backendなし）：記録はこのブラウザにだけ残ります';
   else if (client.config.data_backend === 'memory') dialog.querySelector('[role=status]').textContent = 'チームテスト用：記録はサーバーを再起動すると消えます';
   const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
+  const me = await api('/me');
+  if (me.deletion_pending) {
+    dialog.querySelector('[role=status]').textContent = 'アカウント削除が途中です。再開して残りのデータを削除してください。';
+    button('削除を再開', deleteAccount, dialog);
+    return;
+  }
   const houses = await api('/houses');
   const items = houses.items || houses;
   const enter = async id => { client.house = id; await refresh(); write('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
@@ -126,7 +132,7 @@ function subscribe() {
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'days'), sync, report));
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'posts'), sync, report));
   }
-  // Also handles midnight and recovery from missed notifications. Local mode polls.
+  // Also handles the 04:00 day boundary and recovery from missed notifications. Local mode polls.
   timer = setInterval(() => { if (!document.hidden) sync(); }, client.db ? 60000 : 2500);
   window.addEventListener('focus', sync);
 }
@@ -146,4 +152,20 @@ export async function logout() {
 export async function inviteCode() {
   const { token } = await houseApi('/invites', {});
   return token.length === 8 ? token.slice(0, 4) + '-' + token.slice(4) : token;
+}
+
+
+export async function deleteAccount() {
+  // Called directly from the final confirmation button, preserving popup activation.
+  if (client.auth?.currentUser) {
+    await reauthenticateWithPopup(client.auth.currentUser, new GoogleAuthProvider());
+  }
+  await api('/me', undefined, 'DELETE');
+  clearInterval(timer); subscriptions.forEach(stop => stop()); subscriptions = [];
+  for (const area of ['localStorage', 'sessionStorage']) {
+    remove('darupoyo-uid', area); remove('darupoyo-house-' + client.uid, area); remove('darupoyo-push', area);
+  }
+  images.forEach(URL.revokeObjectURL); images.clear();
+  if (client.auth) await signOut(client.auth);
+  location.reload();
 }

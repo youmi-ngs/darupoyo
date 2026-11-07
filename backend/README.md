@@ -40,3 +40,27 @@ Googleサービスの実接続確認にはプロジェクト設定が必要。�
 キー・token・環境固有の値は .env／環境変数で管理し、コミットしない。
 本番の認証・所属チェックはBackendが担当し、クライアントの自己申告uidを信用しない。
 Notionは変更せず、このリポジトリ内で実装と説明を管理する。
+
+
+### Account deletion and meal activity
+
+`DELETE /api/me` removes the authenticated resident's records and media, leaves all
+houses, and deletes their Firebase login last. Firebase requests require a sign-in
+within the last five minutes. A private deletion marker blocks new writes and
+allows retries after partial failure; `GET /api/me` exposes `deletion_pending` to
+show the recovery action. Other residents retain their records and an owner is
+reassigned when needed. The final resident's house is removed.
+
+Before deploying this feature to an existing project, run
+`node scripts/setup-account-deletion.mjs` from the repository root. It grants only
+`firebaseauth.users.delete` on the project and `storage.objects.delete` on the
+configured media bucket through dedicated custom roles. Full cloud setup includes
+this step.
+
+Household days start at 04:00 in `DAY_TIMEZONE`. Existing historical dates are not
+rewritten. `PUT /api/houses/{house}/posts/{post}/meal-finish` attaches an owned voice
+recording to the caller's meal for the current household day. Repeating the same
+voice ID is idempotent; it does not create a second completion. The day's `activity`
+map shares each resident's latest task and meal phase until the next action/day.
+
+A completed deletion keeps only an internal completion marker (no house IDs or user content), so requests authenticated before deletion cannot recreate data after cleanup.

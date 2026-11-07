@@ -6,7 +6,7 @@ test('how-to opens automatically only on the first entry (#14)', async ({ browse
   await expect(page.locator('#howto-page')).toBeVisible();
   await page.getByRole('button', { name: 'はじめる', exact: true }).click();
   await expect(page.locator('#howto-page')).toBeHidden();
-  await page.locator('#open-menu').click(); await expect(page.locator('#menu')).toBeVisible(); await page.locator('#menu-close').click();
+  await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible(); await page.locator('#howto-close').click();
   await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.door')).toHaveCount(1);
   await expect(page.locator('#howto-page')).toBeHidden();

@@ -24,6 +24,7 @@ test('camera capture, photo-only fallback, save and stream release',async({page,
   await page.getByRole('button',{name:'この写真を撮る'}).waitFor({state:'visible'});
   await page.evaluate(()=>{window.testStream=document.querySelector('video').srcObject;});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
+  expect(await page.locator('.capture canvas').evaluate(c => c.width / c.height)).toBeCloseTo(5 / 6);
   // 撮影直後に確認でき、撮り直してもカメラは動いたまま（#12 #13）
   await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('video')).toBeHidden();
   await page.getByRole('button',{name:'もう1回撮る'}).click();
@@ -51,15 +52,16 @@ test('preset pose shows live guidance and rejects a frame without a person',asyn
 });
 test('いただきます is recorded with the meal and plays back from the album (#9 #33)',async({page,context})=>{
   await context.grantPermissions(['camera','microphone']);
-  // 音声認識の代わり：はじめるとすぐ「いただきます」が聞こえたことにする（録音は本物のマイク＝テスト用の音）。
-  await context.addInitScript(()=>{window.SpeechRecognition=window.webkitSpeechRecognition=class{start(){setTimeout(()=>{this.onaudiostart?.();setTimeout(()=>this.onresult?.({results:[[{transcript:'いただきます'}]]}),600);},50);}abort(){}};});
   await page.goto('/');await page.getByLabel('あなたの名前').fill('itadaki');await page.getByLabel('新しいハウスの名前').fill('voice');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:'ごはんを撮る'}).click();
   await page.getByRole('button',{name:'この写真を撮る'}).click();await page.getByRole('button',{name:'この写真を使う'}).click();
   await page.getByRole('button',{name:'マイクをオンにする'}).click();
-  await expect(page.getByText('聞こえた！')).toBeVisible();
-  await page.getByRole('button',{name:'次へ'}).click();
-  await expect(page.locator('.result-main')).toHaveText('いただきます 言えた！');
+  await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'recording');
+  // Allow the real fake-device audio encoder to produce the short spoken clip.
+  await page.waitForTimeout(700);
+  await page.getByRole('button', { name: '録音を止める' }).click();
+  await page.getByRole('button', { name: 'この音声を使う' }).click();
+  await expect(page.locator('.result-main')).toHaveText('いただきますを記録！');
   await expect(page.locator('.result-card .voice-play')).toBeVisible();
   const saved=page.waitForResponse(r=>r.url().includes('/completions'));
   await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();

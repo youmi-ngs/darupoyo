@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from fastapi import HTTPException
 
 from .services import REWARDS
+from .accounts import require_active
 
 
 def utcnow():
@@ -31,6 +32,7 @@ def digest(value):
 
 
 def require_member(store, house_id, uid):
+    require_active(store, uid)
     house = store.get(f"houses/{house_id}")
     if not house or uid not in house["member_ids"]:
         raise HTTPException(404, "House not found")
@@ -38,15 +40,17 @@ def require_member(store, house_id, uid):
 
 
 def new_day(day):
-    return {"day": day, "goals": {}, "completed": {}, "poses": {}, "recent": [], "latest": {}}
+    return {"day": day, "goals": {}, "completed": {}, "poses": {}, "recent": [], "latest": {}, "activity": {}}
 
 
 class Domain:
     def __init__(self, store, settings, clock=utcnow):
         self.store, self.settings, self.clock = store, settings, clock
 
-    def day(self):
-        return self.clock().astimezone(ZoneInfo(self.settings.timezone)).date().isoformat()
+    def day(self, now=None):
+        # A household day runs from local 04:00 through the next 03:59.
+        local = (now or self.clock()).astimezone(ZoneInfo(self.settings.timezone))
+        return (local - timedelta(hours=4)).date().isoformat()
 
     def create_house(self, uid, body):
         house_id = str(uuid4())
@@ -58,7 +62,10 @@ class Domain:
             "members": {uid: {"display_name": body.display_name}},
             "created_at": self.clock().isoformat(),
         }
-        self.store.atomic(lambda tx: tx.set(f"houses/{house_id}", house))
+        def create(tx):
+            require_active(tx, uid)
+            tx.set(f"houses/{house_id}", house)
+        self.store.atomic(create)
         return house
 
     def invite(self, uid, house_id):
@@ -71,7 +78,7 @@ class Domain:
                 code = "".join(secrets.choice(INVITE_ALPHABET) for _ in range(INVITE_LENGTH))
                 if not tx.get(f"invites/{digest(code)}"):
                     break
-            tx.set(f"invites/{digest(code)}", {"house_id": house_id, "expires_at": expires})
+            tx.set(f"invites/{digest(code)}", {"house_id": house_id, "expires_at": expires, "created_by": uid})
             return code
 
         token = self.store.atomic(run)
@@ -79,12 +86,13 @@ class Domain:
 
     def join(self, uid, body):
         def run(tx):
+            require_active(tx, uid)
             invitation = tx.get(f"invites/{digest(normalize_invite(body.token))}")
             if not invitation or datetime.fromisoformat(invitation["expires_at"]) <= self.clock():
                 raise HTTPException(404, "Invite not found or expired")
             path = f"houses/{invitation['house_id']}"
             house = tx.get(path)
-            if not house:
+            if not house or not house["member_ids"]:
                 raise HTTPException(404, "House not found")
             if uid in house["member_ids"]:
                 return house
@@ -115,7 +123,7 @@ class Domain:
                       "user_id": uid, "media_id": str(body.media_id),
                       "caption": body.caption.strip(), "created_at": now.isoformat()}
             tx.set(f"houses/{house_id}/moments/{moment['id']}", moment)
-            tx.set(path, {"id": moment["id"], "fingerprint": fingerprint})
+            tx.set(path, {"id": moment["id"], "fingerprint": fingerprint, "user_id": uid})
             return moment
         return self.store.atomic(apply)
 
@@ -147,7 +155,7 @@ class Domain:
 
     def complete(self, uid, house_id, body):
         now = self.clock()
-        day = now.astimezone(ZoneInfo(self.settings.timezone)).date().isoformat()
+        day = self.day(now)
         day_path = f"houses/{house_id}/days/{day}"
         request_path = f"houses/{house_id}/requests/{digest(uid + ':' + str(body.request_id))}"
         fingerprint = digest(json.dumps(body.model_dump(mode="json"), sort_keys=True))
@@ -155,7 +163,7 @@ class Domain:
         chore = body.chore.value
 
         def run(tx):
-            require_member(tx, house_id, uid)
+            house = require_member(tx, house_id, uid)
             prior = tx.get(request_path)
             if prior:
                 if prior["fingerprint"] != fingerprint:
@@ -171,6 +179,9 @@ class Domain:
                 voice = tx.get(f"houses/{house_id}/media/{body.voice_media_id}")
                 if not voice or voice["owner_id"] != uid or voice["kind"] != "voice":
                     raise HTTPException(422, "Missing or incompatible owned voice")
+            # Ignore a departed resident's template while their deletion cleans
+            # up historical records; never create a new dangling reference.
+            state['poses'] = {k: p for k, p in state['poses'].items() if p['user_id'] in house['member_ids']}
             # All reads precede writes for Firestore transactions.
             first = chore not in state["poses"] and body.method == "pose"
             template = state["poses"].get(chore)
@@ -190,7 +201,7 @@ class Domain:
             sync = [
                 other
                 for other, latest in state["latest"].get(chore, {}).items()
-                if other != uid
+                if other != uid and other in house["member_ids"]
                 and 0
                 <= (now - datetime.fromisoformat(latest)).total_seconds()
                 <= self.settings.sync_seconds
@@ -223,6 +234,10 @@ class Domain:
             if chore not in completed:
                 completed.append(chore)
             state["latest"].setdefault(chore, {})[uid] = now.isoformat()
+            state.setdefault("activity", {})[uid] = {
+                "chore": chore, "phase": "eating" if chore == "meal" else "done",
+                "gal": body.gal, "at": now.isoformat(), "post_id": post_id,
+            }
             state["recent"] = [
                 {
                     k: post[k]
@@ -231,7 +246,7 @@ class Domain:
             ] + state["recent"][:49]
             tx.set(f"houses/{house_id}/posts/{post_id}", post)
             tx.set(day_path, state)
-            tx.set(request_path, {"fingerprint": fingerprint, "post_id": post_id})
+            tx.set(request_path, {"fingerprint": fingerprint, "post_id": post_id, "user_id": uid})
             return post, True
 
         return self.store.atomic(run)
@@ -241,6 +256,9 @@ class Domain:
 
         def run(tx):
             post = tx.get(path)
+            if not post:
+                raise HTTPException(409, "Post was removed")
+            require_active(tx, post["user_id"])
             post["praise"] = praise
             tx.set(path, post)
             return post
@@ -251,6 +269,8 @@ class Domain:
         def run(tx):
             house = require_member(tx, house_id, uid)
             member = house["members"][uid]
+            if body.gal is not None:
+                member["gal"] = body.gal
             if body.theme is not None:
                 member["theme"] = body.theme
             if body.display_name is not None:
@@ -282,4 +302,36 @@ class Domain:
             tx.set(path, post)
             return post
 
+        return self.store.atomic(run)
+
+
+    def finish_meal(self, uid, house_id, post_id, body):
+        now = self.clock()
+        path = f"houses/{house_id}/posts/{post_id}"
+        day_path = f"houses/{house_id}/days/{self.day(now)}"
+        def run(tx):
+            require_member(tx, house_id, uid)
+            post = tx.get(path)
+            voice = tx.get(f"houses/{house_id}/media/{body.voice_media_id}")
+            state = tx.get(day_path)
+            if not post or post['user_id'] != uid or post['chore'] != 'meal':
+                raise HTTPException(404, "Own meal not found")
+            if post['day'] != self.day(now):
+                raise HTTPException(409, "This meal belongs to a previous day")
+            if not voice or voice['owner_id'] != uid or voice['kind'] != 'voice':
+                raise HTTPException(422, "Missing owned voice recording")
+            if post.get('finished_voice_media_id'):
+                if post['finished_voice_media_id'] != str(body.voice_media_id):
+                    raise HTTPException(409, "This meal is already finished")
+                return post
+            post['finished_voice_media_id'] = str(body.voice_media_id)
+            post['finished_at'] = now.isoformat()
+            state = state or new_day(self.day(now))
+            state.setdefault('activity', {})[uid] = {
+                'chore': 'meal', 'phase': 'finished', 'gal': post['gal'],
+                'at': now.isoformat(), 'post_id': post_id,
+            }
+            tx.set(path, post)
+            tx.set(day_path, state)
+            return post
         return self.store.atomic(run)
