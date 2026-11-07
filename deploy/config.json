@@ -8,7 +8,7 @@
   "hostingSite": "darupoyo",
   "geminiModel": "gemini-3.5-flash-lite",
   "storageBucket": "darupoyo-8ed91.firebasestorage.app",
-  "webPushKey": "",
+  "webPushKey": "BNXh8BsNBvDWB82yBn6_kOrjVFcX1rKga8kqZnCiFO5UIyimTsdMJNkBcM3IYQGV48ZX4qnzEUkHd5JuuiyrIwQ",
   "schedulerServiceAccount": "darupoyo-scheduler",
   "schedulerAudience": "darupoyo-evening-nudge"
 }
