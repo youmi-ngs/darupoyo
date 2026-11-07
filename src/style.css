@@ -556,7 +556,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .top-ui .scene-tabs { flex-wrap: nowrap; }
 .scene-tab { background: rgba(255, 255, 255, .88); box-shadow: var(--soft-shadow); }
 .ham { width: 42px; height: 42px; flex: none; border-radius: 14px; border: 2px solid var(--ink); background: var(--paper); box-shadow: var(--soft-shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; position: relative; }
-.ham span { width: 18px; height: 2.5px; border-radius: 2px; background: var(--ink); }
+.ham span { width: 18px; height: 3px; flex-shrink: 0; border-radius: 2px; background: var(--ink); }
 /* drawer */
 dialog.drawer { margin: 0; padding: 0; border: 0; border-right: 2.5px solid var(--ink); width: min(340px, 88vw); max-width: none; height: 100%; max-height: none; background: #FFFFFF; color: var(--ink); }
 dialog.drawer::backdrop { background: rgba(59, 37, 96, .35); }
@@ -977,3 +977,29 @@ dialog.log-modal, dialog.photo-modal { overflow: hidden; }
 .pm-slide > .voice-play { align-self: center; }
 .voice-badge { position: absolute; right: 2px; bottom: 2px; width: 18px; height: 18px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--pink); color: var(--ink); font-size: 11px; font-weight: 900; line-height: 1; }
 @media (prefers-reduced-motion: reduce) { .voice-play.is-playing { animation: none; } }
+
+/* Keep decoration previews readable without counting a chore as completed. */
+.room-view.is-decorating .mr-dark { opacity: 0; }
+.room-view.is-decorating .mr-plate span { visibility: hidden; }
+.window-sky { fill: var(--window-sky, #CFE9FF); transition: fill 2s; }
+.window-cloud, .window-rain { display: none; }
+body[data-weather="cloudy"] .window-cloud, body[data-weather="rain"] .window-cloud,
+body[data-weather="snow"] .window-cloud { display: initial; }
+body[data-weather="rain"] .window-rain { display: initial; }
+body[data-daylight="night"] .window-sun { fill: #FFFCE3; }
+body[data-daylight] .scene[data-scene="balcony"], body[data-daylight] .sv-balcony { --sv-wall: var(--outdoor-sky); }
+body[data-daylight="night"] .sv-sun { background: #FFFCE3; box-shadow: 0 0 24px #fff9; }
+.plan.is-swaying .sv-obj, .plan.is-swaying .sv-hit, .plan.is-swaying .sv-fridge {
+  transform-origin: 50% 100%; animation: furniture-sway .65s ease-out;
+}
+@keyframes furniture-sway { 0% { rotate: 0deg; } 30% { rotate: var(--sway); } 65% { rotate: calc(var(--sway) * -.4); } 100% { rotate: 0deg; } }
+@media (prefers-reduced-motion: reduce) { .plan.is-swaying .sv-obj, .plan.is-swaying .sv-hit, .plan.is-swaying .sv-fridge { animation: none; } }
+
+.weather-credit { position:absolute; right: 12px; bottom: 8px; z-index: 3; color: var(--ink); font-size: 10px; background: #ffffffb8; padding: 3px 6px; border-radius: 8px; }
+body[data-weather="snow"] .window-rain { display: initial; stroke: white; stroke-width: 4; stroke-dasharray: 1 5; }
+.moments-dialog { width: min(94vw, 480px); max-height: 90dvh; overflow:auto; padding: 20px; border: 3px solid var(--ink); border-radius: 24px; background: var(--paper); color: var(--ink); }
+.moments-dialog article { padding: 16px 0; border-bottom: 1px solid #3b256033; }
+.moments-dialog img { display:block; width:100%; max-height:55vh; object-fit:contain; border-radius:16px; margin-top:8px; }
+.moments-dialog time { display:block; font-size:12px; }
+.moments-dialog input { display:block; width:100%; padding:10px; margin:8px 0; }
+.moments-dialog .btn { margin: 5px 4px 5px 0; }

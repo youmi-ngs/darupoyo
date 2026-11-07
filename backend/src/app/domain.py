@@ -97,6 +97,28 @@ class Domain:
 
         return self.store.atomic(run)
 
+    def share_moment(self, uid, house_id, body):
+        now = self.clock()
+        path = f"houses/{house_id}/moment_requests/{uid}_{body.request_id}"
+        fingerprint = digest(body.model_dump_json())
+        def apply(tx):
+            require_member(tx, house_id, uid)
+            prior = tx.get(path)
+            if prior:
+                if prior["fingerprint"] != fingerprint:
+                    raise HTTPException(409, "Request ID already used")
+                return tx.get(f"houses/{house_id}/moments/{prior['id']}")
+            media = tx.get(f"houses/{house_id}/media/{body.media_id}")
+            if not media or media["owner_id"] != uid or media["kind"] != "selfie":
+                raise HTTPException(422, "Missing or incompatible owned selfie")
+            moment = {"id": now.strftime("%Y%m%dT%H%M%S%f") + "_" + uuid4().hex,
+                      "user_id": uid, "media_id": str(body.media_id),
+                      "caption": body.caption.strip(), "created_at": now.isoformat()}
+            tx.set(f"houses/{house_id}/moments/{moment['id']}", moment)
+            tx.set(path, {"id": moment["id"], "fingerprint": fingerprint})
+            return moment
+        return self.store.atomic(apply)
+
     def dashboard(self, uid, house_id, day=None):
         house = require_member(self.store, house_id, uid)
         date = day or self.day()

@@ -142,3 +142,10 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 - 送信は data のみの web push（`title` / `body` / `link`）。表示は `public/push-sw.js`。アプリを開いているときは画面内に出す
 - 端末トークンは `notify/{uid}` に保存し、ブラウザからは読めない。届かなくなったトークンは自動で消す
 - `/api/config` の `push.vapid_key` が空なら通知はオフ（画面に設定を出さない）
+
+### 任意の自撮り・近況共有
+
+`POST /api/houses/{house_id}/media?kind=selfie` に写真を送る（既存の画像正規化でEXIF等を除去）。
+`POST /api/houses/{house_id}/moments` は `{request_id, media_id, caption?}` を受け取り、ハウスの住人が所有する自撮りだけを保存する。`caption` は140文字まで。同じrequest_idで同じ内容を再送しても重複せず、異なる内容なら409。
+`GET /api/houses/{house_id}/moments?before=...` は新しい順に30件とnext_cursorを返す。
+閲覧・画像取得にはハウスの所属が必要。近況は家事の記録・部屋の点灯・ハピネス・報酬に影響しない。

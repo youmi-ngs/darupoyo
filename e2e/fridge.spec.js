@@ -10,14 +10,7 @@ test('the fridge board says it is today\'s to-do list (#22)', async ({ page }) =
   await page.locator('#open-fridge').click();
   await expect(page.locator('#board-title')).toBeVisible();
   await expect(page.locator('#board-title')).toHaveText('今日やること');
-  // 新しいハウスでは、洗濯とゴミ捨てが最初から貼ってある（#23）。
-  await expect(page.locator('#board-magnets .magnet')).toHaveText(['洗濯', 'ゴミ捨て']);
-  await page.getByRole('button', { name: '洗濯をボードから外す' }).click();
-  const cleared = page.waitForResponse(r => r.url().includes('/goals') && r.request().postData()?.includes('"chores":[]'));
-  await page.getByRole('button', { name: 'ゴミ捨てをボードから外す' }).click();
   await expect(page.locator('#board-magnets .board-empty')).toHaveText('今日やる家事をここに貼る');
-  // 外したら、読み込み直しても勝手に戻らない。
-  await cleared;
   await page.reload();
   await page.locator('[data-go="1"].scene-tab').click();
   await page.locator('#open-fridge').click();

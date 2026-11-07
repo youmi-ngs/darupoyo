@@ -1,3 +1,5 @@
+import { setupMoments } from './moments.js';
+import { startAmbience } from './ambience.js';
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
@@ -9,8 +11,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   const nameOf = uid => dashboard?.house.members[uid]?.display_name || '住人';
   const toApi = id => id === 'trash' ? 'garbage' : id;
   const fromApi = id => id === 'garbage' ? 'trash' : id;
-  let savingGoals = Promise.resolve(), pendingGoals = 0, defaultedDay = '';
-  const DEFAULT_GOALS = ['laundry', 'garbage'];
+  let savingGoals = Promise.resolve(), pendingGoals = 0;
   function saveGoals() {
     const chores = state.board.map(b => toApi(b.id)); pendingGoals++;
     savingGoals = savingGoals.then(() => houseApi('/goals', { chores }, 'PUT')).catch(e => toast(e.message)).finally(async () => { pendingGoals--; if (!pendingGoals) await refresh().catch(e => toast(e.message)); });
@@ -324,8 +325,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       pop.append(b);
     });
   }
-  function closePaint() { $('paint-pop').hidden = true; $('room-paint').setAttribute('aria-expanded', 'false'); }
-  $('room-paint').addEventListener('click', () => { const p = $('paint-pop'); p.hidden = !p.hidden; $('room-paint').setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); });
+  function closePaint() { $('room-view').classList.remove('is-decorating'); $('paint-pop').hidden = true; $('room-paint').setAttribute('aria-expanded', 'false'); }
+  $('room-paint').addEventListener('click', () => { const p = $('paint-pop'); p.hidden = !p.hidden; $('room-view').classList.toggle('is-decorating', !p.hidden); $('room-paint').setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); });
   function showRoom(who, refresh) {
     currentRoom = who;
     const mine = state.posts.filter((p) => p.who === who);
@@ -569,9 +570,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     Object.entries(data.state.completed).forEach(([uid,chores])=>chores.forEach(t=>{ (state.doneToday[fromApi(t)] ||= []).push(uid); }));
     if (!pendingGoals) {
       // その日まだ「今日やること」を触っていなければ、洗濯とゴミ捨てを最初から貼っておく（#23）。
-      const mine = data.state.goals[ME], fresh = !mine && defaultedDay !== data.state.day;
-      state.board = (mine || (fresh ? DEFAULT_GOALS : [])).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
-      if (fresh) { defaultedDay = data.state.day; saveGoals(); }
+      state.board = (data.state.goals[ME] || []).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
     }
     state.originals = Object.fromEntries(Object.entries(data.state.poses).map(([t,p])=>[fromApi(t),{ ...p, fig:0, by:p.user_id }]));
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
@@ -624,6 +623,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   document.body.classList.add('no-scroll');
 
   // ---------- walk between rooms ----------
+  startAmbience();
+  setupMoments();
   const plan = $('plan'), scenes = [...plan.querySelectorAll('.scene')], tabs = [...document.querySelectorAll('.scene-tab')];
   let sceneIdx = 1;
   function goScene(i, instant) {

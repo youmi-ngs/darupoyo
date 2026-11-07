@@ -44,16 +44,16 @@
       </div>
       <div class="scene" data-scene="ldk" aria-label="リビング">
         <div class="sv sv-ldk">
-          <span class="sv-label">リビング</span>
-          <svg class="sv-obj" style="left:52%;top:24%;width:40%" viewBox="0 0 140 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round"><rect x="16" y="8" width="108" height="78" rx="6" fill="#CFE9FF"/><circle cx="96" cy="34" r="14" fill="#FFF4A8"/><path d="M70 8v78M16 47h108" stroke-width="2"/><path d="M4 4h132" stroke-width="3"/><path d="M8 4q10 40 0 90h14q-8-46 0-90z" fill="#FFB3DE"/><path d="M132 4q-10 40 0 90h-14q8-46 0-90z" fill="#FFB3DE"/></g></svg>
-          <svg class="sv-obj" style="left:40%;top:28%;width:9%" viewBox="0 0 30 30" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linecap="round"><circle cx="15" cy="15" r="12" fill="#FFFFFF"/><path d="M15 15V8M15 15l5 3"/></g></svg>
+          <span class="sv-label">リビング</span><a class="weather-credit" href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" aria-label="東京の天気・Open-Meteo">東京の空 · Open-Meteo</a>
+          <svg class="sv-obj" style="left:52%;top:24%;width:40%" viewBox="0 0 140 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round"><rect class="window-sky" x="16" y="8" width="108" height="78" rx="6" fill="#CFE9FF"/><circle class="window-sun" cx="96" cy="34" r="14" fill="#FFF4A8"/><path class="window-cloud" d="M34 35q0-9 9-9q5-10 14-2q12 0 12 11z" fill="#FFFFFF"/><path class="window-rain" d="M40 43l-3 6m15-6l-3 6m15-6l-3 6" stroke="#7DB6E0"/><path d="M70 8v78M16 47h108" stroke-width="2"/><path d="M4 4h132" stroke-width="3"/><path d="M8 4q10 40 0 90h14q-8-46 0-90z" fill="#FFB3DE"/><path d="M132 4q-10 40 0 90h-14q8-46 0-90z" fill="#FFB3DE"/></g></svg>
+          <svg class="sv-obj" style="left:40%;top:28%;width:9%" viewBox="0 0 30 30" role="img" aria-label="時計" id="room-clock"><g stroke="#3B2560" stroke-width="2.5" stroke-linecap="round"><circle cx="15" cy="15" r="12" fill="#FFFFFF"/><path class="clock-hour" d="M15 15V9"/><path class="clock-minute" d="M15 15V6" stroke-width="1.8"/></g></svg>
           <button class="mini-fridge sv-fridge" type="button" id="open-fridge" aria-label="冷蔵庫をひらく（今日やる家事を決める）">
             <span class="mini-board" id="mini-board" aria-hidden="true"></span>
             <span class="mini-photos" id="mini-photos" aria-hidden="true"></span>
             <span class="tap-hint">冷蔵庫</span>
           </button>
           <button class="sv-hit" type="button" data-chore="meal" style="left:40%;bottom:calc(var(--fl) - 42px);width:54%">
-            <svg viewBox="0 0 180 120" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M18 30v86M38 30v86" /><rect x="10" y="22" width="36" height="46" rx="8" fill="#D9C2FF"/><path d="M142 30v86M162 30v86"/><rect x="134" y="22" width="36" height="46" rx="8" fill="#A8E6FF"/><rect x="24" y="52" width="132" height="14" rx="4" fill="#F2D9C0"/><path d="M40 66v50M140 66v50" stroke-width="4"/><ellipse cx="70" cy="48" rx="20" ry="6" fill="#FFFFFF"/><path d="M56 46q14-16 28 0" fill="#FFF4A8"/><ellipse cx="112" cy="48" rx="18" ry="6" fill="#FFFFFF"/><path d="M100 46q12-14 24 0" fill="#FFB3DE"/></g></svg>
+            <svg viewBox="0 0 180 120" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M18 30v86M38 30v86" /><rect x="10" y="22" width="36" height="46" rx="8" fill="#D9C2FF"/><path d="M142 30v86M162 30v86"/><rect x="134" y="22" width="36" height="46" rx="8" fill="#A8E6FF"/><rect x="24" y="52" width="132" height="14" rx="4" fill="#F2D9C0"/><path d="M40 66v50M140 66v50" stroke-width="4"/><path d="M49 44q4 20 22 20t22-20" fill="#A8E6FF"/><path d="M49 43q0-8 8-8q3-10 11-5q8-7 14 3q10 0 11 10z" fill="#FFFFFF"/><path d="m59 40 3-2m8 1 3-2m7 5 3-2" stroke="#D4D4D4" stroke-width="1.5"/><ellipse cx="119" cy="51" rx="21" ry="8" fill="#FFFFFF"/><path d="M102 50q5-15 13-8q10-8 20 9z" fill="#E89A65"/><path d="m138 37 22 9m-21-13 22 9" stroke="#AF7955" stroke-width="3"/></g></svg>
             <span class="area-task">ごはん</span><span class="who-dots"></span>
           </button>
         </div>
@@ -74,10 +74,11 @@
           <span class="sv-label">ベランダ</span>
           <span class="sv-sun" aria-hidden="true"></span>
           <button class="sv-hit sv-laundry" type="button" data-chore="laundry" style="left:4%;top:20%;width:92%">
-            <svg viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M6 14h308" stroke-width="4"/><path d="M40 14l-8 12h16zM120 14l-8 12h16zM200 14l-8 12h16zM280 14l-8 12h16z" fill="#FFFFFF" stroke-width="2"/><path d="M14 26l18-4h16l18 4l-6 18h-8v44h-44v-44h-8z" fill="#A8E6FF"/><path d="M96 26h48v60h-48z" fill="#FFB3DE"/><path d="M96 46h48" stroke-width="2"/><path d="M176 26h48l-6 72h-14l-4-50l-4 50h-14z" fill="#E6F7A0"/><path d="M256 26h48l-4 22l-8 2v44h-24v-44l-8-2z" fill="#D9C2FF"/></g></svg>
+            <svg viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M6 14h308" stroke-width="4"/><path d="M40 14l-8 12h16zM120 14l-8 12h16zM200 14l-8 12h16zM280 14l-8 12h16z" fill="#FFFFFF" stroke-width="2"/><path d="M14 28q10-3 18-6q8 10 16 0q8 3 18 6l-6 18q-5 1-9-2l1 41q-20 8-44 0l1-41q-5 3-9 2z" fill="#A8E6FF"/><path d="M96 26q24 4 48 0l-2 58q-11 6-22 1q-13 5-25 0z" fill="#FFB3DE"/><path d="M96 46h48" stroke-width="2"/><path d="M177 26q23 4 46 0l-5 70q-7 4-14 0l-4-48l-4 48q-7 4-14 0z" fill="#E6F7A0"/><path d="M256 26h48l-4 22l-8 2v44h-24v-44l-8-2z" fill="#D9C2FF"/></g></svg>
             <span class="area-task">洗濯</span><span class="who-dots"></span>
           </button>
           <span class="sv-rail" aria-hidden="true"></span>
+          <svg class="sv-obj laundry-basket" style="left:10%;bottom:calc(var(--fl) - 24px);width:35%" viewBox="0 0 120 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M15 48q-5-24 20-22q5-20 27-7q28-7 31 17q18-5 15 18" fill="#FFB3DE"/><path d="M18 46q12-23 29-10q5-13 20-3l9 18" fill="#A8E6FF"/><path d="M10 45h100l-12 45H22z" fill="#FFF4A8"/><path d="M32 57l4 22m16-22 2 22m16-22-2 22m20-22-4 22M18 67h84" fill="none"/><rect x="8" y="43" width="104" height="10" rx="5" fill="#F2D9C0"/></g></svg>
           <svg class="sv-obj" style="right:6%;bottom:calc(var(--fl) - 10px);width:18%" viewBox="0 0 60 80" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M30 44q-20-10-22-34q18 6 22 26q4-20 22-26q-2 24-22 34" fill="#7BC47F"/><path d="M14 44h32l-4 32H18z" fill="#F2D9C0"/></g></svg>
         </div>
       </div>
@@ -173,6 +174,7 @@
       <button class="map-cell" type="button" style="grid-area:wash" data-go="2" data-chore-map="dryer">おふろば<small>ドライヤーかます</small></button>
       <button class="map-cell" type="button" style="grid-area:entry" data-go="0" data-chore-map="trash">玄関<small>ゴミとおさらば</small></button>
     </div>
+    <button class="btn btn-main" type="button" id="open-moments">みんなの今 📷</button>
     <h2 class="drawer-h">け〜じばん</h2>
     <div class="board-panel">
       <p class="board-panel-title">リビングの掲示板</p>

@@ -76,7 +76,7 @@ export async function capture(root, chore, choice, reference, signal) {
     const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true;
     const count = document.createElement('span'); count.className = 'capture-count'; count.setAttribute('aria-hidden', 'true'); count.hidden = true;
     live.append(video, count); box.append(live);
-    const liveText = chore === 'meal' ? 'ごはんを撮影してください。写真だけで記録できます。' : '全身を枠に入れて撮影。背景は端末内で切り抜いてから送ります。';
+    const liveText = chore === 'selfie' ? '今のじぶんを、ハウスのみんなに。' : chore === 'meal' ? 'ごはんを撮影してください。写真だけで記録できます。' : '全身を枠に入れて撮影。背景は端末内で切り抜いてから送ります。';
     status.textContent = liveText;
     if (reference?.image && choice.mode === 'original-copy') { const img = document.createElement('img'); img.src = reference.image; img.alt = '今日のお手本'; img.style.maxHeight = '150px'; box.append(img); }
     const stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal);
@@ -89,7 +89,7 @@ export async function capture(root, chore, choice, reference, signal) {
         await landmarker.setOptions({ runningMode: 'VIDEO' }); check(signal);
         stopPreview = livePreview(video, landmarker, choice, reference, status, resources);
       }
-      const picker = chore === 'meal' ? null : timerPicker(box);
+      const picker = (chore === 'meal' || chore === 'selfie') ? null : timerPicker(box);
       await action(box, 'この写真を撮る', signal); check(signal);
       stopPreview();
       const seconds = picker ? picker.seconds() : 0; picker?.remove();
@@ -100,13 +100,14 @@ export async function capture(root, chore, choice, reference, signal) {
       live.hidden = true; canvas.hidden = false;
     };
     const stopCamera = () => { stream.getTracks().forEach(t => t.stop()); live.remove(); };
-    if (chore === 'meal') {
+    if (chore === 'meal' || chore === 'selfie') {
       for (;;) {
         await takePhoto();
         status.textContent = '撮れた写真を確認してね。';
         if (await choose(box, [{ label: 'この写真を使う', value: true }, { label: 'もう1回撮る', value: false, sub: true }], signal)) break;
       }
       stopCamera();
+      if (chore === 'selfie') return { blob: await blobOf(canvas, 'image/jpeg'), kind: 'selfie' };
       const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
       if (!Speech) return evidence;

@@ -532,3 +532,26 @@ def test_itadakimasu_voice_is_kept_with_the_meal_and_private(client):
         client.post(f"/api/houses/{h}/completions", headers=auth(), json=photo_only).status_code
         == 422
     )
+
+
+def test_selfie_is_member_only_idempotent_and_not_a_chore(client):
+    h = house(client)
+    join(client, h)
+    base = f"/api/houses/{h}"
+    before = client.get(base + "/dashboard", headers=auth()).json()
+    photo = upload(client, h, "selfie")
+    body = {"request_id": str(uuid4()), "media_id": photo, "caption": "今のじぶん"}
+    assert client.post(base + "/moments", json=body).status_code == 401
+    assert client.post(base + "/moments", headers=auth("outsider"), json=body).status_code == 404
+    assert client.post(base + "/moments", headers=auth("bob"), json=body).status_code == 422
+    created = client.post(base + "/moments", headers=auth(), json=body)
+    assert created.status_code == 201
+    assert client.post(base + "/moments", headers=auth(), json=body).json() == created.json()
+    assert client.post(base + "/moments", headers=auth(), json={**body, "caption": "changed"}).status_code == 409
+    assert len(client.get(base + "/moments", headers=auth("bob")).json()["items"]) == 1
+    assert client.get(base + "/moments", headers=auth("outsider")).status_code == 404
+    assert client.get(base + "/media/" + photo, headers=auth("outsider")).status_code == 404
+    assert client.get(base + "/dashboard", headers=auth()).json() == before
+    assert client.get(base + "/posts", headers=auth()).json()["items"] == []
+    bad = {"request_id": str(uuid4()), "media_id": upload(client, h, "meal")}
+    assert client.post(base + "/moments", headers=auth(), json=bad).status_code == 422

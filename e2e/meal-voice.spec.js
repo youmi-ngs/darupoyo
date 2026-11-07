@@ -9,6 +9,9 @@ async function setup(page) {
     document.body.replaceChildren(box);
     window.controller = new AbortController();
     window.attempts = [];
+    window.recordingStarted = false;
+    const nativeStart = MediaRecorder.prototype.start;
+    MediaRecorder.prototype.start = function (...args) { const result = nativeStart.apply(this, args); window.recordingStarted = true; return result; };
     class Speech {
       constructor() { window.attempts.push(this); }
       start() { if (window.failStart) throw new Error('unavailable'); }
@@ -30,6 +33,7 @@ test('shows readiness, listening, processing and persistent success before conti
   await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'starting');
   await emit(page, 'onaudiostart');
   await expect(page.getByText('「いただきます」と言ってね', { exact: true })).toBeVisible();
+  await expect.poll(() => page.evaluate(() => recordingStarted)).toBe(true);
   await emit(page, 'onspeechstart');
   await expect(page.getByText('うん、聞いてるよ')).toBeVisible();
   await emit(page, 'onspeechend');
@@ -82,4 +86,19 @@ test('stop, timeout, photo fallback and dismissal release recognition and ignore
   await page.locator('.meal-voice-toggle').click();
   await page.evaluate(() => controller.abort());
   await expect.poll(() => page.evaluate(() => ({ outcome, stopped: attempts[0].aborted }))).toEqual({ outcome: 'AbortError', stopped: true });
+});
+
+test('dismissing a pending microphone request settles and releases a late stream', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    navigator.mediaDevices.getUserMedia = () => new Promise(resolve => { window.grantMic = resolve; });
+  });
+  await page.locator('.meal-voice-toggle').click();
+  await page.evaluate(() => controller.abort());
+  await expect.poll(() => page.evaluate(() => outcome)).toBe('AbortError');
+  await page.evaluate(() => {
+    window.lateMicStopped = false;
+    grantMic({getTracks: () => [{stop: () => { window.lateMicStopped = true; }}]});
+  });
+  await expect.poll(() => page.evaluate(() => lateMicStopped)).toBe(true);
 });

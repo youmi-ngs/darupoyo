@@ -1,0 +1,20 @@
+import { test, expect } from '@playwright/test';
+test('selfies share a photo without completing chores or lighting rooms',async({page,context})=>{
+ await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
+ await page.goto('/');await page.getByLabel('あなたの名前').fill('カメラ');await page.getByLabel('新しいハウスの名前').fill('近況');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+ await page.locator('#open-menu').click();await page.locator('#open-moments').click();
+ await page.getByRole('button',{name:'自撮りを撮る',exact:true}).click();
+ await page.getByRole('button',{name:'この写真を撮る',exact:true}).click();
+ await page.getByRole('button',{name:'もう1回撮る',exact:true}).click();
+ await page.getByRole('button',{name:'この写真を撮る',exact:true}).click();
+ await page.getByRole('button',{name:'この写真を使う',exact:true}).click();
+ await page.getByLabel('ひとこと（任意）').fill('おはよう');
+ await page.getByRole('button',{name:'みんなに共有',exact:true}).click();
+ await expect(page.locator('.moments-dialog article')).toHaveCount(1);
+ await expect(page.locator('.moments-dialog article')).toContainText('おはよう');
+ await page.locator('.moments-dialog [data-close]').click();
+ await expect(page.locator('.door.is-lit')).toHaveCount(0);
+ await page.reload();await expect(page.locator('.onboarding')).toHaveCount(0);
+ await page.locator('#open-menu').click();await page.locator('#open-moments').click();
+ await expect(page.locator('.moments-dialog article')).toContainText('おはよう');
+});
