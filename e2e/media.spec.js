@@ -61,7 +61,7 @@ test('いただきます is recorded with the meal and plays back from the album
   await page.waitForTimeout(700);
   await page.getByRole('button', { name: '録音を止める' }).click();
   await page.getByRole('button', { name: 'この音声を使う' }).click();
-  await expect(page.locator('.result-main')).toHaveText('いただきますを記録！');
+  await expect(page.locator('.result-main')).toHaveText('「いただきます」聞こえた！');
   await expect(page.locator('.result-card .voice-play')).toBeVisible();
   const saved=page.waitForResponse(r=>r.url().includes('/completions'));
   await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();

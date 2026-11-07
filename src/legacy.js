@@ -475,7 +475,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   function resultOf(c, fields, result) {
     if (fields.method === 'rhythm') return { label: 'リズム', main: fields.hits + ' / ' + fields.total_beats + ' ヒット', sub: 'よき ' + (result.good || 0) + '・まあまあ ' + (fields.hits - (result.good || 0)) };
     if (fields.method === 'sound') return { label: 'ドライヤーの音', main: Math.floor(fields.duration_seconds) + '秒 聞こえた', sub: '10秒でクリア' };
-    if (fields.method === 'photo_voice') return { label: 'ごはん', main: 'いただきますを記録！', sub: '写真といっしょに残すよ' };
+    if (fields.method === 'photo_voice') return { label: 'ごはん', main: '「いただきます」聞こえた！', sub: 'AI（Gemini）が声を確認したよ。写真といっしょに残すよ' };
     if (fields.method === 'photo') return { label: 'ごはん', main: '写真で記録', sub: 'ちゃんと食べてえらい' };
     if (fields.similarity !== undefined) return { label: 'まねっこ度', main: fields.similarity + '%', sub: 'お手本：' + c.title.replace(/のオリジナル$/, '') };
     if (c.mode === 'original-new') return { label: 'オリジナルのポーズ', main: '今日の一番乗り！', sub: 'みんなのお手本になるよ' };
