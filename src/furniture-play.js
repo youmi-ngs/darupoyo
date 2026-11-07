@@ -5,6 +5,13 @@ import './daily-tasks.css';
 // task buttons intact; this adapter only adds keyboard/tap behavior to props.
 const SELECTOR = '.scene .sv > .sv-obj:not(.balcony-pole), .myroom > .mr-bed, .myroom > .mr-desk, .myroom > .mr-lamp, .myroom > .mr-window, [data-furniture-name]';
 const NAMES = { outside:['おうち'], entry:['玄関のドア'], ldk:['時計','窓'], wash:['植木'] };
+// Every fifth play drops one of these little gal treasures.
+const PRIZES = [
+  { name:'つけまつげ', short:'つけま', svg:'<path d="M10 12Q40 40 70 12M15 18L9 28M26 25l-4 12M40 29v12M54 25l4 12M65 18l6 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>' },
+  { name:'ネイルチップ', short:'ネイルチップ', svg:'<g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M28 40V16q0-12 12-12t12 12v24z" fill="#FFB3DE"/><path d="M34 14q2-5 6-6" fill="none" stroke="#FFFFFF" stroke-width="3"/><path d="M40 24l2 4 4 1-3 3 1 4-4-2-4 2 1-4-3-3 4-1z" fill="#FFF4A8" stroke-width="1.5"/></g>' },
+  { name:'アメピン', short:'アメピン', svg:'<g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" fill="none" stroke-width="3.5"><path d="M8 30h58q8 0 8-6t-8-6H8"/><path d="M8 18q8-5 14 0t14 0t14 0t14 0"/></g>' },
+  { name:'ピアスのキャッチ', short:'ピアスのキャッチ', svg:'<g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><ellipse cx="40" cy="30" rx="16" ry="7" fill="#FFE08A"/><path d="M24 30v-8q0-7 16-7t16 7v8" fill="#FFE08A"/><ellipse cx="40" cy="22" rx="16" ry="7" fill="#FFF4A8"/><ellipse cx="40" cy="22" rx="3.5" ry="1.8" fill="#3B2560"/></g>' },
+];
 export function setupFurniturePlay() {
   let taps=0, house='', prize=null, expiry;
   const bound=new WeakSet(), animations=new WeakMap();
@@ -21,10 +28,11 @@ export function setupFurniturePlay() {
     if(!special) { status.textContent='ぽよっ'; return; }
     clearPrize(); sfx.ding();
     const room=target.closest('.sv, .myroom'); if(!room) return;
-    prize=document.createElement('button'); prize.type='button'; prize.className='furniture-prize'; prize.setAttribute('aria-label','落ちたつけまつげを拾う');
-    prize.innerHTML='<svg viewBox="0 0 80 45" aria-hidden="true"><path d="M10 12Q40 40 70 12M15 18L9 28M26 25l-4 12M40 29v12M54 25l4 12M65 18l6 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg><span>つけま♡</span>';
-    prize.onclick=()=>{ clearPrize(); sfx.clear(); status.textContent='つけまゲット♡ ＋1'; status.classList.add('is-visible'); setTimeout(()=>status.classList.remove('is-visible'),2000); };
-    room.append(prize); status.textContent='つけまが落ちた！拾ってみよ♡'; expiry=setTimeout(clearPrize,15000);
+    const item=PRIZES[Math.floor(Math.random()*PRIZES.length)];
+    prize=document.createElement('button'); prize.type='button'; prize.className='furniture-prize'; prize.setAttribute('aria-label','落ちた'+item.name+'を拾う');
+    prize.innerHTML='<svg viewBox="0 0 80 45" aria-hidden="true">'+item.svg+'</svg><span>'+item.short+'♡</span>';
+    prize.onclick=()=>{ clearPrize(); sfx.clear(); status.textContent=item.short+'ゲット♡ ＋1'; status.classList.add('is-visible'); setTimeout(()=>status.classList.remove('is-visible'),2000); };
+    room.append(prize); status.textContent=item.short+'が落ちた！拾ってみよ♡'; expiry=setTimeout(clearPrize,15000);
   }
   function bind() {
     document.querySelectorAll(SELECTOR).forEach(target=>{

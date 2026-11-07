@@ -92,3 +92,23 @@ test('trash cans empty and sparkle once you took the garbage out', async ({ page
   await expect(page.locator('.trash-pile')).toBeHidden();
   await expect(page.locator('.trash-cans .sparkles')).toBeVisible();
 });
+
+test('the bird on the pole talks in gal slang and the black cat stays only while there is garbage', async ({ page }) => {
+  await enter(page);
+  await page.locator('.scene-dot').nth(4).click();
+  await page.locator('.pole-bird').click();
+  await expect(page.locator('.pole-bird')).toHaveClass(/is-talking/);
+  await expect(page.locator('.pole-bird .critter-bubble')).not.toHaveText('');
+  await page.locator('.scene-dot').nth(0).click();
+  await expect(page.locator('.trash-cat')).toBeVisible();
+  await page.locator('.trash-cat').click();
+  await expect(page.locator('.trash-cat .critter-bubble')).toHaveText(/にゃ|ごろごろ/);
+  await page.evaluate(async () => {
+    const { houseApi, refresh } = await import('/src/api.js');
+    const c = document.createElement('canvas'); c.width = 40; c.height = 40; c.getContext('2d').fillRect(0, 0, 20, 40);
+    const cut = await houseApi('/media?kind=cutout', await new Promise(r => c.toBlob(r, 'image/png')));
+    await houseApi('/completions', { request_id: crypto.randomUUID(), chore: 'garbage', method: 'pose', media_id: cut.id, landmarks: Array.from({ length: 33 }, (_, i) => ({ x: .5, y: i / 40, z: 0, visibility: 1 })) });
+    await refresh();
+  });
+  await expect(page.locator('.trash-cat')).toHaveCSS('opacity', '0');
+});

@@ -58,14 +58,14 @@ test('a lost save response can retry the same record without duplication',async(
   const records=await page.evaluate(async()=>{ const {houseApi}=await import('/src/api.js');return houseApi('/darupoyo'); });
   expect(records.items).toHaveLength(1);
 });
-test('furniture reacts on taps and keyboard, with a temporary prize every five plays',async({page})=>{
+test('furniture reacts on taps and keyboard, with a temporary prize (つけま・ネイルチップ・アメピン・ピアスのキャッチ) every five plays',async({page})=>{
   await enter(page); const before=await state(page);
   await page.locator('.scene-dot').nth(1).click(); const furniture=page.getByRole('button',{name:'玄関のドアであそぶ'});
   for(let i=0;i<4;i++) await furniture.click(); await expect(page.locator('.furniture-prize')).toHaveCount(0);
   await furniture.focus(); await furniture.press('Enter');
-  await expect(page.getByRole('button',{name:'落ちたつけまつげを拾う'})).toBeVisible();
-  await page.getByRole('button',{name:'落ちたつけまつげを拾う'}).click();
-  await expect(page.locator('.furniture-play-status')).toHaveText('つけまゲット♡ ＋1');
+  await expect(page.getByRole('button',{name:/^落ちた(つけまつげ|ネイルチップ|アメピン|ピアスのキャッチ)を拾う$/})).toBeVisible();
+  await page.getByRole('button',{name:/^落ちた(つけまつげ|ネイルチップ|アメピン|ピアスのキャッチ)を拾う$/}).click();
+  await expect(page.locator('.furniture-play-status')).toHaveText(/^(つけま|ネイルチップ|アメピン|ピアスのキャッチ)ゲット♡ ＋1$/);
   expect((await state(page)).state).toEqual(before.state);
   await page.reload(); await page.locator('.scene-dot').nth(1).click();
   await page.getByRole('button',{name:'玄関のドアであそぶ'}).click(); await expect(page.locator('.furniture-prize')).toHaveCount(0);

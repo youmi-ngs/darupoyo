@@ -2,6 +2,7 @@ import { setupUtilityMenu } from './utility-menu.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
+import { setupCritters } from './critters.js';
 import { startAmbience } from './ambience.js';
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
 import { capture } from './media.js';
@@ -641,6 +642,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   // ---------- walk between rooms ----------
   startAmbience();
   setupMoments();
+  setupCritters();
   const plan = $('plan'), scenes = () => [...plan.querySelectorAll('.scene')];
   const sceneIndexOf = (name, page = 0) => Math.max(0, scenes().findIndex(sc => sc.dataset.scene === name && (sc.dataset.page == null || Number(sc.dataset.page) === page)));
   let sceneIdx = 1;
