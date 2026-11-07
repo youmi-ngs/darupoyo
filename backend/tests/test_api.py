@@ -401,3 +401,40 @@ def test_invite_is_a_short_code_typed_any_way(client):
     assert client.post("/api/join", headers=auth("carol"), json={"token": spaced, "display_name": "c"}).status_code == 200
     wrong = "ZZZZ-ZZZZ" if code != "ZZZZZZZZ" else "YYYY-YYYY"
     assert client.post("/api/join", headers=auth("dave"), json={"token": wrong, "display_name": "d"}).status_code == 404
+
+
+def test_gal_praise_voice_meal_rule_and_retry():
+    import random as _random
+
+    from src.app import gals
+
+    # Fallback lines come from the chosen gal.
+    for gal in gals.GALS:
+        for chore in gals.CHORES:
+            assert gals.fallback_line(chore, gal) in gals.FALLBACK[gal][chore]
+    assert gals.fallback_line("meal", "unknown") in gals.FALLBACK["reiwa"]["meal"]
+
+    system, contents = gals.prompt("meal", "kuro", rng=_random.Random(1))
+    assert "黒ギャル" in system and "自炊" in system and "ごはん" in contents
+    assert "自炊" not in gals.prompt("dryer", "kuro")[0]
+    _, contents = gals.prompt("laundry", "hime", {"hits": 7, "total_beats": 8, "is_first_pose": False})
+    assert "8拍中7回" in contents
+    assert not gals.acceptable("meal", "自炊えらすぎ！")
+    assert gals.acceptable("meal", "ちゃんと食べたのえらすぎ！")
+    assert gals.acceptable("dryer", "料理じゃないけどえらい")
+
+    replies = iter(["外食でもえらい！", "ちゃんと食べたの優勝♡"])
+    calls = []
+
+    class Models:
+        def generate_content(self, **kwargs):
+            calls.append(kwargs)
+            return type("R", (), {"text": next(replies)})()
+
+    class Client:
+        models = Models()
+
+    p = Praise(LOCAL)
+    p.client = Client()
+    out = p.generate("meal", "hime")
+    assert out == {"text": "ちゃんと食べたの優勝♡", "source": "gemini"} and len(calls) == 2

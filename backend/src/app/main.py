@@ -181,7 +181,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         post, created = app.state.domain.complete(uid, house, body)
         if created:
             post = app.state.domain.set_praise(
-                house, post["id"], app.state.praise.generate(body.chore.value, body.gal)
+                house, post["id"], app.state.praise.generate(body.chore.value, body.gal, post)
             )
         return {"post": post, "created": created}
 
