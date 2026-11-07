@@ -65,6 +65,15 @@ test('the house weather comes from our server (Google), not Open-Meteo (#125)', 
   await enter(page);
   await expect(page.locator('body')).toHaveAttribute('data-weather', 'snow');
   expect(outside).toEqual([]);
+  // the required credits sit on every sky that shows the weather
+  for (const [dot, scene] of [[0, 'outside'], [2, 'ldk'], [4, 'balcony']]) {
+    await page.locator('.scene-dot').nth(dot).click();
+    const credit = page.locator(`.credit-${scene}`);
+    await expect(credit).toBeVisible();
+    await expect(credit).toContainText('Source: Includes weather data from Google.');
+    await expect(credit.getByRole('link', { name: '気象データ提供：株式会社ウェザーニューズ' })).toHaveAttribute('href', 'https://jp.weathernews.com/');
+  }
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
-  await expect(page.locator('.data-credits')).toContainText('Google Weather API');
+  await expect(page.locator('.data-credits')).toContainText('Source: Includes weather data from Google.');
+  await expect(page.locator('.data-credits')).toContainText('気象データ提供：株式会社ウェザーニューズ');
 });

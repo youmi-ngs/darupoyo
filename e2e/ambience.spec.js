@@ -10,7 +10,7 @@ test('clock, Tokyo weather and daylight follow time and weather',async({page})=>
  await page.clock.setFixedTime(new Date(2026,10,7,9,30));await enter(page);
  await expect(page.locator('body')).toHaveAttribute('data-daylight','day');
  await expect(page.locator('body')).toHaveAttribute('data-weather','rain');
- await expect(page.locator('.weather-credit')).toHaveCount(0);
+ await expect(page.locator('.weather-credit')).toHaveCount(3); // #125: Google's credit on each sky
  await expect(page.getByText('東京の空', { exact: false })).toHaveCount(0);
  await expect(page.locator('.clock-hour')).toHaveAttribute('transform','rotate(285 15 15)');
  await expect(page.locator('.clock-minute')).toHaveAttribute('transform','rotate(180 15 15)');
