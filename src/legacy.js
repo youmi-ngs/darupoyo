@@ -8,7 +8,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   const nameOf = uid => dashboard?.house.members[uid]?.display_name || '住人';
   const toApi = id => id === 'trash' ? 'garbage' : id;
   const fromApi = id => id === 'garbage' ? 'trash' : id;
-  let savingGoals = Promise.resolve(), pendingGoals = 0;
+  let savingGoals = Promise.resolve(), pendingGoals = 0, defaultedDay = '';
+  const DEFAULT_GOALS = ['laundry', 'garbage'];
   function saveGoals() {
     const chores = state.board.map(b => toApi(b.id)); pendingGoals++;
     savingGoals = savingGoals.then(() => houseApi('/goals', { chores }, 'PUT')).catch(e => toast(e.message)).finally(async () => { pendingGoals--; if (!pendingGoals) await refresh().catch(e => toast(e.message)); });
@@ -444,11 +445,14 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const evidence = await capture(sheetBody, id, c, state.originals[id], signal);
       if (signal.aborted) return;
       const gal = pickGal();
-      const { blob, kind, ...fields } = evidence;
+      const { blob, kind, result, ...fields } = evidence;
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
-      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><p class="sheet-text"></p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
-      sheetBody.querySelector('p').textContent = fields.similarity !== undefined ? 'まねっこ度 ' + fields.similarity + '%'
-        : fields.method === 'rhythm' ? fields.hits + ' / ' + fields.total_beats + ' ヒット！お部屋に残そう。' : 'できたことをお部屋に残そう。';
+      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
+      const shown = resultOf(c, fields, result || {});
+      sheetBody.querySelector('.result-label').textContent = shown.label;
+      sheetBody.querySelector('.result-main').textContent = shown.main;
+      sheetBody.querySelector('.result-sub').textContent = shown.sub || '';
+      sheetBody.querySelector('.result-sub').hidden = !shown.sub;
       if (blob) { const img = document.createElement('img'); const url = URL.createObjectURL(blob); img.src = url; img.style.cssText = 'width:100%;max-height:30vh;object-fit:contain'; sheetBody.querySelector('p').after(img); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
@@ -468,6 +472,16 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       if (e.name === 'NoHitError') { showNoHit(id, c, e); return; }
       openSheet(id); toast(deviceMessage(e, id));
     }
+  }
+  // 「記録する？」に出す結果（#33）。家事ごとに、何がどれだけできたかを1行で。
+  function resultOf(c, fields, result) {
+    if (fields.method === 'rhythm') return { label: 'リズム', main: fields.hits + ' / ' + fields.total_beats + ' ヒット', sub: '良 ' + (result.good || 0) + '・可 ' + (fields.hits - (result.good || 0)) };
+    if (fields.method === 'sound') return { label: 'ドライヤーの音', main: Math.floor(fields.duration_seconds) + '秒 聞こえた', sub: '10秒でクリア' };
+    if (fields.method === 'photo_voice') return { label: 'ごはん', main: 'いただきます 言えた！', sub: '写真といっしょに残すよ' };
+    if (fields.method === 'photo') return { label: 'ごはん', main: '写真で記録', sub: 'ちゃんと食べてえらい' };
+    if (fields.similarity !== undefined) return { label: 'まねっこ度', main: fields.similarity + '%', sub: 'お手本：' + c.title.replace(/のオリジナル$/, '') };
+    if (c.mode === 'original-new') return { label: 'オリジナルのポーズ', main: '今日の一番乗り！', sub: 'みんなのお手本になるよ' };
+    return { label: c.title, main: (result.score ?? '') + '%', sub: 'ポーズの決まり度' };
   }
   // Rhythm ended without enough hits: a gal cheers you on and offers another go (nothing is recorded).
   function showNoHit(id, c, e) {
@@ -526,7 +540,12 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
     state.doneToday = {};
     Object.entries(data.state.completed).forEach(([uid,chores])=>chores.forEach(t=>{ (state.doneToday[fromApi(t)] ||= []).push(uid); }));
-    if (!pendingGoals) state.board = (data.state.goals[ME] || []).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
+    if (!pendingGoals) {
+      // その日まだ「今日やること」を触っていなければ、洗濯とゴミ捨てを最初から貼っておく（#23）。
+      const mine = data.state.goals[ME], fresh = !mine && defaultedDay !== data.state.day;
+      state.board = (mine || (fresh ? DEFAULT_GOALS : [])).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
+      if (fresh) { defaultedDay = data.state.day; saveGoals(); }
+    }
     state.originals = Object.fromEntries(Object.entries(data.state.poses).map(([t,p])=>[fromApi(t),{ ...p, fig:0, by:p.user_id }]));
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
     document.querySelector('.account-row b').textContent = nameOf(ME);

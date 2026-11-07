@@ -961,3 +961,10 @@ dialog.log-modal, dialog.photo-modal { overflow: hidden; }
 .set-toggle[open] .gal-picker { margin-top: 12px; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* 「記録する？」の結果（#33） */
+.result-card { display: grid; justify-items: center; gap: 2px; margin: 4px 0 10px; padding: 12px 14px; border: 2.5px solid var(--ink); border-radius: 16px; background: linear-gradient(180deg, #FFFFFF, #FFF4FB); box-shadow: 0 3px 0 var(--ink); text-align: center; }
+.result-label { font-size: 12px; font-weight: 900; letter-spacing: .08em; color: var(--ink-soft); }
+.result-main { font-size: 26px; line-height: 1.2; font-weight: 900; color: var(--ink); }
+.result-sub { font-size: 12px; color: var(--ink-soft); }
+.result-sub[hidden] { display: none; }
