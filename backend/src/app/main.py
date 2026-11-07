@@ -88,6 +88,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             firebase_admin.delete_app(application.state.firebase)
 
     app = FastAPI(title="Clean Your Life / 温玉", version="0.2.0", lifespan=lifespan)
+    register_darupoyo_routes(app, current_user)
     origins = (settings or Settings.from_env()).origins
     app.add_middleware(
         CORSMiddleware,
@@ -310,8 +311,6 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         if not re.fullmatch(r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}", post_id):
             raise HTTPException(422, "Invalid post id")
         return app.state.domain.react(uid, str(house_id), post_id, body.emoji)
-
-    register_darupoyo_routes(app, current_user)
 
     @app.api_route("/api/{unknown:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     def unknown_api(unknown: str):

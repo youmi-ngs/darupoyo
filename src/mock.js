@@ -85,14 +85,15 @@ export async function mockFetch(url, init = {}) {
   const day = today(), dayKey = houseId + '/' + day;
   const state = db.days[dayKey] || newDay(day);
   const posts = Object.values(db.posts).filter(p => p.house_id === houseId);
-  const darupoyo = mockDarupoyo({ db, houseId, uid, rest, method, body, searchParams, day, state, postId, save });
-  if (darupoyo) return darupoyo;
 
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
   if (rest === '/invites') {
     const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', token = Array.from(crypto.getRandomValues(new Uint8Array(8)), n => abc[n % 32]).join(''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
     db.invites[token] = { house_id: houseId, expires_at, created_by: uid }; save(db); return json({ token, expires_at }, 201);
   }
+  const darupoyo = mockDarupoyo({ db, houseId, uid, rest, method, body, searchParams, day, state, postId, save });
+  if (darupoyo) return darupoyo;
+
   if (rest === '/dashboard') {
     const shown = db.days[houseId + '/' + (searchParams.get('day') || day)] || newDay(searchParams.get('day') || day);
     const lights = Object.fromEntries(house.member_ids.map(m => [m, !!shown.completed[m]?.length]));
