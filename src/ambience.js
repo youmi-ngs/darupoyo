@@ -36,7 +36,6 @@ export function weatherKind(code) {
   return 'clear';
 }
 function startWeather() {
-  const credit = document.querySelector('.weather-credit');
   let busy = false, refreshed = 0;
   const refresh = async () => {
     if (busy || document.hidden || Date.now() - refreshed < 15 * 60 * 1000) return;
@@ -48,10 +47,8 @@ function startWeather() {
       const code = (await response.json()).current?.weather_code;
       if (!Number.isInteger(code) || code < 0 || code > 99) throw new Error('invalid weather');
       document.body.dataset.weather = weatherKind(code);
-      if (credit) credit.textContent = '東京の空 · Open-Meteo';
     } catch {
       delete document.body.dataset.weather;
-      if (credit) credit.textContent = '東京の空 · 天気取得待ち';
     } finally { busy = false; }
   };
   void refresh(); setInterval(refresh, 15 * 60 * 1000);

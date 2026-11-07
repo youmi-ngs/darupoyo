@@ -555,3 +555,8 @@ def test_selfie_is_member_only_idempotent_and_not_a_chore(client):
     assert client.get(base + "/posts", headers=auth()).json()["items"] == []
     bad = {"request_id": str(uuid4()), "media_id": upload(client, h, "meal")}
     assert client.post(base + "/moments", headers=auth(), json=bad).status_code == 422
+
+
+def test_public_config_includes_messaging_sender_id(client, monkeypatch):
+    monkeypatch.setenv("FIREBASE_MESSAGING_SENDER_ID", "324099635682")
+    assert client.get("/api/config").json()["firebase"]["messagingSenderId"] == "324099635682"

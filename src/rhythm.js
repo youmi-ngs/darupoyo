@@ -48,3 +48,14 @@ export function bodyEdge(person, width, height, count = 14, threshold = .5) {
   }
   return points;
 }
+
+// Outline the moving laundry with the same tiny frames used for hit detection.
+// No synchronous segmentation/model inference is needed during the rhythm game.
+export function motionEdge(prev, cur, width, height, threshold = 40) {
+  const mask = new Float32Array(width * height);
+  for (let i = 0; i < mask.length; i++) {
+    const p = i * 4;
+    mask[i] = (Math.abs(cur[p] - prev[p]) + Math.abs(cur[p + 1] - prev[p + 1]) + Math.abs(cur[p + 2] - prev[p + 2])) / 3 > threshold ? 1 : 0;
+  }
+  return bodyEdge(mask, width, height).map(p => ({ x: 1 - p.x, y: p.y }));
+}

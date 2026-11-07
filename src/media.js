@@ -82,6 +82,10 @@ export async function capture(root, chore, choice, reference, signal) {
     const stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal);
     let landmarker, segmenter, stopPreview = () => {};
     const canvas = document.createElement('canvas'); canvas.hidden = true; box.append(canvas);
+    // Mirror only the preview; retain raw pixels/landmarks for pose scoring and storage.
+    const facing = stream.getVideoTracks()[0]?.getSettings().facingMode;
+    const mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
+    video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const takePhoto = async () => {
       live.hidden = false; canvas.hidden = true; status.textContent = liveText;

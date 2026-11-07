@@ -49,7 +49,7 @@ try {
   if (!web.apiKey || !web.appId || !web.authDomain) throw new Error('Firebase Web configuration is incomplete');
   Object.assign(process.env, {
     AUTH_MODE: 'firebase', GOOGLE_CLOUD_PROJECT: project, GOOGLE_CLOUD_QUOTA_PROJECT: project,
-    FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId,
+    FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId, FIREBASE_MESSAGING_SENDER_ID: web.messagingSenderId,
     CORS_ORIGINS: `${url.origin},http://127.0.0.1:5173,http://localhost:5173`,
     VITE_API_BASE_URL: '',
   });

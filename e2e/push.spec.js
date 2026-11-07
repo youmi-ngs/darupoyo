@@ -21,3 +21,58 @@ test('without Firebase login the notification card stays hidden and settings fit
   await expect(page.locator('#push-card')).toBeHidden();
   expect(await page.locator('#settings .drawer-inner').evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
 });
+
+// Exercise the settings UI and real service-worker registration without sending
+// a notification or registering a test device with Firebase.
+test('notification registration succeeds, and a failed save can be retried', async ({ page, context }) => {
+  await context.addInitScript(() => {
+    Object.defineProperty(Notification, 'permission', { get: () => 'granted' });
+    Notification.requestPermission = async () => 'granted';
+  });
+  await page.route('**/firebase_messaging.js*', route => route.fulfill({
+    contentType: 'text/javascript', body: `
+      export const isSupported = async () => true;
+      export const getMessaging = app => {
+        if (!app.options.messagingSenderId) throw new Error('missing sender ID');
+        return app;
+      };
+      export const getToken = async (app, options) => {
+        if (!options.serviceWorkerRegistration.active) throw new Error('worker not active');
+        return 'test-device-token';
+      };
+    `,
+  }));
+  let saveFails = true;
+  const saves = [];
+  await page.route('**/api/notifications', route => {
+    saves.push(route.request().postDataJSON());
+    return route.fulfill({ status: saveFails ? 503 : 200, json: { enabled: !saveFails } });
+  });
+  await page.goto('/');
+  await page.getByLabel('あなたの名前').fill('push-retry');
+  await page.getByLabel('新しいハウスの名前').fill('notifications');
+  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.evaluate(async () => {
+    const { client } = await import('/src/api.js');
+    client.auth = { app: { options: { messagingSenderId: '324099635682' } }, currentUser: { getIdToken: async () => 'test' } };
+    client.config.push = { vapid_key: 'test-public-key' };
+  });
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  expect(await page.evaluate(async () => {
+    const { pushState } = await import('/src/push.js');
+    try { return await pushState(); } catch (e) { return e.stack; }
+  })).toBe('ready');
+  await expect(page.locator('#push-toggle')).toBeEnabled();
+  await page.locator('#push-toggle').click();
+  await expect(page.locator('#push-note')).toContainText('保存できませんでした');
+  await expect(page.locator('#push-toggle')).toHaveAttribute('aria-pressed', 'false');
+  expect(await page.evaluate(() => localStorage.getItem('darupoyo-push'))).toBeNull();
+  saveFails = false;
+  await page.locator('#push-toggle').click();
+  await expect(page.locator('#push-toggle')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#push-note')).toBeHidden();
+  expect(saves).toHaveLength(2);
+  expect(saves[1]).toMatchObject({ token: 'test-device-token', enabled: true });
+  expect(await page.evaluate(() => localStorage.getItem('darupoyo-push'))).toBe('test-device-token');
+});

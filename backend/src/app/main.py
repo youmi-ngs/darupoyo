@@ -121,6 +121,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
                 "authDomain": os.getenv("FIREBASE_AUTH_DOMAIN", ""),
                 "projectId": config.project,
                 "appId": os.getenv("FIREBASE_APP_ID", ""),
+                "messagingSenderId": os.getenv("FIREBASE_MESSAGING_SENDER_ID", ""),
             },
         }
 
