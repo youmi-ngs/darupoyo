@@ -17,12 +17,11 @@ async function enter(page) {
 test('picking a gal plays her voice, and the setting turns every sound off', async ({ page }) => {
   await enter(page);
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
-  await expect(page.locator('#sound-toggle')).toHaveText('オン');
-  await page.locator('#gal-toggle > summary').click();
+  await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('button', { name: '姫ギャル' }).click();
   await expect.poll(() => page.evaluate(() => window.tones)).toBeGreaterThan(3);
   await page.locator('#sound-toggle').click();
-  await expect(page.locator('#sound-toggle')).toHaveText('オフ');
+  await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
   await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
   const before = await page.evaluate(() => window.tones);
   await page.getByRole('button', { name: '姫ギャル' }).click();
@@ -31,5 +30,5 @@ test('picking a gal plays her voice, and the setting turns every sound off', asy
   // 端末に覚えておく
   await page.reload();
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
-  await expect(page.locator('#sound-toggle')).toHaveText('オフ');
+  await expect(page.locator('#sound-toggle')).toHaveAttribute('aria-pressed', 'false');
 });

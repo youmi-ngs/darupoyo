@@ -13,7 +13,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await page.getByRole('button', { name: 'ハウスを作る', exact:true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 
-  await page.locator('#open-menu').click(); await page.getByRole('button', {name:'招待リンク', exact:true}).click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.getByRole('button', {name:'招待リンク', exact:true}).click();
   const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
   await page.locator('#sheet-close').click();
   const context = await browser.newContext({ viewport: {width:390,height:844} }); const friend = await context.newPage();
@@ -82,8 +82,8 @@ test('switch between houses from the menu', async ({ page }) => {
     await expect(page.locator('.onboarding')).toHaveCount(0);
   };
   const switchHouse = async () => {
-    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
-    await page.getByRole('button', { name: 'ハウスを切り替える' }).click();
+    await page.locator('#open-menu').click(); await page.locator('#menu-house').click();
+    await page.locator('#house-add').click();
     await expect(page.locator('.onboarding')).toBeVisible();
   };
   await page.goto('/');
@@ -118,7 +118,7 @@ test('rename yourself and the house from settings', async ({ page }) => {
   if (await howto.count()) await howto.click();
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   const form = page.locator('#account-form');
-  await page.getByRole('button', { name: '名前と家の名前を変える' }).click();
+  await page.getByRole('button', { name: '名前を編集' }).click();
   await expect(form.getByLabel('名前', { exact: true })).toHaveValue('もち');
   await expect(form.getByLabel('家の名前')).toHaveValue('温玉');
   const inner = page.locator('#settings .drawer-inner');

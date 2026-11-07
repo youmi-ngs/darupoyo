@@ -1,5 +1,5 @@
 import { setBusy } from './busy.js';
-import { setupUtilityMenu } from './utility-menu.js';
+import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
@@ -19,7 +19,7 @@ import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
 import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data.js';
 (() => {
-  setupUtilityMenu();
+  setupSettingsUI();
   let ME = '', RESIDENTS = [], dashboard = null, THEME_OF = {};
   // Each resident's theme color: room, hung clothes and their gal's outfit.
   const themeOf = uid => THEME_OF[uid] || 'pink';
@@ -178,15 +178,17 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   const galIcon = (g, who = ME) => dressedGalIcon(g, themeOf(who));
   function renderGalPicker() {
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
+    const faces = { heisei: 'c98ab', reiwa: '24a0f', kuro: 'ddaad', hime: '71e8d' };
+    const mini = { heisei: 'd83de', kuro: '36255', hime: '2be8e', reiwa: '4fc4e' };
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
-      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
-      else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} setAppIcon(id); renderGalPicker(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
+      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + ['heisei', 'kuro', 'hime', 'reiwa'].map(g => '<i class="mini-' + g + '"><img src="/settings/' + mini[g] + '.svg" alt=""></i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
+      else { b.dataset.gal = id; b.innerHTML = '<span class="gal-heading"><span class="settings-gal-face" style="background:' + GALS[id].bg + '"><img src="/settings/' + faces[id] + '.svg" alt=""></span><b>' + GALS[id].name + '</b></span><small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + ({ heisei:'あげぽよ〜↑↑', reiwa:'え、天才すぎん？', kuro:'やるじゃん！最強！', hime:'えらすぎるキュン♡' })[id] + '」'; }
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} setAppIcon(id); renderGalPicker(); [...box.children].find(button => button.getAttribute('aria-pressed') === 'true')?.focus(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
       return b;
     };
-    GAL_IDS.forEach((g) => box.append(mk(g)));
     box.append(mk('random'));
+    GAL_IDS.forEach((g) => box.append(mk(g)));
     const cur = $('gal-current');
     if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>ノリで</small>' : galIcon(galPref);
     if (cur) cur.setAttribute('aria-label', galPref === 'random' ? 'ノリで' : GALS[galPref].name);
@@ -501,7 +503,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   $('next-day').textContent = '招待リンク';
   $('next-day').addEventListener('click', async () => {
     try {
-      const code = await inviteCode();
+      const code = await inviteCode(); $('settings').close();
       const link = new URL('/', location.origin); link.hash = new URLSearchParams({ invite: code }).toString();
       sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住むマブに送ってね💖6人までいける～✌</p><label>招待リンク<input class="invite-link" aria-label="招待リンク" readonly></label><button class="btn invite-link-copy" type="button">リンクをコピー</button><label>招待コード<input class="invite-code" aria-label="招待コード" readonly></label><button class="btn invite-copy" type="button">コードをコピー</button>';
       const input = sheetBody.querySelector('.invite-code'); input.value = code; input.onclick = () => input.select();
@@ -535,8 +537,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
     document.querySelector('.account-row b').textContent = nameOf(ME);
     document.querySelector('.account-row small').textContent = data.house.name + '・' + RESIDENTS.length + '人';
-    const icon = document.querySelector('.account-icon'), meEntry = data.house.members[ME];
-    if (meEntry?.avatar) { const img = document.createElement('img'); img.src = meEntry.avatar; img.alt = ''; icon.replaceChildren(img); } else icon.textContent = nameOf(ME).slice(0,1);
+    updateSettingsHouse(data.house, nameOf, ME);
     forgetHistory(); renderSocial();
     renderAccountForm();
     renderAll();
@@ -573,6 +574,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     if (accountForm.hidden) { accountForm.display_name.value = nameOf(ME); accountForm.house_name.value = dashboard.house.name; }
   }
   function toggleAccountForm(open) {
+    if (open && accountForm.hidden) renderAccountForm();
     accountForm.hidden = !open; accountEdit.setAttribute('aria-expanded', String(open));
     document.querySelector('.account-row').hidden = open;
     if (open) { renderAccountForm(); accountForm.display_name.focus(); } else if (accountForm.contains(document.activeElement)) accountEdit.focus();
@@ -591,8 +593,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     } catch (err) { toast(err.message); } finally { save.disabled = false; }
   });
   $('settings').addEventListener('close', () => toggleAccountForm(false));
-  const logoutButton = document.querySelector('#settings button[disabled]'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => disablePush().finally(() => logout().catch(e=>toast(e.message)));
-  $('switch-house').addEventListener('click', switchHouse);
+  const logoutButton = $('settings-logout'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => disablePush().finally(() => logout().catch(e=>toast(e.message)));
+
   const deleteDialog = document.createElement('dialog'); deleteDialog.className = 'delete-dialog';
   deleteDialog.setAttribute('aria-label', 'アカウント削除の確認');
   deleteDialog.innerHTML = '<h2>アカウントを削除しますか？</h2><p>本人の写真・音声・投稿・リアクション・通知登録を削除し、すべてのハウスから退去します。他の住人の記録は残ります。最後の住人の場合はハウスも削除します。</p><p>この操作は元に戻せません。本人確認のため、Googleへの再ログインが必要です。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="btn btn-sub" data-cancel>やめる</button><button type="button" class="btn btn-main" data-confirm disabled>アカウントとデータを削除</button>';
@@ -668,7 +670,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     setTimeout(() => box.classList.remove('is-out'), 4200);
   }
   const settings = $('settings');
-  $('open-settings').addEventListener('click', () => { renderSocial(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
+  $('open-settings').addEventListener('click', () => { renderSocial(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); $('settings-title').focus(); });
   // ---------- phone notifications (#58) ----------
   const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
   async function renderPush() {
@@ -692,10 +694,10 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   });
   listenInApp((body) => { sfx.ding(); toast(body); });
   // ---------- sound effects (#8 #17) ----------
-  function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.textContent = on ? 'オン' : 'オフ'; b.setAttribute('aria-pressed', String(on)); }
+  function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; b.setAttribute('aria-pressed', String(on)); }
   $('sound-toggle').addEventListener('click', () => { setSound(!soundOn()); renderSound(); sfx.pop(); });
   $('settings-close').addEventListener('click', () => settings.close());
-  $('open-howto').addEventListener('click', () => { $('howto-page').showModal(); });
+  $('open-howto').addEventListener('click', () => { $('howto-page').showModal(); $('howto-title').focus(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
   $('howto-start').addEventListener('click', () => $('howto-page').close());
   // 初めて家に入ったときだけ、あそびかたを自動で開く

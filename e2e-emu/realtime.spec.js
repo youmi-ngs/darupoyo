@@ -24,7 +24,7 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('#open-menu').click();
-  await page.getByRole('button', { name: '招待リンク', exact: true }).click();
+  await page.locator('#open-settings').click(); await page.getByRole('button', { name: '招待リンク', exact: true }).click();
   const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
   await page.locator('#sheet-close').click();
 
