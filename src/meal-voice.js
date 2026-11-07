@@ -3,21 +3,38 @@
 function startRecording() {
   if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) return null;
   const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported?.(t));
-  let recorder, stream;
+  let recorder, stream, stopping = false, endPromise;
   const chunks = [];
+  const release = () => stream?.getTracks().forEach(t => t.stop());
   const ready = navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
     stream = s;
-    recorder = new MediaRecorder(s, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
-    recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
-    recorder.start();
+    if (stopping) { release(); return; }
+    try {
+      recorder = new MediaRecorder(s, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
+      recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      recorder.onerror = release;
+      recorder.start();
+    } catch { release(); }
   }).catch(() => {});
-  // keep=true なら録音した音を返す。どちらでもマイクは必ず止める。
-  return async keep => {
-    await ready;
-    const done = recorder && recorder.state !== 'inactive' ? new Promise(r => { recorder.onstop = r; recorder.stop(); }) : Promise.resolve();
-    await done;
-    stream?.getTracks().forEach(t => t.stop());
-    return keep && chunks.length ? new Blob(chunks, { type: recorder?.mimeType || type || 'audio/webm' }) : null;
+  return keep => {
+    if (endPromise) return endPromise;
+    stopping = true;
+    // A permission prompt may never resolve. Closing the UI must not wait for it.
+    if (!recorder) { void ready.then(release); return Promise.resolve(null); }
+    endPromise = new Promise(resolve => {
+      let timer;
+      const finish = () => {
+        clearTimeout(timer); release();
+        const blob = keep && chunks.length ? new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' }) : null;
+        resolve(blob && blob.size <= 512 * 1024 ? blob : null);
+      };
+      recorder.onstop = finish;
+      recorder.onerror = finish;
+      timer = setTimeout(finish, 1000);
+      try { if (recorder.state !== 'inactive') recorder.stop(); else finish(); } catch { finish(); }
+      release();
+    });
+    return endPromise;
   };
 }
 

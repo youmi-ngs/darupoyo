@@ -1,3 +1,5 @@
+import { setupMoments } from './moments.js';
+import { startAmbience } from './ambience.js';
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
@@ -322,8 +324,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       pop.append(b);
     });
   }
-  function closePaint() { $('paint-pop').hidden = true; $('room-paint').setAttribute('aria-expanded', 'false'); }
-  $('room-paint').addEventListener('click', () => { const p = $('paint-pop'); p.hidden = !p.hidden; $('room-paint').setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); });
+  function closePaint() { $('room-view').classList.remove('is-decorating'); $('paint-pop').hidden = true; $('room-paint').setAttribute('aria-expanded', 'false'); }
+  $('room-paint').addEventListener('click', () => { const p = $('paint-pop'); p.hidden = !p.hidden; $('room-view').classList.toggle('is-decorating', !p.hidden); $('room-paint').setAttribute('aria-expanded', p.hidden ? 'false' : 'true'); });
   function showRoom(who, refresh) {
     currentRoom = who;
     const mine = state.posts.filter((p) => p.who === who);
@@ -617,6 +619,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   document.body.classList.add('no-scroll');
 
   // ---------- walk between rooms ----------
+  startAmbience();
+  setupMoments();
   const plan = $('plan'), scenes = [...plan.querySelectorAll('.scene')], tabs = [...document.querySelectorAll('.scene-tab')];
   let sceneIdx = 1;
   function goScene(i, instant) {

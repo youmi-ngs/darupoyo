@@ -25,7 +25,7 @@ export async function mockFetch(url, init = {}) {
   const method = init.method || 'GET';
   const uid = (init.headers?.Authorization || '').replace(/^Bearer dev:/, '');
   const body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
-  const db = load(); db.houses ||= {}; db.invites ||= {}; db.days ||= {}; db.posts ||= {}; db.media ||= {}; db.requests ||= {};
+  const db = load(); db.houses ||= {}; db.invites ||= {}; db.days ||= {}; db.posts ||= {}; db.media ||= {}; db.requests ||= {}; db.moments ||= {};
 
   if (path === '/config') return json({ auth_mode: 'dev', timezone: 'Asia/Tokyo', firebase: {}, mock: true });
   if (!uid) return fail(401, 'Local token format: dev:alice');
@@ -86,6 +86,19 @@ export async function mockFetch(url, init = {}) {
     if (media.has(id)) return new Response(media.get(id));
     let data = null; try { data = localStorage.getItem(KEY + '-media-' + id); } catch {}
     return data ? fetch(data) : fail(404, 'Image not found');
+  }
+  if (rest === '/moments' && method === 'GET') {
+    const before = searchParams.get('before');
+    const items = Object.values(db.moments).filter(p => p.house_id === houseId && (!before || p.id < before)).sort((a,b) => b.id.localeCompare(a.id)).slice(0,30);
+    return json({items, next_cursor: items.length === 30 ? items.at(-1).id : null});
+  }
+  if (rest === '/moments' && method === 'POST') {
+    const prior = Object.values(db.moments).find(p => p.house_id === houseId && p.user_id === uid && p.request_id === body.request_id);
+    if (prior) return prior.media_id === body.media_id && prior.caption === body.caption.trim() ? json(prior,201) : fail(409, 'Request ID already used');
+    const photo = db.media[body.media_id];
+    if (!photo || photo.house_id !== houseId || photo.owner_id !== uid || photo.kind !== 'selfie') return fail(422, 'Invalid selfie');
+    const now = new Date(), moment = {id:postId(now),house_id:houseId,user_id:uid,request_id:body.request_id,media_id:body.media_id,caption:body.caption.trim(),created_at:now.toISOString()};
+    db.moments[moment.id]=moment;save(db);return json(moment,201);
   }
   if (rest === '/completions') {
     const prior = db.requests[uid + ':' + body.request_id];

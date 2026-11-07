@@ -20,6 +20,7 @@ from .models import (
     HouseUpdate,
     Join,
     NotifySettings,
+    Moment,
     Profile,
     Reaction,
 )
@@ -187,7 +188,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     @app.post("/api/houses/{house_id}/media", status_code=201)
     async def upload(
-        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice"],
+        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie"],
         uid=Depends(current_user),
     ):
         house = str(house_id)
@@ -220,6 +221,17 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         if not meta:
             raise HTTPException(404, "Image not found")
         return Response(app.state.media.read(meta["object_name"]), media_type=meta["content_type"])
+
+    @app.post("/api/houses/{house_id}/moments", status_code=201)
+    def share_moment(house_id: UUID, body: Moment, uid=Depends(current_user)):
+        return app.state.domain.share_moment(uid, str(house_id), body)
+
+    @app.get("/api/houses/{house_id}/moments")
+    def moments(house_id: UUID, before: str | None = Query(default=None, max_length=100), uid=Depends(current_user)):
+        house = str(house_id)
+        require_member(app.state.store, house, uid)
+        items = app.state.store.list(f"houses/{house}/moments", limit=30, before=before)
+        return {"items": items, "next_cursor": items[-1]["id"] if len(items) == 30 else None}
 
     @app.post("/api/houses/{house_id}/completions")
     def complete(
