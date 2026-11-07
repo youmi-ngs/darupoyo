@@ -1,94 +1,97 @@
 import { action, check, onAbort, openMic } from './camera.js';
-import { BEAT_MS, TOTAL_BEATS, noteTime, judgeHit, detectMotion, isSlap } from './rhythm.js';
-import { playSparkle, sparkle } from './sparkle.js';
+import { createSegmenter } from './segment.js';
+import { BEAT_MS, TOTAL_BEATS, PASS_HITS, OK_MS, noteTime, judgeHit, detectMotion, isSlap, bodyEdge } from './rhythm.js';
+import { playSparkle, sparkle, sparkleOutline } from './sparkle.js';
 
+// 洗濯：前のカメラに自分を映して、音符に合わせて洗濯物をバサッと動かす。
+// タイミングが合うと体の輪郭からキラキラ。8拍のうち PASS_HITS 回でクリア。映像は端末の中だけで使う。
 export async function laundryRhythm(box, status, choice, signal, resources) {
-      const mic = choice.mode === 'mic';
-      status.textContent = mic ? '洗濯物をはたく動きと音を、カメラとマイクで拾います。音符が丸に重なったらバサッ！映像と音声は端末の中だけで使い、保存も送信もしません。' : 'タップモード：音符が丸に重なったらタップ。8拍遊ぼう（音や動きの自動判定ではありません）。';
-      let analyser, samples, context, video;
-      if (mic) {
-        const audio = { echoCancellation:false, noiseSuppression:false };
-        let stream, hasCamera = true;
-        // 許可の確認を1回で済ませる。カメラだけ使えないときはマイクだけで遊ぶ。
-        try { stream = await navigator.mediaDevices.getUserMedia({ audio, video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } } }); }
-        catch { hasCamera = false; stream = await navigator.mediaDevices.getUserMedia({ audio, video:false }); }
-        resources.push(()=>stream.getTracks().forEach(t=>t.stop())); check(signal);
-        context = new AudioContext(); resources.push(()=>{ void context.close(); }); await context.resume();
-        analyser = context.createAnalyser(); analyser.fftSize = 1024; context.createMediaStreamSource(stream).connect(analyser); samples = new Float32Array(analyser.fftSize);
-        if (hasCamera) {
-          video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true; video.srcObject = stream;
-          const stage = document.createElement('div'); stage.className = 'rhythm-camera'; stage.append(video); box.append(stage); await video.play(); check(signal);
-        } else status.textContent = 'カメラが使えないので、マイクの音だけで遊びます。音符が丸に重なったらバサッ！';
-      }
-      const lane = document.createElement('div'); lane.className = 'rhythm-lane'; lane.setAttribute('aria-hidden', 'true');
-      lane.innerHTML = '<span class="rhythm-target"></span><span class="rhythm-grade"></span>';
-      const notes = Array.from({ length: TOTAL_BEATS }, () => { const n = document.createElement('i'); n.className = 'rhythm-note'; lane.append(n); return n; });
-      box.append(lane);
-      const TARGET = 16, GAP = 24; // 判定の円の位置と音符の間隔（レーン幅に対する%）
-      let start = null;
-      const placeNotes = now => notes.forEach((n, k) => { n.style.left = (TARGET + (noteTime(k) - (now - start)) / BEAT_MS * GAP) + '%'; });
-      start = performance.now(); placeNotes(start);
-      await action(box, 'リズムをはじめる', signal); check(signal);
-      context ||= new AudioContext(); if (!mic) resources.push(()=>{ void context.close(); }); void context.resume();
-      const tap = document.createElement('button'); tap.className = 'btn capture-beat'; tap.textContent = '♪'; box.append(tap);
-      const grade = lane.querySelector('.rhythm-grade');
-      const hit = new Set();
-      let lastSlap = -Infinity, gradeTimer;
-      const slap = (x, y) => {
-        const now = performance.now();
-        if (now - lastSlap < 300) return;
-        lastSlap = now;
-        playSparkle(context);
-        if (video) sparkle(box.querySelector('.rhythm-camera'), 1 - x, y); // カメラ映像は鏡像で表示している
-        else sparkle(lane, TARGET / 100, .5);
-        const result = judgeHit(now - start, hit);
-        if (!result) return;
-        hit.add(result.beat); notes[result.beat].classList.add('is-hit');
-        status.textContent = hit.size + ' / ' + TOTAL_BEATS + ' ヒット';
-        grade.textContent = result.grade === 'good' ? '良' : '可'; grade.className = 'rhythm-grade is-' + result.grade;
-        clearTimeout(gradeTimer); gradeTimer = setTimeout(() => { grade.textContent = ''; grade.className = 'rhythm-grade'; }, 500);
-      };
-      if (!mic) tap.onclick = () => slap(.5, .5);
-      else {
-        tap.disabled = true; let prior = 0;
-        const sampleTimer = setInterval(()=>{ analyser.getFloatTimeDomainData(samples); const rms = Math.sqrt(samples.reduce((sum,n)=>sum+n*n,0)/samples.length); if (rms > .04 && rms > prior*1.5 && performance.now()-lastSlap > 450) slap(.5, .5); prior = rms; },40);
-        resources.push(()=>clearInterval(sampleTimer));
-        if (video) {
-          const W = 64, H = 48, frame = document.createElement('canvas'); frame.width = W; frame.height = H;
-          const fctx = frame.getContext('2d', { willReadFrequently: true });
-          let before = null, priorRatio = 0;
-          const motionTimer = setInterval(()=>{
-            if (video.readyState < 2) return;
-            fctx.drawImage(video, 0, 0, W, H);
-            const now = fctx.getImageData(0, 0, W, H).data;
-            if (before) { const m = detectMotion(before, now, W, H); if (isSlap(m.ratio, priorRatio)) slap(m.x, m.y); priorRatio = m.ratio; }
-            before = now;
-          }, 66);
-          resources.push(()=>clearInterval(motionTimer));
-        }
-      }
-      start = performance.now();
-      let raf;
-      const animate = () => { placeNotes(performance.now()); notes.forEach((n, k) => { if (!hit.has(k) && performance.now() - start > noteTime(k) + 320) n.classList.add('is-miss'); }); raf = requestAnimationFrame(animate); };
-      raf = requestAnimationFrame(animate); resources.push(()=>cancelAnimationFrame(raf));
-      resources.push(()=>clearTimeout(gradeTimer));
-      let beat = -1;
-      await new Promise((resolve, reject) => {
-        const abort = () => reject(new DOMException('中止しました', 'AbortError'));
-        signal.addEventListener('abort', abort, { once: true });
-        const tick = setInterval(() => {
-          beat++;
-          if (beat === TOTAL_BEATS) { clearInterval(tick); signal.removeEventListener('abort', abort); resolve(); return; }
-          tap.textContent = (beat + 1) + ' ♪'; tap.classList.add('on');
-          setTimeout(() => tap.classList.remove('on'), 220);
-        }, BEAT_MS); resources.push(() => clearInterval(tick));
-      });
-      if (!hit.size) {
-        // Finished without a hit: the sheet shows a retry screen instead of silently going back.
-        const e = new Error(mic ? '音符が丸に重なったらバサッとはたいてね' : '音符が丸に重なったらタップしてね');
-        e.name = 'NoHitError'; e.totalBeats = TOTAL_BEATS; throw e;
-      }
-      return { method: 'rhythm', hits: hit.size, total_beats: TOTAL_BEATS, duration_seconds: (performance.now()-start)/1000 };
+  status.textContent = 'カメラに全身か上半身を映してね。音符が丸に重なったら洗濯物をバサッ！映像は端末の中だけで使い、保存も送信もしません。';
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } } });
+  resources.push(() => stream.getTracks().forEach((t) => t.stop())); check(signal);
+  const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true; video.srcObject = stream;
+  const stage = document.createElement('div'); stage.className = 'rhythm-camera'; stage.append(video); box.append(stage);
+  await video.play(); check(signal);
+  // 体の形を見分けるAI（人の切り抜きと同じ）。読み込めなくても、動いた場所からキラキラを出す。
+  const segmenter = await createSegmenter().catch(() => null); check(signal);
+  if (segmenter) resources.push(() => segmenter.close());
+  const lane = document.createElement('div'); lane.className = 'rhythm-lane'; lane.setAttribute('aria-hidden', 'true');
+  lane.innerHTML = '<span class="rhythm-target"></span><span class="rhythm-grade"></span>';
+  const notes = Array.from({ length: TOTAL_BEATS }, () => { const n = document.createElement('i'); n.className = 'rhythm-note'; lane.append(n); return n; });
+  box.append(lane);
+  const TARGET = 16, GAP = 24; // 判定の円の位置と音符の間隔（レーン幅に対する%）
+  let start = performance.now();
+  const placeNotes = (now) => notes.forEach((n, k) => { n.style.left = (TARGET + (noteTime(k) - (now - start)) / BEAT_MS * GAP) + '%'; });
+  placeNotes(start);
+  await action(box, 'リズムをはじめる', signal); check(signal);
+  const context = new AudioContext(); resources.push(() => { void context.close(); }); void context.resume();
+  const counter = document.createElement('p'); counter.className = 'btn capture-beat'; counter.setAttribute('aria-hidden', 'true'); counter.textContent = '♪'; box.append(counter);
+  const grade = lane.querySelector('.rhythm-grade');
+  const W = 64, H = 48, frame = document.createElement('canvas'); frame.width = W; frame.height = H;
+  const fctx = frame.getContext('2d', { willReadFrequently: true });
+  const body = document.createElement('canvas'); body.width = 96; body.height = 128;
+  const bctx = body.getContext('2d', { willReadFrequently: true });
+  const outline = () => {
+    if (!segmenter || video.readyState < 2) return [];
+    bctx.drawImage(video, 0, 0, body.width, body.height);
+    const result = segmenter.segment(body);
+    try {
+      const mask = result.confidenceMasks?.[0]; if (!mask) return [];
+      const person = Float32Array.from(mask.getAsFloat32Array(), (b) => 1 - b);
+      // カメラ映像は鏡像で表示しているので、左右を反転する。
+      return bodyEdge(person, mask.width, mask.height).map((p) => ({ x: 1 - p.x, y: p.y }));
+    } catch { return []; } finally { result.close(); }
+  };
+  const hit = new Set();
+  let lastSlap = -Infinity, gradeTimer;
+  const slap = (x, y) => {
+    const now = performance.now();
+    if (now - lastSlap < 300) return;
+    lastSlap = now;
+    const result = judgeHit(now - start, hit);
+    if (!result) return;
+    hit.add(result.beat); notes[result.beat].classList.add('is-hit');
+    playSparkle(context);
+    const points = outline();
+    if (points.length) sparkleOutline(stage, points); else sparkle(stage, 1 - x, y);
+    status.textContent = hit.size + ' / ' + TOTAL_BEATS + ' ヒット（' + PASS_HITS + '回でクリア）';
+    grade.textContent = result.grade === 'good' ? '良' : '可'; grade.className = 'rhythm-grade is-' + result.grade;
+    clearTimeout(gradeTimer); gradeTimer = setTimeout(() => { grade.textContent = ''; grade.className = 'rhythm-grade'; }, 500);
+  };
+  // 開発中だけ：テストが「バサッ」を起こせるようにする（本番ビルドには入らない）。
+  if (import.meta.env.DEV) box.addEventListener('test-slap', () => slap(.5, .5));
+  let before = null, priorRatio = 0;
+  const motionTimer = setInterval(() => {
+    if (video.readyState < 2) return;
+    fctx.drawImage(video, 0, 0, W, H);
+    const now = fctx.getImageData(0, 0, W, H).data;
+    if (before) { const m = detectMotion(before, now, W, H); if (isSlap(m.ratio, priorRatio)) slap(m.x, m.y); priorRatio = m.ratio; }
+    before = now;
+  }, 66);
+  resources.push(() => clearInterval(motionTimer));
+  start = performance.now();
+  let raf;
+  const animate = () => { placeNotes(performance.now()); notes.forEach((n, k) => { if (!hit.has(k) && performance.now() - start > noteTime(k) + 320) n.classList.add('is-miss'); }); raf = requestAnimationFrame(animate); };
+  raf = requestAnimationFrame(animate); resources.push(() => cancelAnimationFrame(raf));
+  resources.push(() => clearTimeout(gradeTimer));
+  let beat = -1;
+  await new Promise((resolve, reject) => {
+    const abort = () => reject(new DOMException('中止しました', 'AbortError'));
+    signal.addEventListener('abort', abort, { once: true });
+    const tick = setInterval(() => {
+      beat++;
+      // 最後の音符の判定時間が終わるまで待つ。
+      if (beat === TOTAL_BEATS) { setTimeout(() => { signal.removeEventListener('abort', abort); resolve(); }, OK_MS); clearInterval(tick); return; }
+      counter.textContent = (beat + 1) + ' ♪'; counter.classList.add('on');
+      setTimeout(() => counter.classList.remove('on'), 220);
+    }, BEAT_MS); resources.push(() => clearInterval(tick));
+  });
+  if (hit.size < PASS_HITS) {
+    // 足りないときは、記録せずにギャルが「おしい」と声をかける画面へ。
+    const e = new Error('音符が丸に重なったらバサッと動かしてね');
+    e.name = 'NoHitError'; e.hits = hit.size; e.totalBeats = TOTAL_BEATS; e.pass = PASS_HITS; throw e;
+  }
+  return { method: 'rhythm', hits: hit.size, total_beats: TOTAL_BEATS, duration_seconds: (performance.now() - start) / 1000 };
 }
 
 export async function dryerSound(box, status, signal, resources) {

@@ -394,7 +394,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
 
   // ---------- check sheet ----------
   function choicesFor(id) {
-    if (id === 'laundry') return [{ kind: 'rhythm', mode: 'mic', title: 'バサバサでリズム', hint: 'カメラとマイクで、はたく動きと音を拾う・8拍' }, { kind: 'rhythm', mode: 'tap', title: '洗濯リズム', hint: 'はたくリズムで8拍タップ（手動モード）' }];
+    if (id === 'laundry') return [{ kind: 'rhythm', mode: 'camera', title: 'バサバサでリズム', hint: 'カメラに映って、音符に合わせて洗濯物をバサッ・8拍中6回でクリア' }];
     const t = TASKS[id], list = [];
     (t.presets || []).forEach((p) => list.push({ kind: 'pose', mode: 'preset', preset: p.id, title: p.name + 'のポーズ', hint: p.hint, fig: p.fig, praise: p.praise }));
     if (t.presets) {
@@ -408,7 +408,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
   function openSheet(id) {
     const t = TASKS[id], list = choicesFor(id);
-    const lead = id === 'laundry' ? '流れてくる音符に合わせて洗濯物をはたくと、キラキラが出るよ。手動タップでも遊べる。'
+    const lead = id === 'laundry' ? '自分をカメラに映して、流れてくる音符に合わせて洗濯物をバサッ！タイミングが合うと体からキラキラが出るよ。'
       : t.presets ? (isFirstToday(id) ? '今日の' + t.label + 'は一番乗り！決まったポーズか、オリジナルのポーズを撮ってね。' : 'ポーズを1つ選んで撮ってね。人だけ切り抜くから、部屋は写らないよ。')
       : t.sound ? '音だけ聞くから、カメラはいらないよ。' : 'ごはんだけ写せばOK。';
     sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><div class="choice"' + (list.length === 1 ? ' style="grid-template-columns:1fr"' : '') + '></div><p class="demo-note">カメラ・マイクは選んだ操作でのみ使います。保存前に確認できます。</p>';
@@ -427,14 +427,13 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     choice.querySelector('button').focus();
   }
   let captureController;
-  // When the camera or mic cannot be used, laundry still has the tap mode; other chores ask for access.
+  // When the camera or mic cannot be used, ask for access in plain words.
   function deviceMessage(e, id) {
-    const device = id === 'dryer' || id === 'laundry' ? 'マイク' : 'カメラ';
-    const tap = id === 'laundry' ? '。洗濯リズムならタップで遊べるよ' : '';
-    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') return device + 'の利用を許可してください' + tap;
-    if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError') return device + 'が見つかりません' + tap;
-    if (e.name === 'NotReadableError') return device + 'をほかのアプリが使っているみたい' + tap;
-    if (!navigator.mediaDevices) return 'このページでは' + device + 'を使えません（https か localhost で開いてね）' + tap;
+    const device = id === 'dryer' ? 'マイク' : 'カメラ';
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') return device + 'の利用を許可してください';
+    if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError') return device + 'が見つかりません';
+    if (e.name === 'NotReadableError') return device + 'をほかのアプリが使っているみたい';
+    if (!navigator.mediaDevices) return 'このページでは' + device + 'を使えません（https か localhost で開いてね）';
     return e.message;
   }
   async function judge(id, c) {
@@ -469,11 +468,11 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       openSheet(id); toast(deviceMessage(e, id));
     }
   }
-  // Rhythm ended with no hit: a gal cheers you on and offers another go (nothing is recorded).
+  // Rhythm ended without enough hits: a gal cheers you on and offers another go (nothing is recorded).
   function showNoHit(id, c, e) {
     const gal = pickGal();
     sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">おしい〜！</h2><p class="sheet-text"></p><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="retry">もう一回</button><button class="btn btn-sub" id="other-way">ほかのやり方</button>';
-    sheetBody.querySelector('.sheet-text').textContent = '0 / ' + e.totalBeats + ' ヒット';
+    sheetBody.querySelector('.sheet-text').textContent = (e.hits || 0) + ' / ' + e.totalBeats + ' ヒット' + (e.pass ? '（' + e.pass + '回でクリア）' : '');
     sheetBody.querySelector('.gal-text').textContent = e.message + '。もう一回いこ！';
     $('retry').onclick = () => judge(id, c);
     $('other-way').onclick = () => openSheet(id);

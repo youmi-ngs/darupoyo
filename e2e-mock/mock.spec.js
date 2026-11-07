@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { playRhythm, stillCamera } from '../e2e/rhythm-helper.js';
 test.beforeEach(async ({ context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
 });
@@ -16,6 +17,7 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
   await page.getByRole('button', { name: '友だちを招待する' }).click();
   const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
 
+  await stillCamera(context);
   const friend = await context.newPage();
   await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await friend.goto('/'); await friend.getByRole('button', { name: '招待コードで入る' }).click(); await friend.getByLabel('招待コード').fill(code);
@@ -27,12 +29,8 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
 
   await friend.locator('[data-go="3"].scene-tab').click();
   await friend.locator('[data-chore="laundry"]').click();
-  await friend.getByRole('button', { name: /洗濯リズム/ }).click();
-  await friend.getByRole('button', { name: 'リズムをはじめる' }).click();
-  for (let i = 0; i < 8; i++) {
-    await expect(friend.locator('.capture-beat.on')).toBeVisible({ timeout: 2000 }).catch(() => {});
-    await friend.locator('.capture-beat').click().catch(() => {});
-  }
+  await friend.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await playRhythm(friend, 8);
   await friend.getByRole('button', { name: '部屋に飾る', exact: true }).click();
   await expect(friend.getByText('記録できた！')).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(1, { timeout: 8000 });

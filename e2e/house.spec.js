@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { playRhythm, stillCamera } from './rhythm-helper.js';
 test.beforeEach(async({context})=>{await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));});
 
 test('create, invite, sync, rhythm, private meal, persistence and room theme', async ({ page, browser }) => {
+  await stillCamera(page.context());
   const errors = []; page.on('pageerror', e => errors.push(e.message));
   const apiRequests = [];
   page.on('request', request => { if (request.url().includes('/api/')) apiRequests.push(request.url()); });
@@ -20,19 +22,11 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await expect(page.locator('.doors .door')).toHaveCount(2);
   await page.locator('[data-go="3"].scene-tab').click();
   await page.locator('[data-chore="laundry"]').click();
-  await page.getByRole('button', {name:'洗濯リズム'}).click();
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
-  await page.getByRole('button', {name:'リズムをはじめる'}).click();
-  await page.clock.runFor(850);
-  await expect(page.locator('.capture-beat')).toHaveText('1 ♪');
-  await page.locator('.capture-beat').press('Enter');
-  await expect(page.locator('.capture-status')).toHaveText('1 / 8 ヒット');
+  await page.getByRole('button', {name:/バサバサでリズム/}).click();
+  await expect(page.locator('.rhythm-camera video')).toBeVisible();
   await expect(page.locator('.rhythm-note')).toHaveCount(8);
-  await expect(page.locator('.rhythm-grade')).toHaveText('良');
-  await expect(page.locator('.fx-spark')).toHaveCount(8);
-  await page.clock.runFor(6500);
-  await page.clock.resume();
+  await playRhythm(page, 7);
+  await expect(page.locator('.sheet-text')).toHaveText('7 / 8 ヒット！お部屋に残そう。');
   await page.getByRole('button', {name:'部屋に飾る',exact:true}).click();
   await expect(page.getByText('記録できた！')).toBeVisible();
   await page.getByRole('button', {name:'お部屋へ',exact:true}).click();
@@ -69,12 +63,12 @@ test('camera permission failure does not create a completion', async ({ page }) 
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
   await expect(page.locator('#post')).toHaveCount(0);
 });
-test('missing mic points laundry to the tap mode', async ({ page }) => {
+test('missing camera explains it for laundry', async ({ page }) => {
   await page.addInitScript(()=>{ navigator.mediaDevices.getUserMedia = async()=>{throw new DOMException('none','NotFoundError');}; });
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill('nomic'); await page.getByLabel('新しいハウスの名前').fill('no device'); await page.getByRole('button',{name:'ハウスを作る',exact:true}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await page.getByLabel('あなたの名前').fill('nocam'); await page.getByLabel('新しいハウスの名前').fill('no device'); await page.getByRole('button',{name:'ハウスを作る',exact:true}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="laundry"]').click(); await page.getByRole('button',{name:/バサバサでリズム/}).click();
-  await expect(page.locator('#toast')).toHaveText('マイクが見つかりません。洗濯リズムならタップで遊べるよ');
-  await expect(page.getByRole('button',{name:/洗濯リズム/})).toBeVisible();
+  await expect(page.locator('#toast')).toHaveText('カメラが見つかりません');
+  await expect(page.getByRole('button',{name:/バサバサでリズム/})).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
 });
 

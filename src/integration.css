@@ -49,3 +49,6 @@
 /* The fridge board names itself so it reads as today's to-do list (#22). Other fridge copy stays hidden. */
 .whiteboard .board-title{display:block!important;font-size:20px;text-align:center}
 .whiteboard .board-empty{display:block!important;width:100%;text-align:center;font-size:14px}
+
+/* Laundry: sparkles that leave the body outline on a hit. */
+.fx-spark.fx-spark-body{width:22px;height:22px;margin:-11px 0 0 -11px;animation-duration:.8s}

@@ -22,3 +22,16 @@ test('only the rising edge of motion counts as a slap',()=>{
   assert.equal(isSlap(.03,0),false);
 });
 
+
+test('body edge returns outline points of the person and nothing for an empty frame', async () => {
+  const { bodyEdge } = await import('../src/rhythm.js');
+  const W = 20, H = 20, person = new Float32Array(W * H);
+  for (let y = 5; y < 15; y++) for (let x = 6; x < 14; x++) person[y * W + x] = 1; // a block "body"
+  const points = bodyEdge(person, W, H, 10);
+  assert.ok(points.length > 0 && points.length <= 10);
+  for (const p of points) {
+    const x = Math.floor(p.x * W), y = Math.floor(p.y * H);
+    assert.ok(x === 6 || x === 13 || y === 5 || y === 14, 'on the outline: ' + x + ',' + y);
+  }
+  assert.deepEqual(bodyEdge(new Float32Array(W * H), W, H), []);
+});

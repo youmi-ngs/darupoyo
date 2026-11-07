@@ -20,3 +20,16 @@ export function sparkle(parent, x, y) {
     parent.append(spark);
   }
 }
+
+// 体の輪郭の点から、外側へふわっと飛ぶキラキラ（点は0〜1の座標）。
+export function sparkleOutline(parent, points) {
+  if (!parent || !points.length) return;
+  const cx = points.reduce((a, p) => a + p.x, 0) / points.length, cy = points.reduce((a, p) => a + p.y, 0) / points.length;
+  points.forEach((p, i) => {
+    const spark = document.createElement('span'); spark.className = 'fx-spark fx-spark-body'; spark.innerHTML = SPARK_SVG;
+    const dx = p.x - cx, dy = p.y - cy, len = Math.hypot(dx, dy) || 1, far = 18 + (i % 3) * 12;
+    spark.style.cssText = 'left:' + p.x * 100 + '%;top:' + p.y * 100 + '%;--dx:' + dx / len * far + 'px;--dy:' + dy / len * far + 'px;animation-delay:' + (i % 4) * 40 + 'ms';
+    spark.addEventListener('animationend', () => spark.remove(), { once: true });
+    parent.append(spark);
+  });
+}
