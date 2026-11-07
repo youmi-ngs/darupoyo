@@ -1,18 +1,5 @@
-/* Photos and sharing: entrance board (#90), comments (#88), album calendar (#91),
+/* Photos and sharing: comments (#88), album calendar (#91),
    profile photos (#96) and records from other houses (#99). */
-
-/* ---------- entrance board ---------- */
-.entry-board { position: absolute; z-index: 3; top: 114px; right: 4%; width: 56%; max-height: calc(100% - var(--fl) - 150px); min-height: 120px;
-  display: flex; flex-direction: column; gap: 6px; padding: 10px 10px 8px; background: #FFFDF6; border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: var(--soft-shadow); }
-.entry-board::before { content: ""; position: absolute; top: -8px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: #FFB3DE; border: 2px solid var(--ink); }
-.entry-board-head { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
-.entry-board-title { margin: 0; font-family: var(--font-hand); font-size: 14px; color: var(--berry); }
-.entry-board-head small { font-size: 11px; font-weight: 900; color: var(--ink-soft); white-space: nowrap; }
-.entry-timeline { flex: 1; min-height: 0; max-height: none; gap: 6px; }
-.entry-timeline .tl-item { grid-template-columns: 34px 18px minmax(0, 1fr); gap: 4px; font-size: 11.5px; line-height: 1.4; }
-.entry-timeline .who-dot { width: 18px; height: 18px; font-size: 10px; }
-.entry-timeline .tl-get { font-size: 10.5px; padding: 0 5px; }
-.entry-board-more { align-self: flex-end; border: 0; background: none; padding: 2px 4px; font: inherit; font-size: 12px; font-weight: 900; color: var(--berry); cursor: pointer; }
 
 /* ---------- profile photos ---------- */
 .who-dot.has-avatar { overflow: hidden; padding: 0; background: #FFFFFF; }

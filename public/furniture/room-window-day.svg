@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 100"><title>部屋の窓</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
-<rect x="10" y="10" width="90" height="70" rx="6" fill="#FFFFFF"/>
-<rect x="16" y="16" width="78" height="58" rx="3" fill="#CFE9FF"/>
-<circle cx="76" cy="32" r="10" fill="#FFF4A8"/><path d="M26 40q0-8 8-8q4-8 12-2q9 0 9 10z" fill="#FFFFFF"/>
-<path d="M55 16v58M16 45h78" stroke-width="2"/>
-<rect x="6" y="78" width="98" height="8" rx="3" fill="#FFFFFF"/>
-<path d="M2 6h106" stroke-width="3"/><circle cx="3" cy="6" r="3" fill="#FFFFFF"/><circle cx="107" cy="6" r="3" fill="#FFFFFF"/>
-<path d="M5 6h16q-3 22 5 38q-8 14-5 42H5q3-42 0-80z" style="fill:var(--mr-accent,#FFB3DE)"/>
-<path d="M105 6H89q3 22-5 38q8 14 5 42h16q-3-42 0-80z" style="fill:var(--mr-accent,#FFB3DE)"/>
-<rect x="17" y="40" width="10" height="8" rx="4" fill="#FFF4A8" stroke-width="2"/><rect x="83" y="40" width="10" height="8" rx="4" fill="#FFF4A8" stroke-width="2"/>
+<rect vector-effect="non-scaling-stroke" x="10" y="10" width="90" height="70" rx="6" fill="#FFFFFF"/>
+<rect vector-effect="non-scaling-stroke" x="16" y="16" width="78" height="58" rx="3" fill="#CFE9FF"/>
+<circle vector-effect="non-scaling-stroke" cx="76" cy="32" r="10" fill="#FFF4A8"/><path vector-effect="non-scaling-stroke" d="M26 40q0-8 8-8q4-8 12-2q9 0 9 10z" fill="#FFFFFF"/>
+<path vector-effect="non-scaling-stroke" d="M55 16v58M16 45h78" stroke-width="2"/>
+<rect vector-effect="non-scaling-stroke" x="6" y="78" width="98" height="8" rx="3" fill="#FFFFFF"/>
+<path vector-effect="non-scaling-stroke" d="M2 6h106" stroke-width="3"/><circle vector-effect="non-scaling-stroke" cx="3" cy="6" r="3" fill="#FFFFFF"/><circle vector-effect="non-scaling-stroke" cx="107" cy="6" r="3" fill="#FFFFFF"/>
+<path vector-effect="non-scaling-stroke" d="M5 6h16q-3 22 5 38q-8 14-5 42H5q3-42 0-80z" style="fill:var(--mr-accent,#FFB3DE)"/>
+<path vector-effect="non-scaling-stroke" d="M105 6H89q3 22-5 38q8 14 5 42h16q-3-42 0-80z" style="fill:var(--mr-accent,#FFB3DE)"/>
+<rect vector-effect="non-scaling-stroke" x="17" y="40" width="10" height="8" rx="4" fill="#FFF4A8" stroke-width="2"/><rect vector-effect="non-scaling-stroke" x="83" y="40" width="10" height="8" rx="4" fill="#FFF4A8" stroke-width="2"/>
 </g></svg>

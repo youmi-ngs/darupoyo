@@ -35,7 +35,7 @@ test('camera capture, photo-only fallback, save and stream release',async({page,
   if(await page.getByRole('button',{name:'写真だけで進む'}).count()) await page.getByRole('button',{name:'写真だけで進む'}).click();
   await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();await expect(page.getByText('記録できた！')).toBeVisible();
   expect(await page.evaluate(()=>window.testStream.getTracks().every(t=>t.readyState==='ended'))).toBe(true);
-  await page.getByRole('button',{name:'お部屋へ',exact:true}).click();await page.locator('#nav-room').click();await expect(page.locator('.mr-frame img')).toHaveCount(1);
+  await page.getByRole('button',{name:'お部屋へ',exact:true}).click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();await expect(page.locator('.mr-frame img')).toHaveCount(1);
 });
 test('preset pose shows live guidance and rejects a frame without a person',async({page,context})=>{
   test.setTimeout(90000);
@@ -67,7 +67,7 @@ test('いただきます is recorded with the meal and plays back from the album
   await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();
   const post=(await (await saved).json()).post;
   expect(post.method).toBe('photo_voice');expect(post.voice_media_id).toBeTruthy();
-  await page.getByRole('button',{name:'お部屋へ',exact:true}).click();await page.locator('#nav-room').click();
+  await page.getByRole('button',{name:'お部屋へ',exact:true}).click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();
   await expect(page.locator('.mr-frame .voice-badge')).toHaveCount(1);
   await page.locator('.mr-frame').first().click();
   const voice=page.waitForResponse(r=>r.url().includes('/media/'+post.voice_media_id));

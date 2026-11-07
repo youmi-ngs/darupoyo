@@ -1,9 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 100"><title>洗たくかご</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
-<path d="M16 46q2-22 22-20q8-16 26-6q20-8 28 10q16-2 14 16z" fill="#FFB3DE"/>
-<path d="M28 44q10-18 26-8l8 10z" fill="#A8E6FF"/>
-<path d="M8 48h104l-10 44a6 6 0 0 1-6 4H24a6 6 0 0 1-6-4z" fill="#F2D9C0"/>
-<rect x="4" y="42" width="112" height="10" rx="5" fill="#E8C9A6"/>
-<path d="M18 66h84M21 80h78" stroke="#C99B74" stroke-width="1.8"/>
-<path d="M36 52l3 42M60 52v42M84 52l-3 42" stroke="#C99B74" stroke-width="1.8"/>
-<rect x="50" y="56" width="20" height="7" rx="3.5" fill="#FFFFFF" stroke-width="2"/>
+<!-- The pile is separate so the balcony can show an emptied basket after laundry. -->
+<g id="pile" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+<path vector-effect="non-scaling-stroke" d="M16 46q2-22 22-20q8-16 26-6q20-8 28 10q16-2 14 16z" fill="#FFB3DE"/>
+<path vector-effect="non-scaling-stroke" d="M28 44q10-18 26-8l8 10z" fill="#A8E6FF"/>
+</g>
+<g id="basket" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+<path vector-effect="non-scaling-stroke" d="M8 48h104l-10 44a6 6 0 0 1-6 4H24a6 6 0 0 1-6-4z" fill="#F2D9C0"/>
+<rect vector-effect="non-scaling-stroke" x="4" y="42" width="112" height="10" rx="5" fill="#E8C9A6"/>
+<path vector-effect="non-scaling-stroke" d="M18 66h84M21 80h78" stroke="#C99B74" stroke-width="1.8"/>
+<path vector-effect="non-scaling-stroke" d="M36 52l3 42M60 52v42M84 52l-3 42" stroke="#C99B74" stroke-width="1.8"/>
+<rect vector-effect="non-scaling-stroke" x="50" y="56" width="20" height="7" rx="3.5" fill="#FFFFFF" stroke-width="2"/>
 </g></svg>
+</g>

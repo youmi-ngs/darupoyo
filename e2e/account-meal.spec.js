@@ -47,20 +47,20 @@ test('meal finish shares the satisfied avatar and keeps both recordings in one m
   await page.getByRole('button',{name:'ごちそうさまを保存'}).click();
   await expect(friend.locator('.resident-avatar')).toHaveAttribute('aria-label','もち：ごちそうさま・満腹');
   await expect(page.locator('.resident-avatar')).toHaveClass(/is-satisfied/);
-  await page.locator('#nav-room').click(); await page.locator('.mr-frame').first().click();
+  await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click(); await page.locator('.mr-frame').first().click();
   await expect(page.getByRole('button',{name:'いただきます を聞く'})).toBeVisible();
   await expect(page.getByRole('button',{name:'ごちそうさま を聞く'})).toBeVisible();
   const posts = await page.request.get('/api/houses/' + fixture.house + '/posts', {headers:{Authorization:'Bearer dev:'+fixture.uid}});
   expect((await posts.json()).items).toHaveLength(1);
   await other.close();
 });
-test('board remains a swipe destination and the menu contains only three utilities', async ({ page }) => {
+test('the entrance board opens けーじばん and the menu contains only three utilities', async ({ page }) => {
   await enter(page); await expect(page.locator('#open-menu')).toBeVisible();
   await expect(page.locator('#open-settings')).not.toBeVisible();
   await page.locator('#open-menu').click();
   await expect(page.locator('#utility-menu [data-menu-action]')).toHaveText(['設定','遊び方','招待リンク']);
   await page.keyboard.press('Escape'); await expect(page.locator('#utility-menu')).not.toBeVisible();
-  await page.locator('[data-go="5"].scene-tab').click();
-  await expect(page.locator('.sv-board')).toBeInViewport(); await expect(page.locator('#timeline')).toBeVisible();
+  await page.locator('.scene-dot').nth(1).click(); await page.locator('#open-board').click();
+  await expect(page.locator('#board-view')).toBeVisible(); await page.locator('.board-back').click(); await expect(page.locator('#house-view')).toBeVisible();
   await page.locator('#open-menu').click(); await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible();
 });

@@ -6,7 +6,8 @@ import { appIconGal, setAppIcon } from '../src/app-icon.js';
 test('every furniture file used by the rooms exists and has an #art group (#101)', () => {
   const pages = readFileSync('index.html', 'utf8') + readFileSync('src/legacy.js', 'utf8');
   const used = [...pages.matchAll(/\/furniture\/([a-z-]+?)(?:-' \+ \(lit \? 'day' : 'night'\) \+ '|)\.svg#art/g)].map(m => m[1]);
-  assert.ok(used.length >= 12, 'furniture references found: ' + used.length);
+  // The home redesign keeps only the furniture in the sketches (door, table, vanity, plant, room set).
+  assert.ok(used.length >= 8, 'furniture references found: ' + used.length);
   const files = used.flatMap(name => name === 'room-window' ? ['room-window-day', 'room-window-night'] : [name]);
   for (const name of files) {
     const path = 'public/furniture/' + name + '.svg';

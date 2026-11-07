@@ -10,6 +10,7 @@ from fastapi import HTTPException
 
 from .services import REWARDS
 from .accounts import require_active
+from .themes import normalize_themes, taken_by_other
 
 
 def utcnow():
@@ -59,7 +60,7 @@ class Domain:
             "name": body.name,
             "owner_id": uid,
             "member_ids": [uid],
-            "members": {uid: {"display_name": body.display_name}},
+            "members": {uid: {"display_name": body.display_name, "theme": "pink"}},
             "created_at": self.clock().isoformat(),
         }
         def create(tx):
@@ -100,6 +101,7 @@ class Domain:
                 raise HTTPException(409, "House is full")
             house["member_ids"].append(uid)
             house["members"][uid] = {"display_name": body.display_name}
+            normalize_themes(house)  # the newcomer gets the first free color
             tx.set(path, house)
             return house
 
@@ -272,7 +274,10 @@ class Domain:
             if body.gal is not None:
                 member["gal"] = body.gal
             if body.theme is not None:
+                if taken_by_other(house, uid, body.theme):
+                    raise HTTPException(409, "Another resident already uses this color")
                 member["theme"] = body.theme
+            normalize_themes(house)
             if body.display_name is not None:
                 member["display_name"] = body.display_name.strip()
             tx.set(f"houses/{house_id}", house)

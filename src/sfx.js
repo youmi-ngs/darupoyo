@@ -107,3 +107,16 @@ export function galVoice(gal, text) {
   });
   return chars.length;
 }
+
+// ベランダの鳥の「ピピッ」
+export function chirp() {
+  const c = audio(); if (!c) return;
+  tone(c, { type: 'sine', freq: 2400, to: 3200, dur: .06, vol: .07 });
+  tone(c, { type: 'sine', freq: 2600, to: 3600, at: .09, dur: .07, vol: .07 });
+}
+// ゴミバコの黒猫の「ニャ〜」
+export function meow() {
+  const c = audio(); if (!c) return;
+  tone(c, { type: 'triangle', freq: 520, to: 900, dur: .16, vol: .11 });
+  tone(c, { type: 'triangle', freq: 900, to: 430, at: .16, dur: .36, vol: .09 });
+}

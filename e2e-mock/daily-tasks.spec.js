@@ -12,7 +12,7 @@ test('mock darupoyo shares, retries, persists and is removed with the account',a
     return {retry,records:await houseApi('/darupoyo'),dashboard:await houseApi('/dashboard')};
   });
   expect(result.retry.created).toBe(false); expect(result.records.items).toHaveLength(2); expect(result.dashboard.state.completed).toEqual({});
-  await page.reload(); await page.locator('[data-go="5"].scene-tab').click(); await expect(page.locator('.darupoyo-record')).toHaveCount(2);
+  await page.reload(); await page.locator('.scene-dot').nth(1).click(); await page.locator('#open-board').click(); await expect(page.locator('.pin-grid .pin-darupoyo')).toHaveCount(2); await page.locator('.board-back').click();
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.locator('#delete-account').click();
   await page.locator('.delete-dialog input').check(); await page.locator('.delete-dialog [data-confirm]').click(); await expect(page.locator('.onboarding')).toBeVisible();
   const db=await page.evaluate(()=>JSON.parse(localStorage.getItem('darupoyo-mock')));

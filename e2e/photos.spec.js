@@ -15,34 +15,50 @@ const mealPost = page => page.evaluate(async () => {
   await refresh(); return { uid: client.uid, house: client.house, post: post.id };
 });
 async function openOwnAlbum(page) {
-  await page.locator('.scene-tab[data-go="4"]').click();
-  await page.locator('.door').first().click();
+  await page.locator('.scene-dot').nth(5).click();
+  await page.locator('.door.is-me').click();
   await page.locator('.mr-album').click();
   await expect(page.locator('#log-modal')).toBeVisible();
 }
 
-test('home opens the entrance board with the house timeline', async ({ page }) => {
+test('home opens at the entrance; its board shows the newest records and opens けーじばん', async ({ page }) => {
   await enter(page);
-  await expect(page.locator('.scene-tab[data-go="0"]')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#entry-timeline')).toBeInViewport();
-  await expect(page.locator('#entry-timeline')).toContainText('まだ静か');
+  await expect(page.locator('.scene-dot').nth(1)).toHaveAttribute('aria-current', '');
+  await expect(page.locator('#open-board')).toBeInViewport();
+  await expect(page.locator('#entry-board-grid .pin-card.is-empty')).toHaveCount(6);
   await mealPost(page);
-  await expect(page.locator('#entry-timeline .tl-item')).toHaveCount(1);
-  await expect(page.locator('#entry-timeline')).toContainText('もち');
-  await expect(page.locator('#entry-timeline')).toContainText('ツヤ肌');
-  await expect(page.locator('#entry-count')).toContainText('1');
-  // The home button always comes back to the entrance.
-  await page.locator('.scene-tab[data-go="2"]').click();
-  await page.locator('#nav-home').click();
-  await expect(page.locator('.scene-tab[data-go="0"]')).toHaveAttribute('aria-selected', 'true');
-  await page.locator('#entry-board-more').click();
-  await expect(page.locator('.scene-tab[data-go="5"]')).toHaveAttribute('aria-selected', 'true');
-  await expect(page.locator('#timeline .tl-item')).toHaveCount(1);
+  // a no-photo chore, a selfie and a だるぽよ record are cards too
+  await page.evaluate(async () => {
+    const { houseApi, refresh } = await import('/src/api.js');
+    await houseApi('/completions', { request_id: crypto.randomUUID(), chore: 'dryer', method: 'sound', duration_seconds: 11 });
+    const c = document.createElement('canvas'); c.width = 60; c.height = 60;
+    const selfie = await houseApi('/media?kind=selfie', await new Promise(r => c.toBlob(r, 'image/png')));
+    await houseApi('/moments', { request_id: crypto.randomUUID(), media_id: selfie.id, caption: 'ねむい' });
+    await houseApi('/darupoyo', { request_id: crypto.randomUUID(), chore: 'laundry', caption: '今日はむり' });
+    await refresh();
+  });
+  await page.locator('#open-board').click();
+  await expect(page.locator('#board-view')).toBeVisible();
+  const cards = page.locator('.pin-grid .pin-card');
+  await expect(cards).toHaveCount(4);
+  await expect(cards.nth(0)).toContainText('今日はむり');           // newest first
+  await expect(cards.nth(1)).toContainText('ねむい');
+  await expect(page.locator('.pin-grid .pin-post .pin-photo.is-drawing .resident-character')).toHaveCount(1); // dryer: the gal drawing
+  await expect(page.locator('.pin-grid .pin-card .pin-magnet')).toHaveCount(4);
+  // a chore card opens the photo viewer with reactions and comments
+  await page.locator('.pin-grid .pin-post').last().click();
+  await expect(page.locator('#photo-modal')).toBeVisible();
+  await expect(page.locator('#photo-modal .pm-slide').first().getByLabel('コメントを書く')).toBeVisible();
+  await page.locator('#pm-close').click();
+  await page.locator('.board-back').click();
+  await expect(page.locator('#house-view')).toBeVisible();
+  await expect(page.locator('#entry-board-grid .pin-card:not(.is-empty)')).toHaveCount(4);
 });
 
-test('profile photo appears on the timeline and resident chips, and can be removed', async ({ page }) => {
+test('profile photo is the magnet and the room icon, and the gal shows when there is none', async ({ page }) => {
   await enter(page);
   await mealPost(page);
+  await expect(page.locator('#entry-board-grid .pin-magnet .gal-face')).toHaveCount(1);
   const png = await page.evaluate(async () => {
     const c = document.createElement('canvas'); c.width = 300; c.height = 200; const g = c.getContext('2d'); g.fillStyle = '#f9c'; g.fillRect(0, 0, 300, 200);
     return (await new Promise(r => c.toBlob(r, 'image/png')).then(b => b.arrayBuffer()).then(b => Array.from(new Uint8Array(b))));
@@ -50,14 +66,15 @@ test('profile photo appears on the timeline and resident chips, and can be remov
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#social-card input[type=file]').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: Buffer.from(png) });
   await expect(page.locator('#social-card .avatar-preview img')).toBeVisible();
-  await expect(page.locator('.account-icon img')).toBeVisible();
   await page.locator('#settings-close').click();
-  await expect(page.locator('#entry-timeline .who-dot.has-avatar img')).toBeVisible();
-  await expect(page.locator('#door-chips .chip-face img')).toHaveCount(1);
+  await expect(page.locator('#entry-board-grid .pin-magnet img')).toHaveCount(1);
+  await page.locator('.scene-dot').nth(5).click();
+  await expect(page.locator('#hall-icons .hall-icon img')).toHaveCount(1);
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#social-card .avatar-clear').click();
   await expect(page.locator('#social-card .avatar-preview img')).toHaveCount(0);
-  await expect(page.locator('#entry-timeline .who-dot.has-avatar')).toHaveCount(0);
+  await page.locator('#settings-close').click();
+  await expect(page.locator('#hall-icons .hall-icon .gal-face')).toHaveCount(1);
 });
 
 test('residents comment on a photo and the album calendar jumps to a day', async ({ page }) => {
@@ -92,7 +109,7 @@ test('records from another house appear only after their owner shares them', asy
   expect((await page.request.post('/api/join', { headers: asAlice, data: { token: bob.token, display_name: 'あき' } })).status()).toBe(200);
   const openAliceAlbum = async () => {
     await bobPage.reload(); await expect(bobPage.locator('.onboarding')).toHaveCount(0);
-    await bobPage.locator('.scene-tab[data-go="4"]').click();
+    await bobPage.locator('.scene-dot').nth(5).click();
     await bobPage.locator('.door', { hasText: 'あき' }).click();
     await bobPage.locator('.mr-album').click();
   };
