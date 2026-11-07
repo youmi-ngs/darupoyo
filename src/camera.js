@@ -14,6 +14,25 @@ export function action(root, text, signal) {
   });
 }
 
+// Shows seconds counting down (seconds … 1, then 0) once per second; rejects when aborted.
+export function countdown(seconds, show, signal) {
+  return new Promise((resolve, reject) => {
+    let left = seconds; show(left);
+    const abort = () => { clearInterval(timer); reject(aborted()); };
+    const timer = setInterval(() => {
+      left--; show(left);
+      if (left <= 0) { clearInterval(timer); signal.removeEventListener('abort', abort); resolve(); }
+    }, 1000);
+    signal.addEventListener('abort', abort, { once: true });
+  });
+}
+
+// Records how long a step took as a Performance entry (DevTools > Performance, or
+// performance.getEntriesByType('measure')). Used to find slow steps for #98; it changes no behavior.
+export function timing(name, startedAt) {
+  try { performance.measure('darupoyo:' + name, { start: startedAt, end: performance.now() }); } catch {}
+}
+
 // Rejects when the signal aborts; the returned cleanup removes the listener.
 export function onAbort(signal, reject) {
   const abort = () => reject(aborted());

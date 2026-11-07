@@ -48,3 +48,42 @@ test('motion sparkles follow the moving area in mirrored camera coordinates', as
   assert.ok(points.every(p => p.x > .68 && p.x < .94 && p.y > .16 && p.y < .63));
   assert.deepEqual(motionEdge(before, before, width, height), []);
 });
+
+// 33 Pose landmarks; only the listed indices are visible.
+const pose = (visible, at = {}) => Array.from({ length: 33 }, (_, i) => ({ x: .5, y: .5, z: 0, visibility: visible.includes(i) ? .9 : .1, ...at[i] }));
+
+test('upper body is enough for laundry: face, both shoulders and one arm (#106)', async () => {
+  const { hasUpperBody } = await import('../src/rhythm.js');
+  assert.equal(hasUpperBody(pose([0, 11, 12, 13])), true);
+  assert.equal(hasUpperBody(pose([0, 11, 12, 16])), true);
+  assert.equal(hasUpperBody(pose([0, 11, 12])), false, 'no arm');
+  assert.equal(hasUpperBody(pose([11, 12, 13, 14])), false, 'no face');
+  assert.equal(hasUpperBody(pose([0, 11, 13, 14])), false, 'one shoulder');
+  assert.equal(hasUpperBody(undefined), false);
+  // Hips, knees and ankles are not needed.
+  assert.equal(hasUpperBody(pose([0, 11, 12, 13, 14, 15, 16])), true);
+});
+
+test('upper body area reaches 1.5 shoulder widths below the shoulders, within limits (#106)', async () => {
+  const { upperBodyBottom, UPPER_FALLBACK } = await import('../src/rhythm.js');
+  const at = (ly, ry, lx, rx) => ({ 11: { x: lx, y: ly }, 12: { x: rx, y: ry } });
+  assert.ok(Math.abs(upperBodyBottom(pose([0, 11, 12, 13], at(.3, .3, .6, .4))) - .6) < 1e-9);
+  assert.equal(upperBodyBottom(pose([0, 11, 12, 13], at(.1, .1, .52, .48))), .45, 'never smaller than .45');
+  assert.equal(upperBodyBottom(pose([0, 11, 12, 13], at(.8, .8, .9, .1))), 1, 'never past the frame');
+  assert.equal(upperBodyBottom(pose([0])), UPPER_FALLBACK);
+});
+
+test('motion below the upper body area does not count (#106)', () => {
+  const W = 4, H = 4, a = new Uint8ClampedArray(W * H * 4), b = a.slice();
+  [0, 1, 2].forEach(i => { b[(3 * W + 1) * 4 + i] = 255; }); // bottom row moves
+  assert.equal(detectMotion(a, b, W, H).ratio, 1 / 16);
+  assert.deepEqual(detectMotion(a, b, W, H, 40, 2), { ratio: 0, x: .5, y: .5 });
+  [0, 1, 2].forEach(i => { b[(0 * W + 2) * 4 + i] = 255; }); // top row moves
+  assert.equal(detectMotion(a, b, W, H, 40, 2).ratio, 1 / 8);
+});
+
+test('countdown is 3 seconds and grades read よき / まあまあ (#107 #108)', async () => {
+  const { COUNTDOWN_SECONDS, GRADE_LABEL } = await import('../src/rhythm.js');
+  assert.equal(COUNTDOWN_SECONDS, 3);
+  assert.deepEqual(GRADE_LABEL, { good: 'よき', ok: 'まあまあ' });
+});

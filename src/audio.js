@@ -1,11 +1,47 @@
-import { action, check, onAbort, openMic } from './camera.js';
-import { BEAT_MS, TOTAL_BEATS, PASS_HITS, OK_MS, noteTime, judgeHit, detectMotion, isSlap, motionEdge } from './rhythm.js';
+import { action, check, countdown, onAbort, openMic, timing } from './camera.js';
+import { BEAT_MS, TOTAL_BEATS, PASS_HITS, OK_MS, COUNTDOWN_SECONDS, GRADE_LABEL, UPPER_FALLBACK, noteTime, judgeHit, detectMotion, isSlap, motionEdge, hasUpperBody, upperBodyBottom } from './rhythm.js';
+import { createPoseLandmarker } from './pose.js';
 import { playSparkle, sparkle, sparkleOutline } from './sparkle.js';
+import { sfx } from './sfx.js';
+
+const UPPER_HINT = '顔・肩・腕が映るようにしてね（上半身だけでOK）';
+// 開始前だけ Pose で上半身が映っているかを見る（#106）。3回続けて見えたら ready を呼んで、モデルをすぐ閉じる。
+// ゲーム中は軽いフレーム差分だけを使うので、推論で判定が遅れることはない。
+function watchUpperBody(video, status, ready, resources) {
+  let stopped = false, frame, landmarker, seen = 0, last = 0;
+  const stop = () => { if (stopped) return; stopped = true; cancelAnimationFrame(frame); try { landmarker?.close(); } catch {} landmarker = null; };
+  resources.push(stop);
+  status.textContent = UPPER_HINT + '。準備中…';
+  const t0 = performance.now();
+  createPoseLandmarker({ runningMode: 'VIDEO' }).then(model => {
+    timing('laundry-pose-load', t0);
+    if (stopped) { model.close(); return; }
+    landmarker = model; status.textContent = UPPER_HINT;
+    const loop = now => {
+      if (stopped) return;
+      frame = requestAnimationFrame(loop);
+      if (now - last < 150 || video.readyState < 2) return;
+      last = now;
+      const result = landmarker.detectForVideo(video, now), landmarks = result.landmarks[0];
+      const ok = hasUpperBody(landmarks), bottom = ok ? upperBodyBottom(landmarks) : UPPER_FALLBACK;
+      result.close();
+      seen = ok ? seen + 1 : 0;
+      if (seen >= 3) { stop(); ready(bottom); }
+    };
+    frame = requestAnimationFrame(loop);
+  }).catch(e => {
+    if (stopped) return;
+    // モデルを読めない端末でも遊べるように、上半身の範囲は固定値で始められるようにする。
+    console.warn('上半身チェックを使えません', e);
+    ready(UPPER_FALLBACK, 'このまま「リズムをはじめる」でOK。顔・肩・腕が映るようにしてね');
+  });
+  return stop;
+}
 
 // 洗濯：前のカメラに自分を映して、音符に合わせて洗濯物をバサッと動かす。
 // タイミングが合うと動いた部分の輪郭からキラキラ。8拍のうち PASS_HITS 回でクリア。映像は端末の中だけで使う。
 export async function laundryRhythm(box, status, choice, signal, resources) {
-  status.textContent = 'カメラに全身か上半身を映してね。音符が丸に重なったら洗濯物をバサッ！映像は端末の中だけで使い、保存も送信もしません。';
+  status.textContent = 'カメラに上半身を映してね。音符が丸に重なったら洗濯物をバサッ！映像は端末の中だけで使い、保存も送信もしません。';
   const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 640 } } });
   resources.push(() => stream.getTracks().forEach((t) => t.stop())); check(signal);
   const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true; video.srcObject = stream;
@@ -25,8 +61,27 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
     n.style.transform = `translate(${x}px, -50%) translateX(-50%)`;
   });
   placeNotes(start);
-  await action(box, 'リズムをはじめる', signal); check(signal);
+  // 上半身が映るまで「リズムをはじめる」は押せない。一度OKになったら、そのまま押せる。
+  const started = action(box, 'リズムをはじめる', signal), startButton = box.lastElementChild;
+  startButton.disabled = true;
+  let rows = UPPER_FALLBACK;
+  const markReady = (bottom, message = '上半身OK！洗濯物を持って「リズムをはじめる」') => {
+    if (!startButton.disabled) return;
+    rows = bottom; startButton.disabled = false; status.textContent = message;
+  };
+  // 開発中だけ：テストの偽カメラには人が映らないので、上半身OKをイベントで起こせるようにする。
+  if (import.meta.env.DEV) box.addEventListener('test-upper-body', () => markReady(UPPER_FALLBACK));
+  const stopCheck = watchUpperBody(video, status, markReady, resources);
+  await started; check(signal); stopCheck();
   const context = new AudioContext(); resources.push(() => { void context.close(); }); void context.resume();
+  // 3・2・1 の猶予（#107）。洗濯物を構える時間。カウント中の動きはヒットに数えない。
+  const count = document.createElement('span'); count.className = 'capture-count'; count.setAttribute('aria-hidden', 'true'); stage.append(count);
+  await countdown(COUNTDOWN_SECONDS, left => {
+    count.hidden = !left; count.textContent = left || '';
+    status.textContent = left ? left + ' …洗濯物をかまえて！' : 'スタート！';
+    if (left) sfx.pop();
+  }, signal);
+  count.remove(); check(signal);
   const counter = document.createElement('p'); counter.className = 'btn capture-beat'; counter.setAttribute('aria-hidden', 'true'); counter.textContent = '♪'; box.append(counter);
   const grade = lane.querySelector('.rhythm-grade');
   const W = 64, H = 48, frame = document.createElement('canvas'); frame.width = W; frame.height = H;
@@ -44,7 +99,7 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
     playSparkle(context);
     if (points.length) sparkleOutline(stage, points); else sparkle(stage, 1 - x, y);
     status.textContent = hit.size + ' / ' + TOTAL_BEATS + ' ヒット（' + PASS_HITS + '回でクリア）';
-    grade.textContent = result.grade === 'good' ? '良' : '可'; grade.className = 'rhythm-grade is-' + result.grade;
+    grade.textContent = GRADE_LABEL[result.grade]; grade.className = 'rhythm-grade is-' + result.grade;
     clearTimeout(gradeTimer); gradeTimer = setTimeout(() => { grade.textContent = ''; grade.className = 'rhythm-grade'; }, 500);
   };
   // 開発中だけ：テストが「バサッ」を起こせるようにする（本番ビルドには入らない）。
@@ -54,7 +109,8 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
     if (video.readyState < 2) return;
     fctx.drawImage(video, 0, 0, W, H);
     const now = fctx.getImageData(0, 0, W, H).data;
-    if (before) { const m = detectMotion(before, now, W, H); if (isSlap(m.ratio, priorRatio)) slap(m.x, m.y, motionEdge(before, now, W, H)); priorRatio = m.ratio; }
+    // 上半身の範囲（rows）だけを見る。腰から下の動きでは反応しない（#106）。
+    if (before) { const m = detectMotion(before, now, W, H, 40, rows * H); if (isSlap(m.ratio, priorRatio)) slap(m.x, m.y, motionEdge(before, now, W, H, 40, rows * H)); priorRatio = m.ratio; }
     before = now;
   }, 66);
   resources.push(() => clearInterval(motionTimer));

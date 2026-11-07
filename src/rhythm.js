@@ -3,6 +3,10 @@ export const BEAT_MS = 800, TOTAL_BEATS = 8;
 // 8拍のうち、これだけタイミングが合えば洗濯クリア。
 export const PASS_HITS = 6;
 export const GOOD_MS = 150, OK_MS = 320;
+// 「リズムをはじめる」を押してから音符が動き出すまでのカウントダウン（#107）。
+export const COUNTDOWN_SECONDS = 3;
+// 判定の表示名（#108）。内部の値は good / ok のまま。
+export const GRADE_LABEL = { good: 'よき', ok: 'まあまあ' };
 
 // k番目の音符は開始から (k+1) * BEAT_MS に判定の円へ届く。
 export const noteTime = k => (k + 1) * BEAT_MS;
@@ -16,14 +20,35 @@ export function judgeHit(elapsed, taken) {
 }
 
 // RGBAの2フレームを比べ、大きく変化した画素の割合と重心（0〜1）を返す。
-export function detectMotion(prev, cur, width, height, threshold = 40) {
+// rows を渡すと上から rows 行だけ（上半身の範囲）を見る。割合もその範囲に対する値。
+export function detectMotion(prev, cur, width, height, threshold = 40, rows = height) {
+  const limit = Math.max(1, Math.min(height, Math.round(rows)));
   let changed = 0, sumX = 0, sumY = 0;
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+  for (let y = 0; y < limit; y++) for (let x = 0; x < width; x++) {
     const i = (y * width + x) * 4;
     const diff = (Math.abs(cur[i] - prev[i]) + Math.abs(cur[i + 1] - prev[i + 1]) + Math.abs(cur[i + 2] - prev[i + 2])) / 3;
     if (diff > threshold) { changed++; sumX += x; sumY += y; }
   }
-  return { ratio: changed / (width * height), x: changed ? (sumX / changed + .5) / width : .5, y: changed ? (sumY / changed + .5) / height : .5 };
+  return { ratio: changed / (width * limit), x: changed ? (sumX / changed + .5) / width : .5, y: changed ? (sumY / changed + .5) / height : .5 };
+}
+
+// 洗濯は上半身だけで遊べる（#106）。顔・両肩と、片腕（肘か手首）が見えていればOK。
+// 下半身（腰・ひざ・足首）は見なくてよい。landmarks は MediaPipe Pose の33点。
+const VISIBLE = .5;
+export function hasUpperBody(landmarks) {
+  if (!landmarks) return false;
+  const seen = i => (landmarks[i]?.visibility ?? 0) >= VISIBLE;
+  return seen(0) && seen(11) && seen(12) && [13, 14, 15, 16].some(seen);
+}
+
+// 上半身の範囲（画面の上端からの割合 0〜1）。肩から肩幅1.5個ぶん下まで＝腕を振る範囲。
+// 腰より下の動き（歩く・足をゆらす）を「バサッ」と数えないようにする。
+export const UPPER_FALLBACK = .7;
+export function upperBodyBottom(landmarks) {
+  if (!hasUpperBody(landmarks)) return UPPER_FALLBACK;
+  const ls = landmarks[11], rs = landmarks[12];
+  const width = Math.hypot(ls.x - rs.x, ls.y - rs.y);
+  return Math.max(.45, Math.min(1, Math.max(ls.y, rs.y) + width * 1.5));
 }
 
 // 動きの立ち上がりだけを「叩いた」とみなす。動き続けているだけでは反応しない。
@@ -51,9 +76,9 @@ export function bodyEdge(person, width, height, count = 14, threshold = .5) {
 
 // Outline the moving laundry with the same tiny frames used for hit detection.
 // No synchronous segmentation/model inference is needed during the rhythm game.
-export function motionEdge(prev, cur, width, height, threshold = 40) {
-  const mask = new Float32Array(width * height);
-  for (let i = 0; i < mask.length; i++) {
+export function motionEdge(prev, cur, width, height, threshold = 40, rows = height) {
+  const mask = new Float32Array(width * height), limit = Math.max(1, Math.min(height, Math.round(rows))) * width;
+  for (let i = 0; i < limit; i++) {
     const p = i * 4;
     mask[i] = (Math.abs(cur[p] - prev[p]) + Math.abs(cur[p + 1] - prev[p + 1]) + Math.abs(cur[p + 2] - prev[p + 2])) / 3 > threshold ? 1 : 0;
   }
