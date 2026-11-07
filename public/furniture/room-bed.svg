@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 170 100"><title>ベッド</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+<rect x="4" y="8" width="24" height="88" rx="10" fill="#F2D9C0"/><path d="M10 22h12" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="146" y="44" width="20" height="52" rx="8" fill="#F2D9C0"/>
+<rect x="20" y="76" width="134" height="10" rx="3" fill="#E2BF9E"/>
+<rect x="22" y="54" width="128" height="24" rx="6" fill="#FFFFFF"/>
+<rect x="30" y="38" width="36" height="18" rx="9" fill="#FFFFFF"/><path d="M38 46h18" stroke="#E9DDFF" stroke-width="2"/>
+<path d="M58 46q46-8 92 8v24H58q-6-16 0-32z" style="fill:var(--mr-accent,#FFB3DE)"/>
+<path d="M66 60q40-6 80 4" stroke="#FFFFFF" stroke-width="3" fill="none" opacity=".8"/>
+<circle cx="84" cy="68" r="2" fill="#FFFFFF" stroke="none"/><circle cx="104" cy="70" r="2" fill="#FFFFFF" stroke="none"/><circle cx="124" cy="70" r="2" fill="#FFFFFF" stroke="none"/>
+<path d="M26 86v10M148 86v10" stroke-width="3.5"/>
+</g></svg>

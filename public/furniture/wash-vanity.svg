@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 230"><title>洗面台</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+<rect x="34" y="2" width="108" height="90" rx="45" fill="#FFFFFF"/>
+<rect x="42" y="10" width="92" height="74" rx="37" fill="#E2F6FF"/>
+<path d="M60 34q8-12 22-16" stroke="#FFFFFF" stroke-width="5" fill="none"/>
+<rect x="128" y="84" width="14" height="18" rx="4" fill="#A8E6FF"/><rect x="132" y="78" width="6" height="6" rx="2" fill="#FFFFFF" stroke-width="2"/>
+<rect x="82" y="82" width="12" height="22" rx="4" fill="#E4E9F2"/>
+<rect x="76" y="76" width="24" height="8" rx="4" fill="#FFB3DE"/>
+<rect x="88" y="90" width="16" height="7" rx="3.5" fill="#E4E9F2"/>
+<rect x="16" y="102" width="144" height="20" rx="8" fill="#FFFFFF"/>
+<ellipse cx="88" cy="111" rx="40" ry="5" fill="#CFEFFF"/>
+<rect x="24" y="122" width="128" height="102" rx="6" fill="#F0E6FF"/>
+<rect x="32" y="130" width="50" height="86" rx="5" fill="#F7F1FF" stroke-width="2"/>
+<rect x="94" y="130" width="50" height="86" rx="5" fill="#F7F1FF" stroke-width="2"/>
+<circle cx="77" cy="172" r="3" fill="#3B2560"/><circle cx="99" cy="172" r="3" fill="#3B2560"/>
+</g></svg>

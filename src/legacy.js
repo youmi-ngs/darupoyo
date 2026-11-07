@@ -7,6 +7,7 @@ import { capture } from './media.js';
 import { recordMealVoice } from './meal-voice.js';
 import { renderActivities } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
+import { setAppIcon } from './app-icon.js';
 import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { timelineEntries, renderTimeline as drawTimeline } from './timeline.js';
 import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
@@ -154,6 +155,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   // ---------- gal AIs ----------
   let galPref = 'random';
   try { galPref = localStorage.getItem('cyl-gal') || 'random'; } catch (e) {}
+  setAppIcon(galPref); // #110
   const pickGal = () => galPref !== 'random' && GALS[galPref] ? galPref : GAL_IDS[Math.floor(Math.random() * GAL_IDS.length)];
   const galOf = (p) => p.gal || GAL_IDS[[...(p.time + nameOf(p.who) + p.task)].reduce((a, ch) => a + ch.charCodeAt(0), 0) % GAL_IDS.length];
   const lineKey = (id, kind, mode, fig) => {
@@ -171,7 +173,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} setAppIcon(id); renderGalPicker(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
       return b;
     };
     GAL_IDS.forEach((g) => box.append(mk(g)));
@@ -379,19 +381,20 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     box.innerHTML =
       '<div class="myroom w-' + col + (lit ? ' is-lit' : '') + '">' +
         '<div class="mr-plate"><b></b><span></span></div>' +
-        '<svg class="mr-lamp" viewBox="0 0 60 180" aria-hidden="true"><g ' + S2 + '><path d="M30 0v130"/><path d="M12 152q0-22 18-22t18 22z" fill="' + hex + '"/><ellipse class="mr-bulb" cx="30" cy="156" rx="8" ry="5" fill="#FFFFFF"/></g></svg>' +
-        '<svg class="mr-window" viewBox="0 0 110 100" aria-hidden="true"><g ' + S2 + '><rect x="8" y="10" width="94" height="72" rx="6" fill="' + (lit ? '#CFE9FF' : '#5E4E80') + '"/>' + (lit ? '<circle cx="78" cy="34" r="11" fill="#FFF4A8"/>' : '<path d="M76 26a10 10 0 1 0 8 16a8 8 0 1 1-8-16z" fill="#FFF4A8"/>') + '<path d="M55 10v72M8 46h94" stroke-width="2"/><path d="M2 6h106"/><path d="M4 6q8 36 0 82h12q-6-42 0-82z" fill="' + hex + '"/><path d="M106 6q-8 36 0 82H94q6-42 0-82z" fill="' + hex + '"/></g></svg>' +
+        '<svg class="mr-lamp" data-furniture="room-lamp" viewBox="0 0 60 120" aria-hidden="true"><use href="/furniture/room-lamp.svg#art"/></svg>' +
+        '<svg class="mr-window" data-furniture="room-window" viewBox="0 0 110 100" aria-hidden="true"><use href="/furniture/room-window-' + (lit ? 'day' : 'night') + '.svg#art"/></svg>' +
         '<p class="mr-cap mr-cap-wall">壁に飾ったプリ</p>' +
         '<div class="mr-frames"></div>' +
         '<div class="mr-shelf"><p class="mr-cap">今日ゲットしたもの</p><div class="mr-items"></div></div>' +
         '<button class="mr-album" type="button" aria-label="アルバム（これまでの記録）"><svg viewBox="0 0 60 52" aria-hidden="true"><g ' + S2 + '><rect x="6" y="6" width="16" height="44" rx="2" fill="#FFFFFF"/><rect x="18" y="4" width="18" height="46" rx="2" fill="' + hex + '"/><path d="M22 12h10M22 18h6" stroke-width="2"/><rect x="32" y="10" width="22" height="40" rx="3" fill="#FFF4A8" transform="rotate(8 43 30)"/><path d="M38 22l4 3l6-6" stroke-width="2" transform="rotate(8 43 30)"/></g></svg></button>' +
         '<span class="mr-rug" aria-hidden="true"></span>' +
-        '<svg class="mr-bed" viewBox="0 0 170 100" aria-hidden="true"><g ' + S2 + '><rect x="4" y="10" width="20" height="86" rx="6" fill="#F2D9C0"/><rect x="146" y="40" width="20" height="56" rx="6" fill="#F2D9C0"/><rect x="20" y="52" width="130" height="30" rx="6" fill="#FFFFFF"/><rect x="28" y="38" width="38" height="18" rx="8" fill="#FFFFFF"/><path d="M60 46q40-6 90 6v30H60z" fill="' + hex + '"/><path d="M78 56q30-4 66 4" stroke-width="2" fill="none"/><path d="M24 82v14M146 82v14"/></g></svg>' +
-        '<svg class="mr-desk" viewBox="0 0 120 110" aria-hidden="true"><g ' + S2 + '><path d="M8 50h104" stroke-width="5"/><path d="M16 50v58M104 50v58"/><rect x="70" y="56" width="30" height="24" rx="3" fill="#F2D9C0"/><circle cx="85" cy="68" r="2" fill="#3B2560"/><path d="M30 50l6-26M36 24l14 6" fill="none"/><path d="M44 26l14 6l-4 8l-14-6z" fill="#FFF4A8"/><rect x="62" y="30" width="34" height="20" rx="3" fill="#E9DDFF"/><path d="M68 36h22M68 42h14" stroke-width="2"/><path d="M30 70h26l-4 38M34 70l-4 38" fill="none"/><rect x="28" y="62" width="30" height="10" rx="4" fill="' + hex + '"/></g></svg>' +
+        '<svg class="mr-bed" data-furniture="room-bed" viewBox="0 0 170 100" aria-hidden="true"><use href="/furniture/room-bed.svg#art"/></svg>' +
+        '<svg class="mr-desk" data-furniture="room-desk" viewBox="0 0 120 110" aria-hidden="true"><use href="/furniture/room-desk.svg#art"/></svg>' +
         '<div class="mr-dark"><p></p></div>' +
       '</div>';
     $('room-view').style.background = 'repeating-linear-gradient(90deg, ' + theme.wall[0] + ' 0 18px, ' + theme.wall[1] + ' 18px 36px)';
     box.querySelector('.myroom').style.setProperty('--mr-rug', theme.rug);
+    box.querySelector('.myroom').style.setProperty('--mr-accent', hex); // furniture files use it for the theme color (#101)
     $('room-paint').hidden = who !== ME;
     if (who !== ME) closePaint();
     renderPaint();
@@ -641,11 +644,11 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
 
   function receive(data) {
     dashboard = data; ME = client.uid;
-    if (data.house.members[ME]?.gal) { galPref = data.house.members[ME].gal; try { localStorage.setItem('cyl-gal', galPref); } catch {} }
+    if (data.house.members[ME]?.gal) { galPref = data.house.members[ME].gal; try { localStorage.setItem('cyl-gal', galPref); } catch {} setAppIcon(galPref); }
     RESIDENTS = data.house.member_ids.map((who,i) => ({ who, color: ['pink','cyan','lilac','lime','pink','cyan'][i] }));
     const doors = document.querySelector('.doors'); doors.replaceChildren();
     RESIDENTS.forEach(r => { ROOM_COLORS[r.who] = r.color; const slot = document.createElement('div'); slot.className = 'door-slot'; slot.dataset.who = r.who; doors.append(slot); });
-    doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,1fr))';
+    doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,132px))'; // #97: cap the width when few people live here
     $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
     document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who) + 'のへや'; } });
     const convert = convertPost;
