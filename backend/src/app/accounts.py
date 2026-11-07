@@ -75,6 +75,8 @@ def delete_account(store, media, uid, delete_login):
                             recent['sync_with'] = [m for m in recent.get('sync_with', []) if m != uid]
                     else:
                         value.get('reactions', {}).pop(uid, None)
+                        if 'comments' in value:
+                            value['comments'] = [c for c in value['comments'] if c['user_id'] != uid]
                         value['sync_with'] = [m for m in value.get('sync_with', []) if m != uid]
                         # A copied pose remains the other user's own photo.
                         if value.get('pose_template_post_id') and (value['pose_template_post_id'] in removed_posts or not tx.get(root + '/posts/' + value['pose_template_post_id'])):
