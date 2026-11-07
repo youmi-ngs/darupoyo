@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 300"><title>ピンクの屋根のシェアハウス</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M210 60V12h24v66" fill="#E2BF9E"/>
+<path d="M26 120h228v174H26z" fill="#FFF6EC"/>
+<path d="M26 120L140 32l114 88" fill="#FFF6EC"/>
+<path d="M8 122L140 14l132 108-16 14L140 42 24 136z" fill="#FFB3DE"/>
+<path d="M38 138h204M38 198h204" stroke="#E2BF9E"/>
+<g fill="#CFE9FF"><rect x="52" y="146" width="50" height="44" rx="5"/><rect x="178" y="146" width="50" height="44" rx="5"/><circle cx="140" cy="94" r="18"/></g>
+<path d="M77 146v44m-25-22h50m101-22v44m-25-22h50M122 94h36m-18-18v36" fill="none"/>
+<rect x="114" y="218" width="52" height="76" rx="5" fill="#D9C2FF"/><rect x="124" y="229" width="32" height="25" rx="4" fill="#FFF4A8"/><circle cx="154" cy="269" r="3" fill="#FFF4A8"/>
+<path d="M104 218l36-20 36 20z" fill="#FFB3DE"/><path d="M104 294h72v5h-72z" fill="#E2BF9E"/>
+<g fill="#BFE9D3"><path d="M30 294v-15q-8-16 7-19 6-18 17-4 18-8 20 10 14 2 8 28z"/><path d="M196 294q-8-18 7-23 0-20 16-15 14-14 23 3 18-2 12 20v15z"/></g>
+<path d="M24 294h232"/>
+</g></svg>

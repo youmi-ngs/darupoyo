@@ -20,11 +20,18 @@ export function renderActivities(data, now = Date.now()) {
     const room = document.querySelector(`.scene[data-scene="${scene}"] .sv`);
     if (!room) continue;
     let group = room.querySelector('.resident-activities');
-    if (!group) { group = document.createElement('div'); group.className = 'resident-activities'; room.append(group); }
+    if (!group) {
+      group = document.createElement('div'); group.className = 'resident-activities';
+      if (activity.chore === 'meal') {
+        group.classList.add('meal-seats');
+        room.querySelector('[data-chore=meal]').append(group);
+      } else room.append(group);
+    }
     const figure = document.createElement('figure');
     const finished = activity.phase === 'finished';
     figure.className = 'resident-avatar avatar-' + activity.chore + (finished ? ' is-satisfied' : '');
     figure.dataset.user = uid;
+    if (activity.chore === 'meal') figure.style.setProperty('--extra-seat', Math.max(0, group.children.length - 2));
     const label = finished ? 'ごちそうさま・満腹' : LABELS[activity.chore];
     figure.setAttribute('aria-label', member.display_name + '：' + label);
     figure.innerHTML = galCharacter(galId(member, activity), themes[uid], finished ? 'heart' : PROP[activity.chore]);

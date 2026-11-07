@@ -478,7 +478,7 @@ dialog.sheet[open] { animation: rise .32s cubic-bezier(.2, 1, .4, 1); }
 .sv-entry { --sv-wall: linear-gradient(180deg, #FFF0F8, #FFE3F1); --sv-floor: repeating-conic-gradient(#EDE6F6 0 25%, #FFFFFF 0 50%) 0 0 / 28px 28px; }
 .sv-wash { --sv-wall: linear-gradient(rgba(127,184,232,.22) 2px, transparent 2px) 0 0 / 26px 26px, linear-gradient(90deg, rgba(127,184,232,.22) 2px, transparent 2px) 0 0 / 26px 26px, #F2FBFF; --sv-floor: repeating-linear-gradient(90deg, #E2F6FF 0 30px, #CFEFFF 30px 32px); }
 .sv-balcony { --sv-wall: linear-gradient(180deg, #C9B6FF 0%, #FFB8DC 70%, #FFD3C2 100%); --sv-floor: #E9E4F0; }
-.sv-sun { position: absolute; right: 8%; top: 38%; width: 90px; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(180deg, #FFF6A8, #FF9ED8); opacity: .85; }
+.sv-sun { position: absolute; right: 8%; top: 5%; width: 90px; aspect-ratio: 1; border-radius: 50%; background: linear-gradient(180deg, #FFF6A8, #FF9ED8); opacity: .85; }
 .rhythm-camera{position:relative;overflow:hidden;border-radius:16px;background:#3b2560}.capture .rhythm-camera video{transform:scaleX(-1);max-height:34vh}.rhythm-lane{position:relative;height:64px;margin-top:12px;overflow:hidden;border:2px solid #3b2560;border-radius:32px;background:linear-gradient(90deg,#fff5fb,#e9e3ff)}.rhythm-target{position:absolute;left:16%;top:50%;width:48px;height:48px;transform:translate(-50%,-50%);border:4px solid #3b2560;border-radius:50%;background:#fff}.rhythm-note{position:absolute;top:50%;width:36px;height:36px;transform:translate(-50%,-50%);border:3px solid #3b2560;border-radius:50%;background:#ffb3de;will-change:transform;left:0}.rhythm-note.is-hit{visibility:hidden}.rhythm-note.is-miss{opacity:.3}.rhythm-grade{position:absolute;left:16%;top:50%;z-index:2;transform:translate(-50%,-50%);font-size:24px;font-weight:900;pointer-events:none}.rhythm-grade.is-good{color:#d154a2}.rhythm-grade.is-ok{color:#3b2560}.fx-spark{position:absolute;z-index:3;width:30px;height:30px;margin:-15px 0 0 -15px;pointer-events:none;animation:fx-spark .65s ease-out both}.fx-spark svg{display:block;width:100%;height:100%;filter:drop-shadow(0 0 4px #fff)}@keyframes fx-spark{from{transform:translate(0,0) scale(.3);opacity:1}to{transform:translate(var(--dx),var(--dy)) scale(1.1) rotate(90deg);opacity:0}}@media (prefers-reduced-motion:reduce){.fx-spark{animation-duration:.01s}}
 /* 洗濯：タイミングが合ったとき、体の輪郭から出るキラキラ */
 .fx-spark.fx-spark-body{width:22px;height:22px;margin:-11px 0 0 -11px;animation-duration:.8s}
@@ -1044,9 +1044,9 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
 .resident-activities { position: absolute; left: 4%; right: 4%; bottom: 4%; display: flex; justify-content: center; gap: 4px; z-index: 2; pointer-events: none; }
 .resident-avatar { margin: 0; width: 92px; min-width: 0; flex: 0 1 92px; text-align: center; }
 .resident-character { width: 60px; height: 102px; position: relative; margin: auto; max-width: 100%; }
-.resident-face { display: block; position: relative; z-index: 2; width: 56px; height: 54px; max-width: 100%; }
+.resident-face { display: block; position: relative; z-index: 2; width: 56px; height: 54px; max-width: 100%; margin-inline: auto; }
 .resident-face svg { width: 100%; height: 100%; }
-.resident-body { position: absolute; top: 43px; left: 16px; width: 30px; height: 42px; background: var(--avatar-color); border: 2px solid var(--ink); border-radius: 10px 10px 14px 14px; }
+.resident-body { position: absolute; top: 43px; left: 50%; transform: translateX(-50%); width: 30px; height: 42px; background: var(--avatar-color); border: 2px solid var(--ink); border-radius: 10px 10px 14px 14px; }
 .resident-body .arm { position: absolute; top: 6px; width: 10px; height: 28px; background: #FFE5DD; border: 2px solid var(--ink); border-radius: 8px; }
 .resident-body .left { left: -9px; transform: rotate(28deg); }
 .resident-body .right { right: -9px; transform: rotate(-28deg); }
@@ -1054,7 +1054,7 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
 .resident-prop { position: absolute; z-index: 3; top: 55px; left: 20px; font-size: 22px; }
 .resident-avatar figcaption { display: flex; flex-direction: column; padding: 3px; border-radius: 8px; background: #FFFDF1E8; font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
 .resident-avatar figcaption strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.resident-avatar.is-satisfied .resident-body { width: 36px; left: 13px; border-radius: 45%; }
+.resident-avatar.is-satisfied .resident-body { width: 36px; border-radius: 45%; }
 .resident-avatar.is-satisfied .arm { top: 14px; height: 20px; transform: rotate(65deg); }
 .resident-avatar.is-satisfied .right { transform: rotate(-65deg); }
 .resident-avatar.is-satisfied .resident-prop { top: 53px; color: #D154A2; }

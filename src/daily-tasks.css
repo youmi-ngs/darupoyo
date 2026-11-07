@@ -23,8 +23,9 @@
 .completion-sticker { position: absolute; z-index: 2; bottom: -13px; right: -8px; padding: 1px 7px; border: 2px solid white; outline: 1px solid #933a80; border-radius: 5px 12px 5px 12px; transform: rotate(-10deg); background: linear-gradient(120deg, #ffb8e6, #e3c7ff 52%, #fff3ac); color: #65234f; font-size: 12px; font-weight: 900; line-height: 1.6; white-space: nowrap; pointer-events: none; box-shadow: 1px 2px 0 #b186ac; }
 .completion-sticker::before { content: '✧'; margin-right: 2px; }
 .completion-sticker::after { content: '♡'; margin-left: 2px; }
-.furniture-toy { pointer-events: auto !important; cursor: pointer; touch-action: manipulation; }
-.furniture-toy:focus-visible { outline: 3px solid #a32862; outline-offset: 4px; }
+.furniture-toy { pointer-events: auto !important; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.furniture-toy:focus { outline: none; }
+.furniture-toy:focus-visible:not(.is-pointer-focus) { outline: 3px solid #a32862; outline-offset: 4px; }
 .furniture-prize { position: absolute; z-index: 6; left: calc(50% - 38px); bottom: 5%; width: 76px; min-height: 66px; padding: 4px; border: 2px solid var(--ink); border-radius: 18px; background: #fff3fa; color: var(--ink); box-shadow: 0 3px 8px #3b256030; animation: furniture-prize-drop .6s ease-out; }
 .furniture-prize svg { display: block; width: 58px; margin: auto; }
 .furniture-prize span { font-size: 11px; font-weight: 900; }

@@ -42,8 +42,10 @@ export function setupFurniturePlay() {
       const name=target.dataset.furnitureName || NAMES[scene?.dataset.scene]?.[siblings.indexOf(target)] || ({'mr-bed':'ベッド','mr-desk':'机','mr-lamp':'ライト','mr-window':'窓'})[[...target.classList].find(c=>c.startsWith('mr-'))] || '家具';
       target.classList.add('furniture-toy'); target.removeAttribute('aria-hidden'); target.setAttribute('role','button'); target.setAttribute('tabindex','0');
       if(target.id!=='room-clock') target.setAttribute('aria-label',name+'であそぶ');
+      target.addEventListener('pointerdown',()=>target.classList.add('is-pointer-focus'));
+      target.addEventListener('blur',()=>target.classList.remove('is-pointer-focus'));
       target.addEventListener('click',()=>play(target));
-      target.addEventListener('keydown',event=>{ if(event.key==='Enter' || event.key===' ') { event.preventDefault(); if(!event.repeat) play(target); } });
+      target.addEventListener('keydown',event=>{ target.classList.remove('is-pointer-focus'); if(event.key==='Enter' || event.key===' ') { event.preventDefault(); if(!event.repeat) play(target); } });
     });
   }
   bind();
