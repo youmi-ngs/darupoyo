@@ -1,3 +1,4 @@
+import { mockDarupoyo, deleteMockDarupoyo } from './mock-darupoyo.js';
 // In-browser stand-in for the Backend API (backend/docs/api.md), used only in development
 // when no Backend answers. Same paths and response shapes; data stays in this browser.
 // Tabs of the same browser share it through localStorage, so two tabs can play two users.
@@ -58,6 +59,7 @@ export async function mockFetch(url, init = {}) {
     scrubSocial(db, uid);
     for (const [key, id] of Object.entries(db.requests)) if (key.startsWith(uid + ':') || removedPosts.has(id)) delete db.requests[key];
     for (const [key, invite] of Object.entries(db.invites)) if (invite.created_by === uid || removedHouses.has(invite.house_id)) delete db.invites[key];
+    deleteMockDarupoyo(db, uid, removedHouses);
     save(db); return new Response(null, {status: 204});
   }
   if (path === '/me') return json({ uid, deletion_pending: false });
@@ -99,6 +101,9 @@ export async function mockFetch(url, init = {}) {
     const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', token = Array.from(crypto.getRandomValues(new Uint8Array(8)), n => abc[n % 32]).join(''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
     db.invites[token] = { house_id: houseId, expires_at, created_by: uid }; save(db); return json({ token, expires_at }, 201);
   }
+  const darupoyo = mockDarupoyo({ db, houseId, uid, rest, method, body, searchParams, day, state, postId, save });
+  if (darupoyo) return darupoyo;
+
   if (rest === '/dashboard') {
     const shown = db.days[houseId + '/' + (searchParams.get('day') || day)] || newDay(searchParams.get('day') || day);
     const lights = Object.fromEntries(house.member_ids.map(m => [m, !!shown.completed[m]?.length]));

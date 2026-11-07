@@ -13,6 +13,7 @@ from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
 from .accounts import delete_account, require_active
+from .darupoyo import register_darupoyo_routes
 from .domain import Domain, require_member
 from .models import (
     Avatar,
@@ -91,6 +92,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             firebase_admin.delete_app(application.state.firebase)
 
     app = FastAPI(title="Clean Your Life / 温玉", version="0.2.0", lifespan=lifespan)
+    register_darupoyo_routes(app, current_user)
     origins = (settings or Settings.from_env()).origins
     app.add_middleware(
         CORSMiddleware,
@@ -217,7 +219,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     @app.post("/api/houses/{house_id}/media", status_code=201)
     async def upload(
-        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie", "avatar"],
+        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie", "avatar", "darupoyo"],
         uid=Depends(current_user),
     ):
         house = str(house_id)

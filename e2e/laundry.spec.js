@@ -13,8 +13,8 @@ async function openLaundry(page, name) {
 
 test('laundry is one camera rhythm; no tap or mic mode (#35)', async ({ page }) => {
   await openLaundry(page, 'one');
-  await expect(page.locator('.choice button')).toHaveCount(1);
-  await expect(page.locator('.choice button')).toContainText('バサバサでリズム');
+  await expect(page.locator('.choice button:not(.darupoyo-choice)')).toHaveCount(1);
+  await expect(page.locator('.choice button:not(.darupoyo-choice)')).toContainText('バサバサでリズム');
 });
 
 test('start waits for the upper body, then counts down 3-2-1 before the notes move (#106 #107)', async ({ page, context }) => {

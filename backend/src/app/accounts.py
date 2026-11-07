@@ -49,6 +49,10 @@ def delete_account(store, media, uid, delete_login):
         empty = store.atomic(detach)
         removed_posts = {path.split('/')[-1] for path, p in store.scan(root + '/posts') if empty or p['user_id'] == uid}
         removed_moments = {path.split('/')[-1] for path, p in store.scan(root + '/moments') if empty or p['user_id'] == uid}
+        for collection in ('darupoyo_records', 'darupoyo_requests'):
+            for path, value in store.scan(root + '/' + collection):
+                if empty or value.get('user_id') == uid:
+                    store.atomic(lambda tx, path=path: tx.delete(path))
         # Mark ownership on new request records; older records can be resolved
         # from their referenced post before it is deleted.
         for collection, field, removed in [('requests', 'post_id', removed_posts), ('moment_requests', 'id', removed_moments)]:
