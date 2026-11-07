@@ -24,7 +24,7 @@ from .models import (
     Reaction,
 )
 from .notify import Notifier
-from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image
+from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image, normalize_voice
 from .store import FirestoreStore, MemoryStore
 
 
@@ -187,11 +187,16 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     @app.post("/api/houses/{house_id}/media", status_code=201)
     async def upload(
-        house_id: UUID, request: Request, kind: Literal["meal", "cutout"], uid=Depends(current_user)
+        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice"],
+        uid=Depends(current_user),
     ):
         house = str(house_id)
         await run_in_threadpool(require_member, app.state.store, house, uid)
-        data, content_type = await run_in_threadpool(normalize_image, await request.body(), kind)
+        raw = await request.body()
+        if kind == "voice":
+            data, content_type = normalize_voice(raw)
+        else:
+            data, content_type = await run_in_threadpool(normalize_image, raw, kind)
         media_id = str(uuid4())
         name = f"houses/{house}/{media_id}"
         await run_in_threadpool(app.state.media.put, name, data, content_type)

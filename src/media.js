@@ -111,9 +111,11 @@ export async function capture(root, chore, choice, reference, signal) {
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
       if (!Speech) return evidence;
       status.hidden = true;
-      if (await confirmMealVoice(box, Speech, signal)) {
+      const heard = await confirmMealVoice(box, Speech, signal);
+      if (heard.matched) {
         evidence.method = 'photo_voice';
         evidence.itadakimasu = true;
+        if (heard.voice) evidence.voice = heard.voice;
       }
       return evidence;
     }

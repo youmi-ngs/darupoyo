@@ -34,6 +34,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       : p.kind === 'photo' ? '<span class="mini-sun"></span>' + MEAL_SVG
       : '<span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
     if (p.image) { const img = document.createElement('img'); img.src = p.image; img.alt = TASKS[p.task].label + 'の記録'; d.replaceChildren(img); }
+    if (p.voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
     return d;
   }
 
@@ -81,6 +82,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sl.querySelector('.gal-slot').outerHTML = galIcon(pg);
       sl.querySelector('.gal-text').textContent = postLine(p);
       sl.querySelector('.tl-get').textContent = REWARD[p.task].item;
+      if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => voiceOf(p.voice_media_id)));
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
       ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
       track.append(sl);
@@ -95,6 +97,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
   function openPhoto(p, day) { openPhotos([{ p, day }], 0); }
   $('pm-close').addEventListener('click', () => $('photo-modal').close());
+  $('photo-modal').addEventListener('close', () => playing?.pause());
   $('photo-modal').addEventListener('click', (e) => { if (e.target === $('photo-modal')) $('photo-modal').close(); });
 
   // ---------- gal AIs ----------
@@ -446,7 +449,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const evidence = await capture(sheetBody, id, c, state.originals[id], signal);
       if (signal.aborted) return;
       const gal = pickGal();
-      const { blob, kind, result, ...fields } = evidence;
+      const { blob, kind, result, voice, ...fields } = evidence;
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
       sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
       const shown = resultOf(c, fields, result || {});
@@ -454,12 +457,15 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sheetBody.querySelector('.result-main').textContent = shown.main;
       sheetBody.querySelector('.result-sub').textContent = shown.sub || '';
       sheetBody.querySelector('.result-sub').hidden = !shown.sub;
+      if (voice) { const url = URL.createObjectURL(voice); sheetBody.querySelector('.result-card').append(voiceButton(() => url)); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       if (blob) { const img = document.createElement('img'); const url = URL.createObjectURL(blob); img.src = url; img.style.cssText = 'width:100%;max-height:30vh;object-fit:contain'; sheetBody.querySelector('p').after(img); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
         const button = $('post'); button.disabled = true; $('redo').disabled = true; $('sheet-close').disabled = true;
         try {
           if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
+          // 声が送れなくても、ごはんの記録はできるようにする。
+          if (voice && !body.voice_media_id) body.voice_media_id = await houseApi('/media?kind=voice', voice).then(r => r.id, () => undefined);
           const result = await houseApi('/completions', body);
           await refresh();
           sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
@@ -474,6 +480,24 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       if (e.name === 'NoHitError') { showNoHit(id, c, e); return; }
       openSheet(id); toast(deviceMessage(e, id));
     }
+  }
+  // 録音した「いただきます」を再生するボタン（#9）。src() は再生する音の URL を返す。
+  const voiceUrls = new Map();
+  const voiceOf = (id) => { if (!voiceUrls.has(id)) voiceUrls.set(id, houseApi('/media/' + id).then(URL.createObjectURL).catch((e) => { voiceUrls.delete(id); throw e; })); return voiceUrls.get(id); };
+  let playing = null;
+  function voiceButton(src) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'voice-play';
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>いただきます を聞く</span>';
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        playing?.pause();
+        const audio = new Audio(await src()); playing = audio;
+        b.classList.add('is-playing'); audio.onended = audio.onpause = () => b.classList.remove('is-playing');
+        await audio.play();
+      } catch (err) { b.classList.remove('is-playing'); toast('声を再生できなかった…'); }
+    });
+    return b;
   }
   // 「記録する？」に出す結果（#33）。家事ごとに、何がどれだけできたかを1行で。
   function resultOf(c, fields, result) {

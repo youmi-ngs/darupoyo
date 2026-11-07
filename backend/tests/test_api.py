@@ -491,3 +491,44 @@ def test_evening_task_rejects_callers_without_scheduler_token(client, monkeypatc
     assert client.post("/api/tasks/evening").status_code == 403
     bad = {"Authorization": "Bearer not-a-google-token"}
     assert client.post("/api/tasks/evening", headers=bad).status_code == 403
+
+
+def test_itadakimasu_voice_is_kept_with_the_meal_and_private(client):
+    h = house(client)
+    join(client, h)
+    webm = b"\x1a\x45\xdf\xa3" + b"\x00" * 400
+    r = client.post(f"/api/houses/{h}/media?kind=voice", headers=auth(), content=webm)
+    assert r.status_code == 201, r.text
+    voice = r.json()["id"]
+    body = {
+        "request_id": str(uuid4()),
+        "chore": "meal",
+        "method": "photo_voice",
+        "media_id": upload(client, h),
+        "voice_media_id": voice,
+        "itadakimasu": True,
+    }
+    # Someone else's recording cannot be attached.
+    assert (
+        client.post(f"/api/houses/{h}/completions", headers=auth("bob"), json=body).status_code
+        == 422
+    )
+    post = client.post(f"/api/houses/{h}/completions", headers=auth(), json=body).json()["post"]
+    assert post["voice_media_id"] == voice
+    played = client.get(f"/api/houses/{h}/media/{voice}", headers=auth("bob"))
+    assert played.status_code == 200 and played.headers["content-type"] == "audio/webm"
+    assert client.get(f"/api/houses/{h}/media/{voice}", headers=auth("eve")).status_code == 404
+    # A photo is not a recording, a recording is not a photo, and photo-only meals have no voice.
+    assert (
+        client.post(
+            f"/api/houses/{h}/media?kind=voice", headers=auth(), content=image_bytes()
+        ).status_code
+        == 422
+    )
+    wrong = dict(body, request_id=str(uuid4()), media_id=voice)
+    assert client.post(f"/api/houses/{h}/completions", headers=auth(), json=wrong).status_code == 422
+    photo_only = dict(body, request_id=str(uuid4()), method="photo", itadakimasu=False)
+    assert (
+        client.post(f"/api/houses/{h}/completions", headers=auth(), json=photo_only).status_code
+        == 422
+    )

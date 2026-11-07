@@ -44,6 +44,8 @@ class Completion(Model):
     chore: Chore
     method: Literal["pose", "photo_voice", "photo", "sound", "rhythm"]
     media_id: UUID | None = None
+    # Recorded いただきます; only with photo_voice.
+    voice_media_id: UUID | None = None
     duration_seconds: float | None = Field(default=None, ge=0, le=600)
     itadakimasu: bool = False
     landmarks: list[Landmark] | None = Field(default=None, min_length=33, max_length=33)
@@ -70,6 +72,8 @@ class Completion(Model):
             raise ValueError("Meal requires photo and itadakimasu confirmation")
         if self.method == "photo" and not self.media_id:
             raise ValueError("Meal requires a photo")
+        if self.voice_media_id and self.method != "photo_voice":
+            raise ValueError("Voice recording only applies to itadakimasu")
         if self.method == "rhythm":
             if self.hits is None or self.total_beats is None or self.hits > self.total_beats:
                 raise ValueError("Rhythm requires hits <= total_beats")
