@@ -21,7 +21,7 @@ try {
   if (!app) throw new Error('Create a Firebase Web app, or set webAppId in deploy/config.json when multiple apps exist');
   const web = run(firebase, ['apps:sdkconfig', 'WEB', app.appId, '--project', project, '--json'], { json: true }).result.sdkConfig;
   const bucket = config.storageBucket || web.storageBucket;
-  if (!bucket || !web.apiKey || !web.appId) throw new Error('Firebase Web config or Storage bucket is missing');
+  if (!bucket || !web.apiKey || !web.appId || !web.messagingSenderId) throw new Error('Firebase Web config or Storage bucket is missing');
   const hosting = JSON.parse(readFileSync(new URL('../firebase.json', import.meta.url))).hosting;
   if ((hosting.site || project) !== site) throw new Error('Hosting site must match deploy/config.json');
   if (hosting.rewrites.some(rule => rule.run && (rule.run.serviceId !== config.service || rule.run.region !== config.region))) throw new Error('firebase.json rewrites must match deploy/config.json');
@@ -53,6 +53,7 @@ try {
     if (response.status !== expected) throw new Error(`${path}: expected ${expected}, got ${response.status}`);
     if (path === '/api/config') {
       const publicConfig = await response.json();
+      if (publicConfig.firebase.messagingSenderId !== web.messagingSenderId) throw new Error('Published notification sender ID does not match target project');
       if (publicConfig.auth_mode !== 'firebase' || publicConfig.firebase.projectId !== project) throw new Error('Published authentication configuration does not match target project');
     }
   }
