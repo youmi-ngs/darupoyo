@@ -1,6 +1,7 @@
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
+import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
   const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -116,7 +117,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); });
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); if (GALS[id]) galVoice(id, GALS[id].title); });
       return b;
     };
     GAL_IDS.forEach((g) => box.append(mk(g)));
@@ -250,7 +251,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       if (!item.done) {
         const x = document.createElement('button'); x.type = 'button'; x.className = 'unstick'; x.textContent = '×';
         x.setAttribute('aria-label', TASKS[item.id].label + 'をボードから外す');
-        x.addEventListener('click', () => { state.board = state.board.filter((b) => b.id !== item.id); saveGoals(); renderAll(); });
+        x.addEventListener('click', () => { sfx.unpop(); state.board = state.board.filter((b) => b.id !== item.id); saveGoals(); renderAll(); });
         wrap.append(x);
       }
       boardMagnets.append(wrap);
@@ -264,7 +265,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const m = magnetEl(id); m.setAttribute('aria-label', TASKS[id].label + 'をボードに貼る'); bindDrag(m, id); trayEl.append(m);
     });
   }
-  function stick(id) { if (state.board.some((b) => b.id === id)) return; state.board.push({ id, done: false }); saveGoals(); renderAll(id); }
+  function stick(id) { if (state.board.some((b) => b.id === id)) return; sfx.pop(); state.board.push({ id, done: false }); saveGoals(); renderAll(id); }
   function bindDrag(el, id) {
     let start = null, ghost = null, dragged = false;
     el.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; start = { x: e.clientX, y: e.clientY }; dragged = false; el.setPointerCapture(e.pointerId); });
@@ -463,6 +464,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
           await refresh();
           sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
+          sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
           $('finish').onclick = () => { sheet.close(); showHouse(); toast('部屋に飾った。電気ついたね'); };
         } catch (e) { toast(e.message); button.disabled = false; if ($('redo')) $('redo').disabled = false; }
         finally { $('sheet-close').disabled = false; }
@@ -489,6 +491,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">おしい〜！</h2><p class="sheet-text"></p><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="retry">もう一回</button><button class="btn btn-sub" id="other-way">ほかのやり方</button>';
     sheetBody.querySelector('.sheet-text').textContent = (e.hits || 0) + ' / ' + e.totalBeats + ' ヒット' + (e.pass ? '（' + e.pass + '回でクリア）' : '');
     sheetBody.querySelector('.gal-text').textContent = e.message + '。もう一回いこ！';
+    sfx.miss(); setTimeout(() => galVoice(gal, 'おしい！もう一回いこ！'), 600);
     $('retry').onclick = () => judge(id, c);
     $('other-way').onclick = () => openSheet(id);
     $('retry').focus();
@@ -621,7 +624,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('open-menu').addEventListener('click', () => { document.querySelectorAll('.map-cell').forEach((c) => c.classList.toggle('is-here', Number(c.dataset.go) === sceneIdx)); menu.showModal(); });
   $('menu-close').addEventListener('click', () => menu.close());
   const settings = $('settings');
-  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); renderPush(); settings.showModal(); });
+  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
   // ---------- phone notifications (#58) ----------
   const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
   async function renderPush() {
@@ -640,7 +643,10 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     } catch (e) { toast(e.message); }
     await renderPush();
   });
-  listenInApp((body) => toast(body));
+  listenInApp((body) => { sfx.ding(); toast(body); });
+  // ---------- sound effects (#8 #17) ----------
+  function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.textContent = on ? 'オン' : 'オフ'; b.setAttribute('aria-pressed', String(on)); }
+  $('sound-toggle').addEventListener('click', () => { setSound(!soundOn()); renderSound(); sfx.pop(); });
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());

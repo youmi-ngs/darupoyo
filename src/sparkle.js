@@ -1,6 +1,7 @@
 // 洗濯物を叩いたときのキラキラ（効果音はアセットを使わずWeb Audioで鳴らす）
+import { soundOn } from './sfx.js';
 export function playSparkle(context) {
-  if (!context || context.state === 'closed') return;
+  if (!context || context.state === 'closed' || !soundOn()) return;
   const at = context.currentTime;
   [1046.5, 1318.5, 1568, 2093].forEach((frequency, i) => {
     const osc = context.createOscillator(), gain = context.createGain(), begin = at + i * .05;
