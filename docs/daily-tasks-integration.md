@@ -51,3 +51,12 @@
 - スタイルは `src/daily-tasks.css` に分離。`index.html` / `src/style.css` / `src/api.js` / `src/media.js` / `domain.py` / `models.py` は変更していません。
 
 PRのマージ・本番デプロイ・Issuesのcloseは統合担当が行います。
+
+## 並行PRとの統合確認（2026-11-07）
+
+`git merge-tree` で他担当のブランチとの統合をプレビューしました（ブランチの実マージはしていません）。
+
+- PR #112（撮影・ゲーム）: 自動統合可能。ゲームの検証では `.choice button:not(.darupoyo-choice)` を使い、家事を実行する選択肢と非完了の「だるぽよ」を区別します。
+- PR #111（写真・共有）: `backend/src/app/main.py` のアップロードkindの1行が競合します。`Literal["meal", "cutout", "voice", "selfie", "avatar", "darupoyo"]` とし、両方の追加種別を残してください。その他の変更は確認時点では自動統合できます。統合後のテストは統合担当が実行してください。
+
+記録は当面、現在所属しているハウス内だけで共有します。#99の別ハウスへの履歴表示に、だるぽよ記録を自動追加する実装は含めていません。

@@ -33,7 +33,7 @@ test('darupoyo shares text, preserves completion state and survives reload',asyn
   await expect(page.locator('.darupoyo-record')).toContainText('今日は洗い物、そのまま〜');
   await expect(page.locator('.door.is-lit')).toHaveCount(0); await context.close();
 });
-test('photo-only records preview before sharing and display to housemates',async({page})=>{
+test('photo-only records preview before sharing and display in the board',async({page})=>{
   await enter(page); await compose(page);
   const png=await page.evaluate(()=>{ const c=document.createElement('canvas');c.width=50;c.height=60;return c.toDataURL('image/png').split(',')[1]; });
   await page.locator('.darupoyo-dialog input[type=file]').setInputFiles({name:'today.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
