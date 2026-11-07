@@ -56,6 +56,8 @@ export async function refresh() {
     do { const page = await houseApi('/posts?limit=100' + (cursor ? '&before=' + cursor : '')); posts.push(...page.items); cursor = page.next_cursor; } while (cursor);
     await Promise.all(posts.map(async p => { p.image = await imageUrl(p.media_id); }));
     for (const pose of Object.values(dashboard.state.poses)) pose.image = await imageUrl(pose.media_id);
+    // Profile photos (#96) are house media like any other photo.
+    await Promise.all(Object.values(dashboard.house.members).map(async m => { m.avatar = await imageUrl(m.avatar_media_id).catch(() => null); }));
     update({ ...dashboard, posts });
   })().finally(() => { refreshing = null; if (refreshQueued) { refreshQueued = false; void refresh().catch(report); } });
   return refreshing;

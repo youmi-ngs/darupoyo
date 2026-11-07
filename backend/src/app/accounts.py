@@ -49,6 +49,10 @@ def delete_account(store, media, uid, delete_login):
         empty = store.atomic(detach)
         removed_posts = {path.split('/')[-1] for path, p in store.scan(root + '/posts') if empty or p['user_id'] == uid}
         removed_moments = {path.split('/')[-1] for path, p in store.scan(root + '/moments') if empty or p['user_id'] == uid}
+        for collection in ('darupoyo_records', 'darupoyo_requests'):
+            for path, value in store.scan(root + '/' + collection):
+                if empty or value.get('user_id') == uid:
+                    store.atomic(lambda tx, path=path: tx.delete(path))
         # Mark ownership on new request records; older records can be resolved
         # from their referenced post before it is deleted.
         for collection, field, removed in [('requests', 'post_id', removed_posts), ('moment_requests', 'id', removed_moments)]:
@@ -75,6 +79,8 @@ def delete_account(store, media, uid, delete_login):
                             recent['sync_with'] = [m for m in recent.get('sync_with', []) if m != uid]
                     else:
                         value.get('reactions', {}).pop(uid, None)
+                        if 'comments' in value:
+                            value['comments'] = [c for c in value['comments'] if c['user_id'] != uid]
                         value['sync_with'] = [m for m in value.get('sync_with', []) if m != uid]
                         # A copied pose remains the other user's own photo.
                         if value.get('pose_template_post_id') and (value['pose_template_post_id'] in removed_posts or not tx.get(root + '/posts/' + value['pose_template_post_id'])):

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { playRhythm, stillCamera } from './rhythm-helper.js';
+import { playRhythm, stillCamera, unlockStart } from './rhythm-helper.js';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); await stillCamera(context); });
 
 async function openLaundry(page, name) {
@@ -13,8 +13,37 @@ async function openLaundry(page, name) {
 
 test('laundry is one camera rhythm; no tap or mic mode (#35)', async ({ page }) => {
   await openLaundry(page, 'one');
-  await expect(page.locator('.choice button')).toHaveCount(1);
-  await expect(page.locator('.choice button')).toContainText('バサバサでリズム');
+  await expect(page.locator('.choice button:not(.darupoyo-choice)')).toHaveCount(1);
+  await expect(page.locator('.choice button:not(.darupoyo-choice)')).toContainText('バサバサでリズム');
+});
+
+test('start waits for the upper body, then counts down 3-2-1 before the notes move (#106 #107)', async ({ page, context }) => {
+  await context.grantPermissions(['camera']);
+  await openLaundry(page, 'wait');
+  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  const start = page.getByRole('button', { name: 'リズムをはじめる' });
+  await expect(start).toBeDisabled({ timeout: 20000 });
+  await unlockStart(page);
+  await expect(start).toBeEnabled();
+  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await start.click();
+  await expect(page.locator('.rhythm-camera .capture-count')).toHaveText('3');
+  const notePosition = () => page.evaluate(() => document.querySelector('.rhythm-note').getBoundingClientRect().x);
+  const before = await notePosition();
+  // A slap during the countdown is not counted.
+  await page.locator('.capture').dispatchEvent('test-slap');
+  await page.clock.runFor(1000);
+  await expect(page.locator('.rhythm-camera .capture-count')).toHaveText('2');
+  await page.clock.runFor(1000);
+  await expect(page.locator('.rhythm-camera .capture-count')).toHaveText('1');
+  expect(await notePosition()).toBe(before);
+  await page.clock.runFor(1000);
+  await expect(page.locator('.rhythm-camera .capture-count')).toHaveCount(0);
+  await page.clock.runFor(800);
+  await page.locator('.capture').dispatchEvent('test-slap');
+  await expect(page.locator('.capture-status')).toHaveText('1 / 8 ヒット（6回でクリア）');
+  await expect(page.locator('.rhythm-grade')).toHaveText('よき');
+  await page.clock.resume();
 });
 
 test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async ({ page, context }) => {
@@ -27,11 +56,10 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   await expect(page.locator('.rhythm-note')).toHaveCount(8);
   const tracks = await page.evaluate(() => { window.testVideo = document.querySelector('.rhythm-camera video').srcObject; return window.testVideo.getAudioTracks().length; });
   expect(tracks).toBe(0); // camera only
-  const start = page.getByRole('button', { name: 'リズムをはじめる' });
-  await start.waitFor({ timeout: 20000 });
+  const start = await unlockStart(page);
   await page.clock.install(); await page.clock.pauseAt(new Date());
   await start.click();
-  await page.clock.runFor(800);
+  await page.clock.runFor(3000 + 800);
   const alignment = await page.evaluate(() => {
     const note = document.querySelector('.rhythm-note').getBoundingClientRect();
     const target = document.querySelector('.rhythm-target').getBoundingClientRect();
@@ -45,8 +73,10 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   await page.clock.runFor(1120); await page.clock.resume();
   await expect(page.locator('#post')).toBeVisible();
   await expect(page.locator('.result-main')).toHaveText('6 / 8 ヒット');
+  await expect(page.locator('.result-sub')).toHaveText('よき 6・まあまあ 0');
   expect(await page.evaluate(() => window.testVideo.getTracks().every((t) => t.readyState === 'ended'))).toBe(true);
-  expect(modelRequests).toEqual([]);
+  // Only the pose model for the upper-body check before start; no segmenter or sound model (#106).
+  expect(modelRequests.filter(url => !/\/models\/(pose\.task|vision\/)/.test(url))).toEqual([]);
 });
 
 test('fewer than 6 hits shows a gal cheer and a retry, and records nothing (#34)', async ({ page }) => {

@@ -7,17 +7,21 @@ from datetime import date
 from typing import Literal
 from uuid import UUID, uuid4
 
-from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, Header, HTTPException, Path, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
 from .accounts import delete_account, require_active
+from .darupoyo import register_darupoyo_routes
 from .domain import Domain, require_member
 from .models import (
+    Avatar,
+    Comment,
     Completion,
     MealFinish,
     Goals,
+    HistorySharing,
     HouseCreate,
     HouseUpdate,
     Join,
@@ -27,6 +31,7 @@ from .models import (
     Reaction,
 )
 from .notify import Notifier
+from . import social
 from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image, normalize_voice
 from .store import FirestoreStore, MemoryStore
 
@@ -87,6 +92,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             firebase_admin.delete_app(application.state.firebase)
 
     app = FastAPI(title="Clean Your Life / 温玉", version="0.2.0", lifespan=lifespan)
+    register_darupoyo_routes(app, current_user)
     origins = (settings or Settings.from_env()).origins
     app.add_middleware(
         CORSMiddleware,
@@ -213,7 +219,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     @app.post("/api/houses/{house_id}/media", status_code=201)
     async def upload(
-        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie"],
+        house_id: UUID, request: Request, kind: Literal["meal", "cutout", "voice", "selfie", "avatar", "darupoyo"],
         uid=Depends(current_user),
     ):
         house = str(house_id)
@@ -309,6 +315,45 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         if not re.fullmatch(r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}", post_id):
             raise HTTPException(422, "Invalid post id")
         return app.state.domain.react(uid, str(house_id), post_id, body.emoji)
+
+    # ---------- photos and sharing (comments, profile photo, other houses) ----------
+    POST_ID = r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}"
+
+    def post_id_ok(post_id):
+        if not re.fullmatch(POST_ID, post_id):
+            raise HTTPException(422, "Invalid post id")
+
+    @app.post("/api/houses/{house_id}/posts/{post_id}/comments", status_code=201)
+    def comment(house_id: UUID, post_id: str, body: Comment, uid=Depends(current_user)):
+        post_id_ok(post_id)
+        return social.add_comment(app.state.store, uid, str(house_id), post_id, body, app.state.domain.clock)
+
+    @app.delete("/api/houses/{house_id}/posts/{post_id}/comments/{comment_id}")
+    def uncomment(house_id: UUID, post_id: str, comment_id: UUID, uid=Depends(current_user)):
+        post_id_ok(post_id)
+        return social.delete_comment(app.state.store, uid, str(house_id), post_id, str(comment_id))
+
+    @app.put("/api/houses/{house_id}/avatar")
+    def avatar(house_id: UUID, body: Avatar, uid=Depends(current_user)):
+        return social.set_avatar(app.state.store, app.state.media, uid, str(house_id), str(body.media_id))
+
+    @app.delete("/api/houses/{house_id}/avatar")
+    def remove_avatar(house_id: UUID, uid=Depends(current_user)):
+        return social.set_avatar(app.state.store, app.state.media, uid, str(house_id), None)
+
+    @app.put("/api/houses/{house_id}/history-sharing")
+    def history_sharing(house_id: UUID, body: HistorySharing, uid=Depends(current_user)):
+        return social.set_history_sharing(app.state.store, uid, str(house_id), body.enabled)
+
+    @app.get("/api/houses/{house_id}/members/{member_id}/history")
+    def member_history(house_id: UUID, member_id: str = Path(max_length=128), before: str | None = Query(default=None, max_length=64, pattern=r"^[0-9]{8}T[0-9]{12}_[a-f0-9]{32}$"), uid=Depends(current_user)):
+        return social.history(app.state.store, uid, str(house_id), member_id, before)
+
+    @app.get("/api/houses/{house_id}/members/{member_id}/history/{source_id}/media/{media_id}")
+    def member_history_media(house_id: UUID, source_id: UUID, media_id: UUID, member_id: str = Path(max_length=128), uid=Depends(current_user)):
+        data, content_type = social.history_media(
+            app.state.store, app.state.media, uid, str(house_id), member_id, str(source_id), str(media_id))
+        return Response(data, media_type=content_type)
 
     @app.api_route("/api/{unknown:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     def unknown_api(unknown: str):

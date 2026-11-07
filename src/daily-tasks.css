@@ -1,0 +1,39 @@
+/* Scoped to this workstream; avoid changing the room/timeline base layout. */
+.darupoyo-dialog { width: min(440px, calc(100% - 24px)); max-height: 90dvh; overflow-y: auto; padding: 22px; border: 3px solid var(--ink); border-radius: 26px; background: #fff5fb; color: var(--ink); }
+.darupoyo-dialog::backdrop { background: #3b256080; }
+.darupoyo-dialog h2 { font-size: 22px; }
+.darupoyo-dialog label { display: block; margin: 16px 0; font-weight: 700; }
+.darupoyo-dialog input, .darupoyo-dialog textarea { display: block; width: 100%; max-width: 100%; margin-top: 8px; padding: 10px; border: 2px solid var(--ink); border-radius: 12px; background: white; color: var(--ink); font: inherit; }
+.darupoyo-dialog .btn { display: block; width: 100%; margin-top: 10px; }
+.darupoyo-preview { width: 100%; max-height: 32dvh; object-fit: contain; border-radius: 16px; }
+.darupoyo-preview[hidden], .darupoyo-dialog [hidden], .darupoyo-feed [hidden] { display: none; }
+.darupoyo-note { font-size: 12px; }
+.darupoyo-choice { background: #fff0f8; }
+.darupoyo-feed { margin: 24px 0; padding: 16px; border: 2px solid var(--ink); border-radius: 20px; background: #fff5fb; }
+.darupoyo-feed h3 { margin: 0; }
+.darupoyo-feed > p { font-size: 12px; }
+.darupoyo-record { margin: 14px 0; padding: 14px; border-radius: 16px; border: 1.5px solid #dac8e8; background: white; overflow-wrap: anywhere; }
+.darupoyo-record strong, .darupoyo-record time { display: block; }
+.darupoyo-record time { font-size: 11px; color: var(--ink-soft); }
+.darupoyo-record p { white-space: pre-wrap; }
+.darupoyo-record img { display: block; width: 100%; height: auto; aspect-ratio: 5/6; object-fit: cover; border-radius: 12px; background: #f4e9f8; }
+.darupoyo-tag { display: inline-block; font-weight: 700; color: #91406d; font-size: 13px; }
+.fridge .board-item:has(.completion-sticker) { margin-bottom: 14px; }
+.fridge .magnet.is-done { opacity: 1; }
+.completion-sticker { position: absolute; z-index: 2; bottom: -13px; right: -8px; padding: 1px 7px; border: 2px solid white; outline: 1px solid #933a80; border-radius: 5px 12px 5px 12px; transform: rotate(-10deg); background: linear-gradient(120deg, #ffb8e6, #e3c7ff 52%, #fff3ac); color: #65234f; font-size: 12px; font-weight: 900; line-height: 1.6; white-space: nowrap; pointer-events: none; box-shadow: 1px 2px 0 #b186ac; }
+.completion-sticker::before { content: '✧'; margin-right: 2px; }
+.completion-sticker::after { content: '♡'; margin-left: 2px; }
+.furniture-toy { pointer-events: auto !important; cursor: pointer; touch-action: manipulation; }
+.furniture-toy:focus-visible { outline: 3px solid #a32862; outline-offset: 4px; }
+.furniture-prize { position: absolute; z-index: 6; left: calc(50% - 38px); bottom: 5%; width: 76px; min-height: 66px; padding: 4px; border: 2px solid var(--ink); border-radius: 18px; background: #fff3fa; color: var(--ink); box-shadow: 0 3px 8px #3b256030; animation: furniture-prize-drop .6s ease-out; }
+.furniture-prize svg { display: block; width: 58px; margin: auto; }
+.furniture-prize span { font-size: 11px; font-weight: 900; }
+.furniture-play-status { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.furniture-play-status.is-visible { z-index: 40; width: auto; height: auto; max-width: calc(100% - 24px); bottom: 110px; left: 50%; transform: translateX(-50%); clip-path: none; padding: 8px 18px; border: 2px solid var(--ink); border-radius: 20px; background: #fff4a8; white-space: nowrap; }
+@keyframes furniture-prize-drop { from { translate: 0 -90px; opacity: 0; } to { translate: 0 0; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .furniture-prize { animation: none; } }
+/* Leave room for the lower row of overlapping stickers. */
+.fridge .whiteboard:has(.completion-sticker) { height: 192px; }
+.darupoyo-dialog label:has(input[type=file]) { padding: 12px; border: 2px dashed #b68bb4; border-radius: 14px; text-align: center; background: white; cursor: pointer; }
+.darupoyo-dialog label:has(input[type=file]):focus-within { outline: 3px solid #7fb8e8; outline-offset: 3px; }
+.darupoyo-dialog input[type=file] { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }

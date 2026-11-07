@@ -149,3 +149,20 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 `POST /api/houses/{house_id}/moments` は `{request_id, media_id, caption?}` を受け取り、ハウスの住人が所有する自撮りだけを保存する。`caption` は140文字まで。同じrequest_idで同じ内容を再送しても重複せず、異なる内容なら409。
 `GET /api/houses/{house_id}/moments?before=...` は新しい順に30件とnext_cursorを返す。
 閲覧・画像取得にはハウスの所属が必要。近況は家事の記録・部屋の点灯・ハピネス・報酬に影響しない。
+
+## 写真・共有（コメント・プロフィール写真・別ハウスの記録）
+
+| Method | Path | 用途 |
+|---|---|---|
+| POST | /api/houses/{id}/posts/{postId}/comments | コメント `{request_id, text}`（1〜200文字）。request_id がそのままコメントidになり、再送しても重複しない。同じidで別の本文は409。1投稿50件まで |
+| DELETE | /api/houses/{id}/posts/{postId}/comments/{commentId} | 自分のコメントだけ消せる |
+| POST | /api/houses/{id}/media?kind=avatar | プロフィール写真（JPEGに再エンコード） |
+| PUT / DELETE | /api/houses/{id}/avatar | `{media_id}` でこのハウスでのプロフィール写真を設定 / 外す。前の写真のファイルは消す |
+| PUT | /api/houses/{id}/history-sharing | `{enabled}`。オンにしたハウスの住人だけが、本人の別ハウスでの記録を見られる |
+| GET | /api/houses/{id}/members/{uid}/history | 本人の別ハウスでの投稿（新しい順、1ページ200件。`next_cursor` を `?before=` に渡して続き取得）。本人はいつでも、ほかの住人は本人がこのハウスで共有オンのときだけ（それ以外403） |
+| GET | /api/houses/{id}/members/{uid}/history/{sourceHouseId}/media/{mediaId} | 上の公開済み本人投稿に紐づく写真・録音（meal / cutout / voice のみ。未投稿のアップロードは対象外） |
+
+- コメントは投稿の `comments: [{id, user_id, text, created_at}]` に入る。投稿の購読・一覧にそのまま含まれる
+- プロフィール写真は `house.members[uid].avatar_media_id`、共有設定は `house.members[uid].share_history`
+- 別ハウスの記録に含めるのは本人の内容だけ（`id, day, chore, method, created_at, media_id, voice_media_id, finished_voice_media_id, reward, praise, gal, source_house_id`）。リアクション・コメント・シンクロ相手は含めない
+- アカウント削除では、本人のコメント（他人の投稿上も）・プロフィール写真・共有設定も消える

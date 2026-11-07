@@ -1060,3 +1060,35 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
 .resident-avatar.is-satisfied .resident-prop { top: 53px; color: #D154A2; }
 /* Keep the hand-drawn laundry still at rest; only scene changes sway it. */
 .sv-laundry, .sv-laundry svg { animation: none; }
+
+/* ---------- Room visuals (#97 #101 #102 #103 #104) ---------- */
+/* #103 Entrance floor: stone tiles (たたき) instead of a checkerboard that looked like a transparent image. */
+.scene[data-scene="entry"], .sv-entry {
+  --sv-floor: linear-gradient(#D9CBB8 2px, transparent 2px) 0 0 / 44px 30px, linear-gradient(90deg, #D9CBB8 2px, transparent 2px) 0 0 / 44px 30px, linear-gradient(180deg, #EFE5D8, #E6DACA);
+}
+/* #104 The door's sill is drawn inside entry-door.svg and placed on the floor line, above the floor. */
+.scene[data-scene="entry"] [data-furniture="entry-door"] { z-index: 1; }
+/* #97 Few residents: doors keep a door-like width and stay centered (columns are capped in legacy.js). */
+.doors, .door-chips { justify-content: center; }
+/* #97 The home button uses the same color as the other bar buttons. */
+.nav-item[aria-current="page"] { color: var(--ink); }
+/* #97 Own room: a shorter pendant so the lamp no longer overlaps the window. Furniture art is in public/furniture (#101). */
+.mr-lamp { width: 64px; }
+.myroom.is-lit .mr-lamp { --mr-bulb: #FFFDF2; --mr-glow: .9; filter: drop-shadow(0 0 6px rgba(255, 246, 205, .9)); }
+.myroom.is-lit::after { background: radial-gradient(circle 340px at calc(9% + 32px) 112px, rgba(255, 250, 225, .95), rgba(255, 246, 205, .45) 45%, transparent 80%); }
+
+/* #102 Phone first: on a wider screen (PC/tablet), show the same phone-width view centered, not a stretched layout. */
+@media (min-width: 431px) {
+  :root { --app-x: calc((100vw - 430px) / 2); }
+  /* html gets its own color, so the body's gradient is painted only inside the phone-width body box. */
+  html { background: #CDBDF0; }
+  body { max-width: 430px; min-height: 100vh; margin-inline: auto; }
+  .vapor { left: var(--app-x); right: var(--app-x); }
+  .house:not([hidden]), .room-view:not([hidden]) { max-width: 430px; box-shadow: 0 0 0 2.5px var(--ink); }
+  .fridge-view:not([hidden]) { left: var(--app-x); right: var(--app-x); }
+  nav.bar { left: var(--app-x); right: var(--app-x); border-inline: 2.5px solid var(--ink); }
+  .utility-actions { right: calc(var(--app-x) + 12px); }
+  .drawer-close { right: calc(var(--app-x) + 10px); }
+  dialog.drawer { left: var(--app-x); right: auto; width: 430px; max-width: 430px; }
+  dialog.sheet { width: 430px; }
+}
