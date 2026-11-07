@@ -4,7 +4,7 @@ const HISTORY_FIELDS = ['id', 'day', 'chore', 'method', 'created_at', 'media_id'
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 const fail = (status, detail) => json({ detail }, status);
 
-export function socialRoute({ db, uid, houseId, house, rest, method, body, save, readMedia, dropMedia }) {
+export function socialRoute({ db, uid, houseId, house, rest, method, body, save, readMedia, dropMedia, searchParams }) {
   const comments = rest.match(/^\/posts\/([^/]+)\/comments(?:\/([^/]+))?$/);
   if (comments) {
     const post = db.posts[comments[1]];
@@ -44,13 +44,17 @@ export function socialRoute({ db, uid, houseId, house, rest, method, body, save,
     if (mediaId) {
       const meta = db.media[mediaId];
       if (!meta || meta.house_id !== source || meta.owner_id !== member || !['meal', 'cutout', 'voice'].includes(meta.kind) || !db.houses[source]?.member_ids.includes(member)) return fail(404, 'Image not found');
+      const published = Object.values(db.posts).some(p => p.house_id === source && p.user_id === member && [p.media_id,p.voice_media_id,p.finished_voice_media_id].includes(mediaId));
+      if (!published) return fail(404, 'Record media not found');
       return readMedia(mediaId);
     }
     const others = new Set(Object.values(db.houses).filter(h => h.id !== houseId && h.member_ids.includes(member)).map(h => h.id));
-    const items = Object.values(db.posts).filter(p => others.has(p.house_id) && p.user_id === member)
-      .sort((a, b) => b.id.localeCompare(a.id)).slice(0, 200)
+    const before = searchParams?.get('before');
+    const all = Object.values(db.posts).filter(p => others.has(p.house_id) && p.user_id === member && (!before || p.id < before))
+      .sort((a, b) => b.id.localeCompare(a.id));
+    const items = all.slice(0, 200)
       .map(p => ({ ...Object.fromEntries(HISTORY_FIELDS.map(k => [k, p[k] ?? null])), source_house_id: p.house_id }));
-    return json({ items, shared: !!house.members[member].share_history });
+    return json({ items, next_cursor: all.length > 200 ? items.at(-1).id : null, shared: !!house.members[member].share_history });
   }
   return null;
 }

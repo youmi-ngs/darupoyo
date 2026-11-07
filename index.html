@@ -23,10 +23,13 @@
 </div>
 
 <main class="stage">
-<div class="utility-actions"><button class="settings-row" type="button" id="next-day">招待</button>
-    <button class="settings-row" type="button" id="open-settings"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="#FFF4A8"/><path d="M12 2.5l1.6 2.6 3-.6.7 3 2.7 1.4-1.2 2.8 1.2 2.8-2.7 1.4-.7 3-3-.6L12 21.5l-1.6-2.6-3 .6-.7-3-2.7-1.4L5.2 12 4 9.2l2.7-1.4.7-3 3 .6z"/></svg>せって～<span aria-hidden="true">›</span></button>
-    <button class="settings-row" type="button" id="open-howto"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5z" fill="#A8E6FF"/><path d="M4 21.5V5.5M8 7.5h8M8 11h6"/></svg>あそびかた<span aria-hidden="true">›</span></button>
-</div>
+<div class="utility-actions"><button type="button" id="open-menu" aria-label="メニューを開く" aria-controls="utility-menu" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M3 5h18M3 12h18M3 19h18"/></svg></button></div>
+<dialog id="utility-menu" class="utility-menu" aria-labelledby="utility-menu-title">
+  <div class="utility-menu-header"><h2 id="utility-menu-title">メニュー</h2><form method="dialog"><button aria-label="メニューを閉じる">×</button></form></div>
+  <button type="button" id="open-settings" data-menu-action>設定</button>
+  <button type="button" id="open-howto" data-menu-action>遊び方</button>
+  <button type="button" id="next-day" data-menu-action>招待リンク</button>
+</dialog>
   <section class="house" id="house-view" aria-label="だるぽよ">
     <div class="walk">
       <div class="top-ui">

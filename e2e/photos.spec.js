@@ -47,14 +47,14 @@ test('profile photo appears on the timeline and resident chips, and can be remov
     const c = document.createElement('canvas'); c.width = 300; c.height = 200; const g = c.getContext('2d'); g.fillStyle = '#f9c'; g.fillRect(0, 0, 300, 200);
     return (await new Promise(r => c.toBlob(r, 'image/png')).then(b => b.arrayBuffer()).then(b => Array.from(new Uint8Array(b))));
   });
-  await page.locator('#open-settings').click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#social-card input[type=file]').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: Buffer.from(png) });
   await expect(page.locator('#social-card .avatar-preview img')).toBeVisible();
   await expect(page.locator('.account-icon img')).toBeVisible();
   await page.locator('#settings-close').click();
   await expect(page.locator('#entry-timeline .who-dot.has-avatar img')).toBeVisible();
   await expect(page.locator('#door-chips .chip-face img')).toHaveCount(1);
-  await page.locator('#open-settings').click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#social-card .avatar-clear').click();
   await expect(page.locator('#social-card .avatar-preview img')).toHaveCount(0);
   await expect(page.locator('#entry-timeline .who-dot.has-avatar')).toHaveCount(0);

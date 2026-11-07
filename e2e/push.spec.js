@@ -16,7 +16,7 @@ test('without Firebase login the notification card stays hidden and settings fit
   await page.getByLabel('あなたの名前').fill('p'); await page.getByLabel('新しいハウスの名前').fill('push');
   await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
-   await page.locator('#open-settings').click();
+   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await expect(page.locator('#settings')).toBeVisible();
   await expect(page.locator('#push-card')).toBeHidden();
   expect(await page.locator('#settings .drawer-inner').evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
@@ -58,7 +58,7 @@ test('notification registration succeeds, and a failed save can be retried', asy
     client.auth = { app: { options: { messagingSenderId: '324099635682' } }, currentUser: { getIdToken: async () => 'test' } };
     client.config.push = { vapid_key: 'test-public-key' };
   });
-   await page.locator('#open-settings').click();
+   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   expect(await page.evaluate(async () => {
     const { pushState } = await import('/src/push.js');
     try { return await pushState(); } catch (e) { return e.stack; }

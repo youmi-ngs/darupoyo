@@ -16,7 +16,14 @@ export function otherHouseRecords(house, who, allowed) {
   if (!allowed) return Promise.resolve([]);
   const key = house + ':' + who;
   if (!cache.has(key)) {
-    cache.set(key, houseApi('/members/' + encodeURIComponent(who) + '/history').then(async ({ items }) => Promise.all(items.map(async p => ({
+    cache.set(key, (async () => {
+      const items = []; let cursor;
+      do {
+        const page = await houseApi('/members/' + encodeURIComponent(who) + '/history' + (cursor ? '?before=' + encodeURIComponent(cursor) : ''));
+        items.push(...page.items); cursor = page.next_cursor;
+      } while (cursor);
+      return { items };
+    })().then(async ({ items }) => Promise.all(items.map(async p => ({
       ...p, user_id: who, foreign: true, reactions: {}, comments: [], sync_with: [],
       image: p.media_id ? await mediaUrl(who, p.source_house_id, p.media_id).catch(() => null) : null,
       loadMedia: id => mediaUrl(who, p.source_house_id, id),

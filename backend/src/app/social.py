@@ -78,14 +78,20 @@ def set_avatar(store, media, uid, house_id, media_id):
         house = require_member(tx, house_id, uid)
         if media_id:
             meta = tx.get(f"houses/{house_id}/media/{media_id}")
-            if not meta or meta["owner_id"] != uid or meta["kind"] != "avatar":
+            if not meta or meta["owner_id"] != uid or meta["kind"] != "avatar" or meta.get("retired"):
                 raise HTTPException(422, "Missing or incompatible owned profile photo")
         member = house["members"][uid]
         old = member.get("avatar_media_id")
+        old_meta = tx.get(f"houses/{house_id}/media/{old}") if old and old != media_id else None
         if media_id:
             member["avatar_media_id"] = media_id
         else:
             member.pop("avatar_media_id", None)
+        if old_meta and old_meta["owner_id"] == uid and old_meta["kind"] == "avatar":
+            # Fence off a stale concurrent request before deleting the file.
+            # Keep metadata until storage succeeds so account cleanup can retry.
+            old_meta["retired"] = True
+            tx.set(f"houses/{house_id}/media/{old}", old_meta)
         tx.set(f"houses/{house_id}", house)
         return house, old
 
@@ -118,18 +124,19 @@ def _history_access(store, uid, house_id, member_id):
         raise HTTPException(403, "This resident keeps other houses private")
 
 
-def history(store, uid, house_id, member_id):
+def history(store, uid, house_id, member_id, before=None):
     """The member's own records from their other houses, newest first."""
     _history_access(store, uid, house_id, member_id)
     items = []
-    for other in store.list("houses", member=member_id, limit=50):
-        if other["id"] == house_id:
+    for _, other in store.scan("houses"):
+        if other["id"] == house_id or member_id not in other["member_ids"]:
             continue
-        for post in store.list(f"houses/{other['id']}/posts", limit=HISTORY_LIMIT):
-            if post["user_id"] == member_id:
+        for _, post in store.scan(f"houses/{other['id']}/posts"):
+            if post["user_id"] == member_id and (not before or post["id"] < before):
                 items.append({**{k: post.get(k) for k in HISTORY_FIELDS}, "source_house_id": other["id"]})
     items.sort(key=lambda p: p["id"], reverse=True)
-    return {"items": items[:HISTORY_LIMIT], "shared": bool(
+    page = items[:HISTORY_LIMIT]
+    return {"items": page, "next_cursor": page[-1]["id"] if len(items) > HISTORY_LIMIT else None, "shared": bool(
         require_member(store, house_id, uid)["members"][member_id].get("share_history"))}
 
 
@@ -140,4 +147,11 @@ def history_media(store, media, uid, house_id, member_id, source_house_id, media
     if (not source or member_id not in source["member_ids"] or not meta
             or meta["owner_id"] != member_id or meta["kind"] not in HISTORY_MEDIA_KINDS):
         raise HTTPException(404, "Image not found")
+    # Uploaded previews/drafts are not published records, even when their owner
+    # opted into sharing completed records with this destination house.
+    published = any(post.get("user_id") == member_id and media_id in (
+        post.get("media_id"), post.get("voice_media_id"), post.get("finished_voice_media_id")
+    ) for _, post in store.scan(f"houses/{source_house_id}/posts"))
+    if not published:
+        raise HTTPException(404, "Record media not found")
     return media.read(meta["object_name"]), meta["content_type"]

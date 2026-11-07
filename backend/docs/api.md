@@ -159,8 +159,8 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 | POST | /api/houses/{id}/media?kind=avatar | プロフィール写真（JPEGに再エンコード） |
 | PUT / DELETE | /api/houses/{id}/avatar | `{media_id}` でこのハウスでのプロフィール写真を設定 / 外す。前の写真のファイルは消す |
 | PUT | /api/houses/{id}/history-sharing | `{enabled}`。オンにしたハウスの住人だけが、本人の別ハウスでの記録を見られる |
-| GET | /api/houses/{id}/members/{uid}/history | 本人の別ハウスでの投稿（新しい順、最大200件）。本人はいつでも、ほかの住人は本人がこのハウスで共有オンのときだけ（それ以外403） |
-| GET | /api/houses/{id}/members/{uid}/history/{sourceHouseId}/media/{mediaId} | 上の記録の写真・録音（meal / cutout / voice のみ） |
+| GET | /api/houses/{id}/members/{uid}/history | 本人の別ハウスでの投稿（新しい順、1ページ200件。`next_cursor` を `?before=` に渡して続き取得）。本人はいつでも、ほかの住人は本人がこのハウスで共有オンのときだけ（それ以外403） |
+| GET | /api/houses/{id}/members/{uid}/history/{sourceHouseId}/media/{mediaId} | 上の公開済み本人投稿に紐づく写真・録音（meal / cutout / voice のみ。未投稿のアップロードは対象外） |
 
 - コメントは投稿の `comments: [{id, user_id, text, created_at}]` に入る。投稿の購読・一覧にそのまま含まれる
 - プロフィール写真は `house.members[uid].avatar_media_id`、共有設定は `house.members[uid].share_history`

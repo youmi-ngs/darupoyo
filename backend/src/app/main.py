@@ -346,8 +346,8 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         return social.set_history_sharing(app.state.store, uid, str(house_id), body.enabled)
 
     @app.get("/api/houses/{house_id}/members/{member_id}/history")
-    def member_history(house_id: UUID, member_id: str = Path(max_length=128), uid=Depends(current_user)):
-        return social.history(app.state.store, uid, str(house_id), member_id)
+    def member_history(house_id: UUID, member_id: str = Path(max_length=128), before: str | None = Query(default=None, max_length=64, pattern=r"^[0-9]{8}T[0-9]{12}_[a-f0-9]{32}$"), uid=Depends(current_user)):
+        return social.history(app.state.store, uid, str(house_id), member_id, before)
 
     @app.get("/api/houses/{house_id}/members/{member_id}/history/{source_id}/media/{media_id}")
     def member_history_media(house_id: UUID, source_id: UUID, media_id: UUID, member_id: str = Path(max_length=128), uid=Depends(current_user)):

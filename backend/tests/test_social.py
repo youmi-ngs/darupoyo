@@ -86,6 +86,7 @@ def test_records_from_other_houses_are_private_until_the_owner_shares_them_in_th
         c.put(f"/api/houses/{old}/posts/{mine['id']}/reaction", headers=auth("carol"), json={"emoji": "heart"})
         c.post(f"/api/houses/{old}/completions", headers=auth("carol"), json=sound())
         selfie = upload(c, old, "selfie")
+        unpublished = upload(c, old)
         new = own_house(c, "bob", "新居")
         invite_into(c, new, "bob", "alice")
         url = f"/api/houses/{new}/members/alice/history"
@@ -102,6 +103,7 @@ def test_records_from_other_houses_are_private_until_the_owner_shares_them_in_th
         assert c.put(f"/api/houses/{new}/history-sharing", headers=auth(), json={"enabled": True}).status_code == 200
         assert [p["id"] for p in c.get(url, headers=auth("bob")).json()["items"]] == [mine["id"]]
         assert c.get(f"/api/houses/{new}/members/alice/history/{old}/media/{photo}", headers=auth("bob")).status_code == 200
+        assert c.get(f"/api/houses/{new}/members/alice/history/{old}/media/{unpublished}", headers=auth("bob")).status_code == 404
         # Only record media travels; selfies and outsiders stay out.
         assert c.get(f"/api/houses/{new}/members/alice/history/{old}/media/{selfie}", headers=auth("bob")).status_code == 404
         assert c.get(url, headers=auth("carol")).status_code == 404
@@ -130,3 +132,40 @@ def test_account_deletion_removes_comments_profile_photo_and_sharing():
         assert [x["text"] for x in store.get(f"houses/{h}/posts/{post['id']}")["comments"]] == ["alice"]
         assert avatar_object not in media.memory
         assert "bob" not in store.get(f"houses/{h}")["members"]
+
+
+def test_history_paginates_own_records_without_housemates_hiding_older_entries():
+    with TestClient(create_app(LOCAL)) as c:
+        old = house(c); new = house(c)
+        store = c.app.state.store
+        for i in range(205):
+            pid = f"20261107T120000{i:06d}_" + 'a'*32
+            store.set(f"houses/{old}/posts/{pid}", {"id":pid,"user_id":"alice","chore":"dryer"})
+        for i in range(220):
+            pid = f"20261108T120000{i:06d}_" + 'b'*32
+            store.set(f"houses/{old}/posts/{pid}", {"id":pid,"user_id":"bob","chore":"dryer"})
+        url = f"/api/houses/{new}/members/alice/history"
+        first = c.get(url,headers=auth()).json()
+        assert len(first['items']) == 200 and first['next_cursor']
+        second = c.get(url,headers=auth(),params={'before':first['next_cursor']}).json()
+        assert len(second['items']) == 5 and second['next_cursor'] is None
+        assert not {p['id'] for p in first['items']} & {p['id'] for p in second['items']}
+
+
+def test_replaced_avatar_cannot_be_reselected_during_file_cleanup(monkeypatch):
+    with TestClient(create_app(LOCAL)) as c:
+        h = house(c)
+        first, second = upload(c,h,'avatar'), upload(c,h,'avatar')
+        endpoint = f'/api/houses/{h}/avatar'
+        c.put(endpoint,headers=auth(),json={'media_id':first})
+        media = c.app.state.media
+        original = media.delete
+        attempted = []
+        def interleaved_delete(name):
+            attempted.append(c.put(endpoint,headers=auth(),json={'media_id':first}).status_code)
+            original(name)
+        monkeypatch.setattr(media,'delete',interleaved_delete)
+        result = c.put(endpoint,headers=auth(),json={'media_id':second})
+        assert result.status_code == 200 and attempted == [422]
+        assert c.get(f'/api/houses/{h}/dashboard',headers=auth()).json()['house']['members']['alice']['avatar_media_id'] == second
+        assert c.get(f'/api/houses/{h}/media/{second}',headers=auth()).status_code == 200

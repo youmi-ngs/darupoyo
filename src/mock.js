@@ -93,7 +93,7 @@ export async function mockFetch(url, init = {}) {
     return data ? fetch(data) : fail(404, 'Image not found');
   };
   const dropMedia = id => { media.delete(id); try { localStorage.removeItem(KEY + '-media-' + id); } catch {} delete db.media[id]; };
-  const social = socialRoute({ db, uid, houseId, house, rest, method, body, save, readMedia, dropMedia });
+  const social = socialRoute({ db, uid, houseId, house, rest, method, body, save, readMedia, dropMedia, searchParams });
   if (social) return social;
 
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }

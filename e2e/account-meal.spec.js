@@ -9,7 +9,7 @@ async function enter(page) {
 test('account deletion is confirmed, removes data and returns to onboarding', async ({ page }) => {
   await enter(page);
   const prior = await page.evaluate(async () => { const { client } = await import('/src/api.js'); return {uid:client.uid, house:client.house}; });
-  await page.locator('#open-settings').click(); await page.locator('#delete-account').click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.locator('#delete-account').click();
   await expect(page.locator('.delete-dialog [data-confirm]')).toBeDisabled();
   await page.locator('.delete-dialog [data-cancel]').click();
   await expect(page.locator('#settings')).toBeVisible();
@@ -22,7 +22,7 @@ test('account deletion is confirmed, removes data and returns to onboarding', as
 });
 test('meal finish shares the satisfied avatar and keeps both recordings in one meal', async ({ page, browser }) => {
   await enter(page);
-  await page.locator('#open-settings').click(); await page.locator('.set-toggle summary').click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.locator('.set-toggle summary').click();
   await page.locator('.gal-card[aria-label]').last().click(); await page.locator('#settings-close').click();
   const fixture = await page.evaluate(async () => {
     const { client, houseApi } = await import('/src/api.js');
@@ -54,10 +54,13 @@ test('meal finish shares the satisfied avatar and keeps both recordings in one m
   expect((await posts.json()).items).toHaveLength(1);
   await other.close();
 });
-test('board is a swipe destination and the hamburger is removed', async ({ page }) => {
-  await enter(page); await expect(page.locator('#open-menu')).toHaveCount(0);
-  await expect(page.locator('#open-settings')).toBeInViewport(); await expect(page.locator('#next-day')).toBeInViewport();
+test('board remains a swipe destination and the menu contains only three utilities', async ({ page }) => {
+  await enter(page); await expect(page.locator('#open-menu')).toBeVisible();
+  await expect(page.locator('#open-settings')).not.toBeVisible();
+  await page.locator('#open-menu').click();
+  await expect(page.locator('#utility-menu [data-menu-action]')).toHaveText(['設定','遊び方','招待リンク']);
+  await page.keyboard.press('Escape'); await expect(page.locator('#utility-menu')).not.toBeVisible();
   await page.locator('[data-go="5"].scene-tab').click();
   await expect(page.locator('.sv-board')).toBeInViewport(); await expect(page.locator('#timeline')).toBeVisible();
-  await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible();
+  await page.locator('#open-menu').click(); await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible();
 });

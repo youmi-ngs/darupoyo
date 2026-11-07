@@ -1,3 +1,4 @@
+import { setupUtilityMenu } from './utility-menu.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
@@ -15,6 +16,7 @@ import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
+  setupUtilityMenu();
   const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
   let ME = '', RESIDENTS = [], dashboard = null;
   const nameOf = uid => dashboard?.house.members[uid]?.display_name || '住人';
@@ -623,13 +625,17 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     if (next) openSheet(next.id);
     else { showFridge(); boardSub.textContent = 'まずマグネットを1個貼ってね'; toast('冷蔵庫にマグネットを貼ると始められるよ'); }
   });
-  $('next-day').textContent = '招待';
+  $('next-day').textContent = '招待リンク';
   $('next-day').addEventListener('click', async () => {
     try {
       const code = await inviteCode();
-      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待コード貼っとくね（7日間有効）</h2><p class="sheet-text">一緒に住むマブに今すぐ送って！！💖6人までいける～✌</p><input class="invite-code" aria-label="招待コード" readonly><button class="btn invite-copy" type="button">コピー</button>';
+      const link = new URL('/', location.origin); link.hash = new URLSearchParams({ invite: code }).toString();
+      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住むマブに送ってね💖6人までいける～✌</p><label>招待リンク<input class="invite-link" aria-label="招待リンク" readonly></label><button class="btn invite-link-copy" type="button">リンクをコピー</button><label>招待コード<input class="invite-code" aria-label="招待コード" readonly></label><button class="btn invite-copy" type="button">コードをコピー</button>';
       const input = sheetBody.querySelector('.invite-code'); input.value = code; input.onclick = () => input.select();
-      sheetBody.querySelector('.invite-copy').onclick = () => navigator.clipboard.writeText(code).then(() => toast('コピーしたよ'), () => { input.select(); toast('長押しでコピーしてね'); });
+      const linkInput = sheetBody.querySelector('.invite-link'); linkInput.value = link.href; linkInput.onclick = () => linkInput.select();
+      const copy = async field => { try { await navigator.clipboard.writeText(field.value); toast('コピーしたよ'); } catch { field.select(); toast('長押しでコピーしてね'); } };
+      sheetBody.querySelector('.invite-copy').onclick = () => copy(input);
+      sheetBody.querySelector('.invite-link-copy').onclick = () => copy(linkInput);
       sheet.showModal();
     }
     catch (e) { toast(e.message); }
