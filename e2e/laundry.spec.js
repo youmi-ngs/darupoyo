@@ -7,7 +7,7 @@ async function openLaundry(page, name) {
   await page.getByLabel('あなたの名前').fill(name); await page.getByLabel('新しいハウスの名前').fill('laundry');
   await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('[data-go="3"].scene-tab').click();
+  await page.locator('.scene-dot').nth(4).click();
   await page.locator('[data-chore="laundry"]').click();
 }
 

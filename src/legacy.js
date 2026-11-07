@@ -10,27 +10,34 @@ import { renderActivities } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
 import { setAppIcon } from './app-icon.js';
 import { sfx, galVoice, soundOn, setSound } from './sfx.js';
-import { timelineEntries, renderTimeline as drawTimeline } from './timeline.js';
+import { setupBoardView } from './board-view.js';
+import { THEMES, residentThemes } from './themes.js';
+import { galIcon as dressedGalIcon, outfitOf } from './gal-figure.js';
 import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
 import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
-import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
+import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data.js';
 (() => {
   setupUtilityMenu();
-  const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
-  let ME = '', RESIDENTS = [], dashboard = null;
+  let ME = '', RESIDENTS = [], dashboard = null, THEME_OF = {};
+  // Each resident's theme color: room, hung clothes and their gal's outfit.
+  const themeOf = uid => THEME_OF[uid] || 'pink';
   const nameOf = uid => dashboard?.house.members[uid]?.display_name || '住人';
   const toApi = id => id === 'trash' ? 'garbage' : id;
   const fromApi = id => id === 'garbage' ? 'trash' : id;
   const convertPost = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:dashboard?.timezone || 'Asia/Tokyo', hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise?.text, galLine:p.praise?.text });
   // A resident's round mark with their profile photo (#96), or their initial.
-  const dotOf = uid => residentDot(dashboard?.house.members[uid], nameOf(uid), RESIDENTS.find(x => x.who === uid)?.color || 'pink');
-  let savingGoals = Promise.resolve(), pendingGoals = 0;
-  function saveGoals() {
-    const chores = state.board.map(b => toApi(b.id)); pendingGoals++;
-    savingGoals = savingGoals.then(() => houseApi('/goals', { chores }, 'PUT')).catch(e => toast(e.message)).finally(async () => { pendingGoals--; if (!pendingGoals) await refresh().catch(e => toast(e.message)); });
+  const dotOf = uid => residentDot(dashboard?.house.members[uid], nameOf(uid), outfitOf(themeOf(uid)));
+  // A resident's icon: profile photo, or else their gal's face in their color.
+  const memberGal = (uid, fallback) => { const g = dashboard?.house.members[uid]?.gal; return GALS[g] ? g : GALS[fallback] ? fallback : 'reiwa'; };
+  function iconOf(uid) {
+    const member = dashboard?.house.members[uid], el = document.createElement('span'); el.className = 'who-icon'; el.setAttribute('aria-hidden', 'true');
+    if (member?.avatar) { const img = document.createElement('img'); img.src = member.avatar; img.alt = ''; el.append(img); }
+    else el.innerHTML = dressedGalIcon(memberGal(uid), themeOf(uid));
+    el.style.setProperty('--outfit', outfitOf(themeOf(uid)));
+    return el;
   }
-  const state = { board: [], posts: [], originals: {}, doneToday: {}, history: [], newRoom: null };
+  const state = { posts: [], originals: {}, doneToday: {}, history: [], newRoom: null };
   const WD = ['日','月','火','水','木','金','土'];
   let dayOffset = 0;
   const dayLabel = off => { const d = new Date((dashboard?.state.day || new Date().toISOString().slice(0,10)) + 'T12:00:00+09:00'); d.setUTCDate(d.getUTCDate()+off); return (d.getUTCMonth()+1)+'/'+d.getUTCDate()+'（'+WD[d.getUTCDay()]+'）'; };
@@ -127,7 +134,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sl.querySelector('.pm-title').textContent = nameOf(p.who) + 'の' + TASKS[p.task].label;
       sl.querySelector('.pm-meta').textContent = (day || '今日') + ' ' + p.time + '　' + ({ pose: 'ポーズ', photo: '写真', sound: '音', rhythm: 'リズム' })[p.kind] + 'でクリア';
       const pg = galOf(p);
-      sl.querySelector('.gal-slot').outerHTML = galIcon(pg);
+      sl.querySelector('.gal-slot').outerHTML = galIcon(pg, p.who);
       sl.querySelector('.gal-text').textContent = postLine(p);
       sl.querySelector('.tl-get').textContent = REWARD[p.task].item;
       const sound = id => p.foreign ? p.loadMedia(id) : voiceOf(id);
@@ -168,7 +175,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     return id;
   };
   const postLine = (p) => p.galLine || GALS[galOf(p)].lines[lineKey(p.task, p.kind, null, p.pose)];
-  const galIcon = (g) => '<span class="gal-face" style="background:' + GALS[g].bg + '">' + GALS[g].svg + '</span>';
+  const galIcon = (g, who = ME) => dressedGalIcon(g, themeOf(who));
   function renderGalPicker() {
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
     const mk = (id) => {
@@ -186,36 +193,31 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
 
   // ---------- house ----------
+  const PER_PAGE = 3;
+  const roomOrder = () => [ME, ...RESIDENTS.map(r => r.who).filter(w => w !== ME)].filter(w => RESIDENTS.some(r => r.who === w));
   function renderRooms() {
-    const lit = cleared();
-    const chipsBox = $('door-chips'); chipsBox.replaceChildren();
-    RESIDENTS.forEach((r) => {
-      const slot = document.querySelector('.door-slot[data-who="' + r.who + '"]');
-      const mine = state.posts.filter((p) => p.who === r.who);
-      const on = lit.has(r.who);
-      const b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'door w-' + r.color + (on ? ' is-lit' : '') + (state.newRoom === r.who ? ' is-new' : '');
-      b.style.setProperty('--tint', ROOM_THEMES[roomTheme(r.who)].accent);
-      b.setAttribute('aria-label', nameOf(r.who) + 'の部屋：' + (mine.length ? '今日' + mine.length + '個クリア' : 'まだ') + '。タップで中に入る');
-      b.innerHTML = '<span class="door-window" aria-hidden="true"></span><span class="door-plate"></span><span class="door-pic"></span><span class="door-knob" aria-hidden="true"></span>';
-      b.querySelector('.door-plate').textContent = nameOf(r.who);
-      const pic = b.querySelector('.door-pic');
-      if (mine.length) {
-        const f = document.createElement('span'); f.className = 'frame'; f.append(shotEl(mine[0])); pic.append(f);
-        if (mine.length > 1) { const m = document.createElement('span'); m.className = 'door-more'; m.textContent = '+' + (mine.length - 1); pic.append(m); }
-      } else { const e = document.createElement('span'); e.className = 'door-empty'; pic.append(e); }
-      pic.style.cssText = 'display:flex;flex-direction:column;align-items:center;width:100%;gap:2px';
-      b.addEventListener('click', () => showRoom(r.who));
-      slot.replaceChildren(b);
-      const col = document.createElement('div');
-      const face = dotOf(r.who); face.classList.add('chip-face'); col.append(face);
-      [...new Set(mine.map((p) => p.task))].forEach((t) => { const c = document.createElement('span'); c.className = 'chore m-' + TASKS[t].color; c.textContent = TASKS[t].label; col.append(c); });
-      chipsBox.append(col);
-    });
+    const lit = cleared(), order = roomOrder(), plan = $('plan');
+    plan.querySelectorAll('.scene.rooms-page').forEach(n => n.remove());
+    for (let page = 0; page * PER_PAGE < Math.max(order.length, 1); page++) {
+      const scene = document.createElement('div'); scene.className = 'scene rooms-page'; scene.dataset.scene = 'rooms'; scene.dataset.page = page;
+      scene.setAttribute('aria-label', 'みんなの部屋' + (order.length > PER_PAGE ? ' ' + (page + 1) : ''));
+      const sv = document.createElement('div'); sv.className = 'sv sv-hall'; const doors = document.createElement('div'); doors.className = 'doors';
+      order.slice(page * PER_PAGE, page * PER_PAGE + PER_PAGE).forEach(who => {
+        const mine = state.posts.filter((p) => p.who === who), on = lit.has(who);
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.who = who;
+        b.className = 'door' + (on ? ' is-lit' : '') + (state.newRoom === who ? ' is-new' : '') + (who === ME ? ' is-me' : '');
+        b.style.setProperty('--tint', THEMES[themeOf(who)].accent);
+        b.setAttribute('aria-label', nameOf(who) + (who === ME ? '（自分）' : '') + 'の部屋：' + (mine.length ? '今日' + mine.length + '個クリア' : 'まだ') + '。タップで中に入る');
+        b.innerHTML = '<span class="door-window" aria-hidden="true"></span><span class="door-hanger" aria-hidden="true"></span><span class="door-plate"></span><span class="door-knob" aria-hidden="true"></span>';
+        b.querySelector('.door-plate').textContent = nameOf(who);
+        b.addEventListener('click', () => showRoom(who));
+        doors.append(b);
+      });
+      sv.append(doors); scene.append(sv); plan.append(scene);
+    }
+    renderHallIcons();
+    renderDots();
     // map
-    document.querySelectorAll('[data-chore-map]').forEach((c) => c.classList.toggle('is-done', (state.doneToday[c.dataset.choreMap] || []).length > 0));
-    document.querySelectorAll('[data-who-map]').forEach((c) => c.classList.toggle('is-lit', lit.has(c.dataset.whoMap)));
     state.newRoom = null;
     // chore spots in the plan
     document.querySelectorAll('[data-chore]').forEach((el) => {
@@ -226,43 +228,16 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       if (!el.querySelector(':scope > .sparkles')) { const sp = document.createElement('span'); sp.className = 'sparkles'; sp.setAttribute('aria-hidden', 'true'); for (let q = 0; q < 6; q++) { const st = document.createElement('i'); st.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 1l2.6 8.4L23 12l-8.4 2.6L12 23l-2.6-8.4L1 12l8.4-2.6z" fill="' + (q % 2 ? '#FFF4A8' : '#FFFFFF') + '" stroke="#3B2560" stroke-width="1.4" stroke-linejoin="round"/></svg>'; sp.append(st); } el.append(sp); }
       el.setAttribute('aria-label', TASKS[id].label + 'をはじめる' + (doers.length ? '（今日やった人：' + doers.map(nameOf).join('、') + '）' : ''));
       const dots = el.querySelector('.who-dots'); dots.replaceChildren();
-      doers.forEach((w) => { const r = RESIDENTS.find((x) => x.who === w); const d = document.createElement('span'); d.className = 'who-dot m-' + r.color; d.textContent = nameOf(w).slice(0,1); d.setAttribute('aria-hidden', 'true'); dots.append(d); });
+      doers.forEach((w) => dots.append(dotOf(w)));
     });
   }
   document.querySelectorAll('[data-chore]').forEach((el) => el.addEventListener('click', () => {
     const id = el.dataset.chore;
     if (id !== 'meal' && (state.doneToday[id] || []).includes(ME)) { toast('今日の' + TASKS[id].label + 'はクリア済み'); return; }
-    // 冷蔵庫の「今日やること」は自分で貼ったものだけ。ここでは勝手に貼らない（#23）。
     openSheet(id);
   }));
 
-  function renderKitchen() {
-    const mb = $('mini-board'); mb.replaceChildren();
-    state.board.forEach((b) => { const i = document.createElement('i'); i.className = 'mini-mag m-' + TASKS[b.id].color; mb.append(i); });
-    const fp = $('fridge-photos'); fp.replaceChildren();
-    $('fp-count').textContent = state.posts.length ? state.posts.length + '枚' : '';
-    if (!state.posts.length) { const e = document.createElement('p'); e.className = 'board-empty'; e.textContent = 'まだ1枚もない。だれが最初に貼る？'; fp.append(e); }
-    const fps = [...state.posts].sort((a, b) => toMin(b.time) - toMin(a.time)); fps.forEach((p, k) => {
-      const r = RESIDENTS.find((x) => x.who === p.who);
-      const f = document.createElement('button'); f.type = 'button'; f.className = 'fp'; f.style.setProperty('--r', ((k % 3) - 1) * 4 + 'deg');
-      f.innerHTML = '<span class="fp-mag m-' + r.color + '" aria-hidden="true"></span>';
-      f.append(shotEl(p));
-      const c = document.createElement('span'); c.className = 'fp-cap'; c.textContent = nameOf(p.who) + '\n' + p.time; f.append(c);
-      const t = document.createElement('span'); t.className = 'fp-task'; t.textContent = TASKS[p.task].label; f.append(t);
-      f.setAttribute('aria-label', p.time + ' ' + nameOf(p.who) + 'の' + TASKS[p.task].label);
-      f.addEventListener('click', () => openPhotos(fps.map((x) => ({ p: x, day: '今日' })), k));
-      fp.append(f);
-    });
-    const mp = $('mini-photos'); mp.replaceChildren();
-    state.posts.slice(0, 3).forEach(() => mp.append(document.createElement('i')));
-    const n = Object.values(dashboard?.lights || {}).filter(Boolean).length;
-    const total = RESIDENTS.length;
-    $('count').textContent = n + ' / ' + total + '人';
-    $('count-note').textContent = total && n === total ? '全員クリア！優勝！' : 'それぞれのペースでいこ〜';
-    $('gauge-fill').style.width = (dashboard?.happiness || 0) + '%';
-    $('gauge-text').textContent = (dashboard?.happiness || 0) + '%';
-    $('gauge').setAttribute('aria-valuemax','100');
-    $('gauge').setAttribute('aria-valuenow', String(dashboard?.happiness || 0));
+  function renderNotes() {
     const sync = $('sync');
     const mine = state.posts.find((p) => p.who === ME);
     const twin = mine?.sync_with?.length;
@@ -285,87 +260,25 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     if (poseIsNew) { void card.offsetWidth; card.classList.add('is-new'); poseIsNew = false; }
   }
 
-  // ---------- fridge ----------
-  const boardEl = $('board'), boardMagnets = $('board-magnets'), boardSub = $('board-sub'), trayEl = $('tray');
-  function magnetEl(id) {
-    const el = document.createElement('button');
-    el.type = 'button'; el.className = 'magnet m-' + TASKS[id].color; el.dataset.id = id; el.textContent = TASKS[id].label;
-    return el;
+  function renderAll() {
+    document.body.style.setProperty('--my-outfit', outfitOf(themeOf(ME)));
+    renderRooms(); renderNotes(); renderPose();
+    boardView.update(dashboard, [...state.posts, ...state.history.flatMap(d => d.posts)]);
+    if (!$('room-view').hidden) showRoom(currentRoom, true);
   }
-  function renderBoard(snapId) {
-    boardMagnets.replaceChildren();
-    if (!state.board.length) { const p = document.createElement('span'); p.className = 'board-empty'; p.textContent = '今日やる家事をここに貼る'; boardMagnets.append(p); }
-    state.board.forEach((item) => {
-      const wrap = document.createElement('span'); wrap.className = 'board-item';
-      const m = magnetEl(item.id);
-      m.setAttribute('aria-label', TASKS[item.id].label + (item.done ? '（クリア済み）' : '（タップして始める）'));
-      if (item.done) {
-        m.classList.add('is-done');
-        const mark = document.createElement('span'); mark.className = 'completion-sticker'; mark.textContent = 'かんりょ〜'; wrap.append(mark);
-        m.addEventListener('click', () => item.id === 'meal' ? openSheet('meal') : toast('今日の' + TASKS[item.id].label + 'はクリア済み'));
-      } else m.addEventListener('click', () => openSheet(item.id));
-      if (item.id === snapId) m.classList.add('snap');
-      wrap.append(m);
-      if (!item.done) {
-        const x = document.createElement('button'); x.type = 'button'; x.className = 'unstick'; x.textContent = '×';
-        x.setAttribute('aria-label', TASKS[item.id].label + 'をボードから外す');
-        x.addEventListener('click', () => { sfx.unpop(); state.board = state.board.filter((b) => b.id !== item.id); saveGoals(); renderAll(); });
-        wrap.append(x);
-      }
-      boardMagnets.append(wrap);
-    });
-    const open = state.board.filter((b) => !b.done).length;
-    boardSub.textContent = !state.board.length ? 'やる家事を貼ってね。1個でいいよ〜' : open === 0 ? '今日のぶん終わり。えらすぎ。' : 'タップでスタート。終わると「かんりょ〜」シールがつくよ';
-  }
-  function renderTray() {
-    trayEl.replaceChildren();
-    ORDER.filter((id) => !state.board.some((b) => b.id === id)).forEach((id) => {
-      const m = magnetEl(id); m.setAttribute('aria-label', TASKS[id].label + 'をボードに貼る'); bindDrag(m, id); trayEl.append(m);
-    });
-  }
-  function stick(id) { if (state.board.some((b) => b.id === id)) return; sfx.pop(); state.board.push({ id, done: false }); saveGoals(); renderAll(id); }
-  function bindDrag(el, id) {
-    let start = null, ghost = null, dragged = false;
-    el.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; start = { x: e.clientX, y: e.clientY }; dragged = false; el.setPointerCapture(e.pointerId); });
-    el.addEventListener('pointermove', (e) => {
-      if (!start) return;
-      if (!ghost && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 6) {
-        dragged = true; ghost = el.cloneNode(true); ghost.classList.add('ghost'); ghost.removeAttribute('aria-label'); document.body.append(ghost);
-      }
-      if (ghost) { ghost.style.left = (e.clientX - ghost.offsetWidth / 2) + 'px'; ghost.style.top = (e.clientY - ghost.offsetHeight / 2) + 'px'; boardEl.classList.toggle('is-target', overBoard(e)); }
-    });
-    const end = (e) => { if (!start) return; const hit = ghost && overBoard(e); if (ghost) ghost.remove(); ghost = null; start = null; boardEl.classList.remove('is-target'); if (hit) stick(id); };
-    el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
-    el.addEventListener('click', (e) => { if (dragged) { e.preventDefault(); dragged = false; return; } stick(id); });
-  }
-  function overBoard(e) { const r = boardEl.getBoundingClientRect(); return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom; }
-
-  let newestPost = null;
-  function renderTimeline() {
-    const entries = timelineEntries({ dashboard, posts: state.posts }, REWARD);
-    const view = { nameOf, dotOf, timeZone: dashboard?.timezone || 'Asia/Tokyo', newestId: newestPost?.id };
-    drawTimeline($('timeline'), entries, view);
-    drawTimeline($('entry-timeline'), entries, view);
-    $('entry-count').textContent = $('count').textContent;
-    newestPost = null;
-  }
-
-  function renderAll(snapId) { renderRooms(); renderKitchen(); renderPose(); renderBoard(snapId); renderTray(); renderTimeline(); if (!$('room-view').hidden) showRoom(currentRoom, true); }
 
   // ---------- views ----------
   let currentRoom = '';
-  function showFridge() { document.body.classList.add('no-scroll'); $('house-view').hidden = true; $('room-view').hidden = true; $('fridge-view').hidden = false; window.scrollTo(0, 0); $('back').focus(); }
-  function showHouse() { document.body.classList.add('no-scroll'); $('fridge-view').hidden = true; $('room-view').hidden = true; $('house-view').hidden = false; window.scrollTo(0, 0); if (window.__goScene) window.__goScene(); }
-  const ROOM_COLORS = {};
-  let savedThemes = {};
-  try { savedThemes = JSON.parse(localStorage.getItem('cyl-room-theme') || '{}') || {}; } catch (e) { savedThemes = {}; }
-  const roomTheme = who => dashboard?.house.members[who]?.theme || ROOM_COLORS[who] || 'pink';
+  function showHouse() { document.body.classList.add('no-scroll'); $('board-view').hidden = true; $('room-view').hidden = true; $('house-view').hidden = false; window.scrollTo(0, 0); if (window.__goScene) window.__goScene(); }
+  const roomTheme = themeOf;
   function renderPaint() {
     const pop = $('paint-pop'); pop.replaceChildren();
-    Object.entries(ROOM_THEMES).forEach(([k, t]) => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'paint-chip' + (roomTheme(ME) === k ? ' is-on' : '');
+    Object.entries(THEMES).forEach(([k, t]) => {
+      const owner = RESIDENTS.find(r => r.who !== ME && themeOf(r.who) === k);
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'paint-chip' + (roomTheme(ME) === k ? ' is-on' : '') + (owner ? ' is-taken' : '');
       b.style.background = 'linear-gradient(135deg, ' + t.wall[1] + ' 0 50%, ' + t.accent + ' 50%)';
-      b.setAttribute('aria-label', k); b.setAttribute('aria-pressed', roomTheme(ME) === k ? 'true' : 'false');
+      b.setAttribute('aria-label', t.name + (owner ? '（' + nameOf(owner.who) + 'の色）' : '')); b.setAttribute('aria-pressed', roomTheme(ME) === k ? 'true' : 'false');
+      b.disabled = !!owner; // one color per resident in a house
       b.addEventListener('click', () => { houseApi('/profile', { theme: k }, 'PUT').then(refresh).catch(e => toast(e.message)); });
       pop.append(b);
     });
@@ -376,8 +289,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     currentRoom = who;
     const mine = state.posts.filter((p) => p.who === who);
     const lit = mine.length > 0;
-    const theme = ROOM_THEMES[roomTheme(who)];
-    const col = ROOM_COLORS[who], hex = theme.accent;
+    const theme = THEMES[roomTheme(who)];
+    const col = roomTheme(who), hex = theme.accent;
     const S2 = 'stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
     const box = $('room-detail');
     box.innerHTML =
@@ -396,6 +309,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       '</div>';
     $('room-view').style.background = 'repeating-linear-gradient(90deg, ' + theme.wall[0] + ' 0 18px, ' + theme.wall[1] + ' 18px 36px)';
     box.querySelector('.myroom').style.setProperty('--mr-rug', theme.rug);
+    box.querySelector('.myroom').style.setProperty('--mr-wall', 'repeating-linear-gradient(90deg, ' + theme.wall[0] + ' 0 18px, ' + theme.wall[1] + ' 18px 36px)');
     box.querySelector('.myroom').style.setProperty('--mr-accent', hex); // furniture files use it for the theme color (#101)
     $('room-paint').hidden = who !== ME;
     if (who !== ME) closePaint();
@@ -413,16 +327,17 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     if (!got.length) { const e = document.createElement('span'); e.className = 'shelf-empty'; e.textContent = 'まだからっぽ'; it.append(e); }
     got.forEach((t) => { const i2 = document.createElement('span'); i2.className = 'mr-item'; i2.innerHTML = '<svg viewBox="0 0 48 48" aria-hidden="true"><g ' + S2 + '>' + ITEM_SVG[t] + '</g></svg><small></small>'; i2.querySelector('small').textContent = REWARD[t].item; it.append(i2); });
     if (!refresh) {
-      document.body.classList.add('no-scroll'); $('house-view').hidden = true; $('fridge-view').hidden = true; $('room-view').hidden = false;
+      document.body.classList.add('no-scroll'); $('house-view').hidden = true; $('board-view').hidden = true; $('room-view').hidden = false;
       $('room-view').style.animation = 'none'; void $('room-view').offsetWidth; $('room-view').style.animation = '';
       window.scrollTo(0, 0); $('room-back').focus();
     }
   }
   $('room-back').addEventListener('click', () => { closePaint(); window.__toHall = true; showHouse(); });
-  $('open-fridge').addEventListener('click', showFridge);
-  $('back').addEventListener('click', () => { showHouse(); $('open-fridge').focus(); });
-  $('nav-home').addEventListener('click', () => { if (!$('house-view').hidden && window.__goLdk) { window.__goLdk(); return; } window.__toScene = 0; showHouse(); });
-  $('nav-room').addEventListener('click', () => showRoom(ME));
+  // けーじばん: opens from the board in the entrance, ← goes back there.
+  const boardView = setupBoardView({ nameOf, iconOf, themeOf, galOf: memberGal, toast,
+    openPost: (posts, index) => openPhotos(posts.map(p => ({ p, day: p.day === dashboard.state.day ? '今日' : dayLabel(offOf(p.day)) })), index),
+    onClose: () => { window.__toScene = sceneIndexOf('entry'); showHouse(); } });
+  $('open-board').addEventListener('click', () => boardView.open());
 
   function openRoom(who) {
     const mine = state.posts.filter((p) => p.who === who);
@@ -431,7 +346,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     const log = sheetBody.querySelector('.room-log');
     if (!mine.length) {
       const p = document.createElement('p'); p.className = 'sheet-text';
-      p.textContent = who === ME ? 'まだ今日の記録はないよ。キッチンの冷蔵庫でマグネットを貼ってみよ。' : 'まだ電気ついてない。ゆるく待と。';
+      p.textContent = who === ME ? 'まだ今日の記録はないよ。家具をタップして家事をはじめてみよ。' : 'まだ電気ついてない。ゆるく待と。';
       log.append(p);
     }
     mine.forEach((p) => {
@@ -616,15 +531,6 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('sheet-close').addEventListener('click', () => sheet.close());
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').disabled) sheet.close(); });
 
-  // The camera button starts the chore of the place you are standing in.
-  const SCENE_CHORE = { entry: 'trash', ldk: 'meal', wash: 'dryer', balcony: 'laundry' };
-  $('shoot').addEventListener('click', () => {
-    const here = SCENE_CHORE[scenes[sceneIdx]?.dataset.scene];
-    if (here && TASKS[here] && $('fridge-view').hidden && $('room-view').hidden) { openSheet(here); return; }
-    const next = state.board.find((b) => !b.done);
-    if (next) openSheet(next.id);
-    else { showFridge(); boardSub.textContent = 'まずマグネットを1個貼ってね'; toast('冷蔵庫にマグネットを貼ると始められるよ'); }
-  });
   $('next-day').textContent = '招待リンク';
   $('next-day').addEventListener('click', async () => {
     try {
@@ -646,23 +552,18 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
 
   const TAP_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10h.4V8.8a1.5 1.5 0 0 1 3 0V10.4a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-.8a5 5 0 0 1-4.1-2.1l-2.8-3.9a1.5 1.5 0 0 1 2.3-1.9L9 15z" fill="#FFFFFF" stroke="#3B2560" stroke-width="1.6" stroke-linejoin="round"/><path d="M5 5.5l-1.6-1M10.5 1.8V.2M16 5.5l1.6-1" stroke="#3B2560" stroke-width="1.6" stroke-linecap="round"/></svg>';
   window.__tapMark = (el) => { if (el.querySelector(':scope > .tap-mark')) return; const m = document.createElement('span'); m.className = 'tap-mark'; m.setAttribute('aria-hidden', 'true'); m.innerHTML = TAP_SVG; el.append(m); };
-  document.querySelectorAll('.sv-hit, #open-fridge').forEach(window.__tapMark);
+  document.querySelectorAll('.sv-hit, #open-board').forEach(window.__tapMark);
 
   function receive(data) {
     dashboard = data; ME = client.uid;
     if (data.house.members[ME]?.gal) { galPref = data.house.members[ME].gal; try { localStorage.setItem('cyl-gal', galPref); } catch {} setAppIcon(galPref); }
-    RESIDENTS = data.house.member_ids.map((who,i) => ({ who, color: ['pink','cyan','lilac','lime','pink','cyan'][i] }));
-    const doors = document.querySelector('.doors'); doors.replaceChildren();
-    RESIDENTS.forEach(r => { ROOM_COLORS[r.who] = r.color; const slot = document.createElement('div'); slot.className = 'door-slot'; slot.dataset.who = r.who; doors.append(slot); });
-    doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,132px))'; // #97: cap the width when few people live here
-    $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
-    document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who) + 'のへや'; } });
+    THEME_OF = residentThemes(data.house);
+    RESIDENTS = data.house.member_ids.map(who => ({ who, color: THEME_OF[who] }));
     const convert = convertPost;
     state.posts = data.posts.filter(p=>p.day===data.state.day).map(convert);
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
     state.doneToday = {};
     Object.entries(data.state.completed).forEach(([uid,chores])=>chores.forEach(t=>{ (state.doneToday[fromApi(t)] ||= []).push(uid); }));
-    if (!pendingGoals) state.board = [...new Set([...(data.state.goals[ME] || []), ...(data.state.completed[ME] || [])])].map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
     state.originals = Object.fromEntries(Object.entries(data.state.poses).map(([t,p])=>[fromApi(t),{ ...p, fig:0, by:p.user_id }]));
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
     document.querySelector('.account-row b').textContent = nameOf(ME);
@@ -675,6 +576,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     renderActivities(data);
     darupoyoRecords.update(data);
     furniturePlay.update(data);
+    if (!greeted) { greeted = true; greet(); }
   }
   // 招待で入居したときに、誰と住むのかを見せる
   window.addEventListener('darupoyo:joined', () => {
@@ -739,27 +641,54 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   // ---------- walk between rooms ----------
   startAmbience();
   setupMoments();
-  const plan = $('plan'), scenes = [...plan.querySelectorAll('.scene')], tabs = [...document.querySelectorAll('.scene-tab')];
-  let sceneIdx = 0;
+  const plan = $('plan'), scenes = () => [...plan.querySelectorAll('.scene')];
+  const sceneIndexOf = (name, page = 0) => Math.max(0, scenes().findIndex(sc => sc.dataset.scene === name && (sc.dataset.page == null || Number(sc.dataset.page) === page)));
+  let sceneIdx = 1;
   function goScene(i, instant) {
-    sceneIdx = Math.max(0, Math.min(scenes.length - 1, i));
+    sceneIdx = Math.max(0, Math.min(scenes().length - 1, i));
     plan.scrollTo({ left: sceneIdx * plan.clientWidth, behavior: instant ? 'auto' : 'smooth' });
     markScene();
   }
+  function renderDots() {
+    const box = $('scene-dots'); box.replaceChildren();
+    scenes().forEach((sc, k) => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'scene-dot';
+      b.setAttribute('aria-label', sc.getAttribute('aria-label') + 'へ');
+      b.addEventListener('click', () => goScene(k)); box.append(b);
+    });
+    markScene();
+  }
+  // Residents along the bottom of みんなの部屋; those whose door is not on this page are dimmed.
+  function renderHallIcons() {
+    const box = $('hall-icons'); box.replaceChildren();
+    roomOrder().forEach(who => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'hall-icon'; b.dataset.who = who;
+      b.setAttribute('aria-label', nameOf(who) + (who === ME ? '（自分）' : '') + 'の部屋に入る');
+      b.append(iconOf(who)); b.addEventListener('click', () => showRoom(who)); box.append(b);
+    });
+  }
   function markScene() {
-    tabs.forEach((t, k) => { t.setAttribute('aria-selected', k === sceneIdx ? 'true' : 'false'); t.classList.toggle('has-done', !!scenes[k].querySelector('.sv-hit.is-done, .door.is-lit')); });
-    $('walk-left').disabled = sceneIdx === 0;
-    $('walk-right').disabled = sceneIdx === scenes.length - 1;
+    const here = scenes()[sceneIdx];
+    [...$('scene-dots').children].forEach((d, k) => { d.toggleAttribute('aria-current', k === sceneIdx); d.classList.toggle('has-done', !!scenes()[k]?.querySelector('.sv-hit.is-done, .door.is-lit')); });
+    const page = here?.dataset.scene === 'rooms' ? Number(here.dataset.page) : null;
+    $('hall-bar').hidden = page === null;
+    const shown = new Set(roomOrder().slice((page || 0) * PER_PAGE, (page || 0) * PER_PAGE + PER_PAGE));
+    [...$('hall-icons').children].forEach(b => b.classList.toggle('is-away', !shown.has(b.dataset.who)));
   }
   let st;
   plan.addEventListener('scroll', () => { clearTimeout(st); st = setTimeout(() => { const i = Math.round(plan.scrollLeft / plan.clientWidth); if (i !== sceneIdx) { sceneIdx = i; markScene(); } }, 60); });
-  $('walk-left').addEventListener('click', () => goScene(sceneIdx - 1));
-  $('walk-right').addEventListener('click', () => goScene(sceneIdx + 1));
-  tabs.forEach((t) => t.addEventListener('click', () => goScene(Number(t.dataset.go))));
-  $('entry-board-more').addEventListener('click', () => goScene(scenes.findIndex(sc => sc.dataset.scene === 'board')));
   document.addEventListener('keydown', (e) => { if ($('house-view').hidden || document.querySelector('dialog[open]')) return; if (e.key === 'ArrowLeft') goScene(sceneIdx - 1); if (e.key === 'ArrowRight') goScene(sceneIdx + 1); });
   window.addEventListener('resize', () => goScene(sceneIdx, true));
   new MutationObserver(markScene).observe(plan, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  // 「おかえり」: every time the app opens, your gal peeks out of the front door.
+  let greeted = false;
+  function greet() {
+    const box = $('okaeri'), gal = GALS[galPref] ? galPref : pickGal();
+    box.innerHTML = '<span class="okaeri-peek"><span class="okaeri-gal">' + dressedGalIcon(gal, themeOf(ME)) + '</span></span><p class="okaeri-bubble">おかえり〜！</p>';
+    box.classList.remove('is-out'); void box.offsetWidth; box.classList.add('is-out');
+    setTimeout(() => galVoice(gal, 'おかえり〜！'), 450);
+    setTimeout(() => box.classList.remove('is-out'), 4200);
+  }
   const settings = $('settings');
   $('open-settings').addEventListener('click', () => { renderSocial(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
   // ---------- phone notifications (#58) ----------
@@ -797,7 +726,8 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, '1'); } catch (e) { return; }
     $('howto-page').showModal();
   });
-  window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = 4; window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
-  window.__goLdk = () => goScene(0);
-  requestAnimationFrame(() => goScene(0, true));
+  // Back from a room: the page of みんなの部屋 with that door.
+  window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = sceneIndexOf('rooms', Math.floor(Math.max(0, roomOrder().indexOf(currentRoom)) / PER_PAGE)); window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
+  renderDots();
+  requestAnimationFrame(() => goScene(sceneIndexOf('entry'), true));
 })();

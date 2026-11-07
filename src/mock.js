@@ -3,6 +3,9 @@ import { mockDarupoyo, deleteMockDarupoyo } from './mock-darupoyo.js';
 // when no Backend answers. Same paths and response shapes; data stays in this browser.
 // Tabs of the same browser share it through localStorage, so two tabs can play two users.
 import { socialRoute, scrubSocial } from './mock-social.js';
+import { residentThemes } from './themes.js';
+// Same as backend themes.normalize_themes: one color per resident, earlier residents keep theirs.
+const settleThemes = house => { const themes = residentThemes(house); for (const uid of house.member_ids) house.members[uid].theme = themes[uid]; };
 const KEY = 'darupoyo-mock';
 const LABELS = { laundry: '洗濯', meal: 'ごはん', dryer: 'ドライヤー', garbage: 'ゴミ捨て' };
 const REWARDS = { laundry: 'いい匂いの服', meal: 'ツヤ肌', dryer: '美髪', garbage: 'スッキリ玄関' };
@@ -66,7 +69,7 @@ export async function mockFetch(url, init = {}) {
   if (path === '/houses' && method === 'GET') return json({ items: Object.values(db.houses).filter(h => h.member_ids.includes(uid)) });
   if (path === '/houses' && method === 'POST') {
     const id = crypto.randomUUID();
-    db.houses[id] = { id, name: body.name, owner_id: uid, member_ids: [uid], members: { [uid]: { display_name: body.display_name } }, created_at: new Date().toISOString() };
+    db.houses[id] = { id, name: body.name, owner_id: uid, member_ids: [uid], members: { [uid]: { display_name: body.display_name, theme: 'pink' } }, created_at: new Date().toISOString() };
     save(db); return json(db.houses[id], 201);
   }
   if (path === '/join') {
@@ -75,7 +78,7 @@ export async function mockFetch(url, init = {}) {
     const house = db.houses[invite.house_id];
     if (!house.member_ids.includes(uid)) {
       if (house.member_ids.length >= 6) return fail(409, 'House is full');
-      house.member_ids.push(uid); house.members[uid] = { display_name: body.display_name }; save(db);
+      house.member_ids.push(uid); house.members[uid] = { display_name: body.display_name }; settleThemes(house); save(db);
     }
     return json(house);
   }
@@ -112,7 +115,9 @@ export async function mockFetch(url, init = {}) {
   if (rest === '/goals') { state.goals[uid] = [...new Set(body.chores)]; db.days[dayKey] = state; save(db); return json(state); }
   if (rest === '/profile') {
     if (body.gal) house.members[uid].gal = body.gal;
+    if (body.theme && house.member_ids.some(o => o !== uid && house.members[o].theme === body.theme)) return fail(409, 'Another resident already uses this color');
     if (body.theme) house.members[uid].theme = body.theme;
+    settleThemes(house);
     if (body.display_name) house.members[uid].display_name = body.display_name.trim();
     save(db); return json(house);
   }

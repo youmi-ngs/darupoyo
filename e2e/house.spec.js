@@ -20,7 +20,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await friend.goto('/'); await friend.getByRole('button', { name: '招待コードで入る' }).click(); await friend.getByLabel('招待コード').fill(code); await friend.getByLabel('あなたの名前').fill('ともだち'); await friend.getByRole('button', {name:'招待に参加する'}).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.doors .door')).toHaveCount(2);
-  await page.locator('[data-go="3"].scene-tab').click();
+  await page.locator('.scene-dot').nth(4).click();
   await page.locator('[data-chore="laundry"]').click();
   await page.getByRole('button', {name:/バサバサでリズム/}).click();
   await expect(page.locator('.rhythm-camera video')).toBeVisible();
@@ -43,12 +43,12 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   });
   expect(result.status).toBe(200);
   await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('#nav-room').click(); await expect(page.locator('.mr-frame img')).toHaveCount(1);
-  await page.locator('#room-paint').click(); await page.getByRole('button',{name:'mint',exact:true}).click();
-  await expect(page.getByRole('button',{name:'mint',exact:true})).toHaveAttribute('aria-pressed','true');
+  await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click(); await expect(page.locator('.mr-frame img')).toHaveCount(1);
+  await page.locator('#room-paint').click(); await page.getByRole('button',{name:'ミント',exact:true}).click();
+  await expect(page.getByRole('button',{name:'ミント',exact:true})).toHaveAttribute('aria-pressed','true');
   await page.locator('#room-paint').click();
   await page.screenshot({path:'test-results/mobile-room.png'});
-  await page.locator('#room-back').click(); await page.locator('#nav-home').click();
+  await page.locator('#room-back').click(); await page.locator('.scene-dot').nth(1).click();
   await page.screenshot({path:'test-results/mobile-house.png'});
   const outsider = await browser.newContext(); const request = await outsider.request.get(new URL('/api/houses/', page.url()).href+result.house+'/media/'+result.media,{headers:{Authorization:'Bearer dev:outsider'}}); expect(request.status()).toBe(404);
   await outsider.close(); await context.close(); expect(errors).toEqual([]);

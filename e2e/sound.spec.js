@@ -33,10 +33,3 @@ test('picking a gal plays her voice, and the setting turns every sound off', asy
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await expect(page.locator('#sound-toggle')).toHaveText('オフ');
 });
-test('sticking a magnet pops', async ({ page }) => {
-  await enter(page);
-  await page.locator('[data-go="1"].scene-tab').click(); await page.locator('#open-fridge').click();
-  const before = await page.evaluate(() => window.tones);
-  await page.locator('#tray .magnet').first().click();
-  await expect.poll(() => page.evaluate(() => window.tones)).toBeGreaterThan(before);
-});

@@ -4,7 +4,9 @@ import { houseApi, refresh } from './api.js';
 
 // A resident's round mark: their profile photo, or the first letter of their name.
 export function residentDot(member, name, color, className = 'who-dot') {
-  const d = document.createElement('span'); d.className = className + ' m-' + color; d.setAttribute('aria-hidden', 'true');
+  // color: the resident's theme color (#hex), or an older color class name.
+  const d = document.createElement('span'); d.className = className; d.setAttribute('aria-hidden', 'true');
+  if (String(color).startsWith('#')) d.style.background = color; else d.classList.add('m-' + color);
   if (member?.avatar) { d.classList.add('has-avatar'); const img = document.createElement('img'); img.src = member.avatar; img.alt = ''; d.append(img); }
   else d.textContent = (name || '').slice(0, 1);
   return d;

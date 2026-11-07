@@ -169,3 +169,24 @@ def test_replaced_avatar_cannot_be_reselected_during_file_cleanup(monkeypatch):
         assert result.status_code == 200 and attempted == [422]
         assert c.get(f'/api/houses/{h}/dashboard',headers=auth()).json()['house']['members']['alice']['avatar_media_id'] == second
         assert c.get(f'/api/houses/{h}/media/{second}',headers=auth()).status_code == 200
+
+
+def test_each_resident_gets_a_color_nobody_else_in_the_house_uses():
+    with TestClient(create_app(LOCAL)) as c:
+        h = house(c)
+        for uid in ("bob", "carol"):
+            invite_into(c, h, "alice", uid)
+        members = c.get(f"/api/houses/{h}/dashboard", headers=auth()).json()["house"]["members"]
+        assert [members[u]["theme"] for u in ("alice", "bob", "carol")] == ["pink", "cyan", "lilac"]
+        # A color in use is refused; a free one of the 16 is fine.
+        assert c.put(f"/api/houses/{h}/profile", headers=auth("bob"), json={"theme": "pink"}).status_code == 409
+        assert c.put(f"/api/houses/{h}/profile", headers=auth("bob"), json={"theme": "cocoa"}).status_code == 200
+        assert c.put(f"/api/houses/{h}/profile", headers=auth("bob"), json={"theme": "rainbow"}).status_code == 422
+        # An older house where two residents share a color: the earlier resident keeps it.
+        store = c.app.state.store
+        doc = store.get(f"houses/{h}")
+        doc["members"]["carol"]["theme"] = "pink"
+        store.set(f"houses/{h}", doc)
+        c.put(f"/api/houses/{h}/profile", headers=auth("carol"), json={"display_name": "キャロル"})
+        members = c.get(f"/api/houses/{h}/dashboard", headers=auth()).json()["house"]["members"]
+        assert members["alice"]["theme"] == "pink" and members["carol"]["theme"] not in ("pink", "cocoa")

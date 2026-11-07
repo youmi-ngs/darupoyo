@@ -27,7 +27,7 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
   await friend.getByRole('button', { name: 'おじゃまします！' }).click();
   await expect(page.locator('.doors .door')).toHaveCount(2, { timeout: 8000 });
 
-  await friend.locator('[data-go="3"].scene-tab').click();
+  await friend.locator('.scene-dot').nth(4).click();
   await friend.locator('[data-chore="laundry"]').click();
   await friend.getByRole('button', { name: /バサバサでリズム/ }).click();
   await playRhythm(friend, 8);

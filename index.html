@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="/src/style.css">
 <link rel="stylesheet" href="/src/integration.css">
 <link rel="stylesheet" href="/src/photos.css">
+<link rel="stylesheet" href="/src/home.css">
 </head>
 <body>
 <div class="vapor" aria-hidden="true">
@@ -32,105 +33,84 @@
 </dialog>
   <section class="house" id="house-view" aria-label="だるぽよ">
     <div class="walk">
-      <div class="top-ui">
-
-        <div class="tab-row"><div class="scene-tabs" id="scene-tabs" aria-label="場所"><button class="scene-tab" type="button" data-go="0">玄関</button><button class="scene-tab" type="button" data-go="1">リビング</button><button class="scene-tab" type="button" data-go="2">おふろば</button><button class="scene-tab" type="button" data-go="3">ベランダ</button><button class="scene-tab" type="button" data-go="4">みんなの部屋</button><button class="scene-tab" type="button" data-go="5">け〜じばん</button></div></div>
-      </div>
-      <button class="walk-arrow left" type="button" id="walk-left" aria-label="左の部屋へ">‹</button>
       <div class="plan" id="plan">
+      <div class="scene" data-scene="outside" aria-label="外">
+        <div class="sv sv-outside">
+          <span class="sv-sun" aria-hidden="true"></span>
+          <svg class="balcony-weather outside-weather" viewBox="0 0 320 220" preserveAspectRatio="none" aria-hidden="true"><g class="balcony-clouds" fill="#C8CDDF"><path d="M20 60q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/><path d="M190 40q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/></g><path class="balcony-rain" d="M30 85l-8 18m46-12l-8 18m46-24l-8 18m110-40l-8 18m46-12l-8 18m46-24l-8 18M55 145l-8 18m70-12l-8 18m105-37l-8 18m65-7l-8 18" fill="none" stroke="#9ABED8" stroke-width="3" stroke-linecap="round"/></svg>
+          <svg class="sv-obj outside-house" style="right:0;bottom:calc(var(--fl) - 2px);width:34%" viewBox="0 0 120 260" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M8 70L120 6v64z" fill="#FFB3DE"/><path d="M18 70h102v190H18z" fill="#FFF6EC"/><path d="M18 70h102" stroke-width="3"/><rect x="40" y="96" width="34" height="30" rx="4" fill="#CFE9FF"/><path d="M57 96v30M40 111h34" stroke-width="2"/><path d="M40 170h44v90H40z" fill="#D9C2FF"/><circle cx="76" cy="216" r="3" fill="#FFF4A8"/></g></svg>
+          <button class="sv-hit trash-cans" type="button" data-chore="trash" style="left:6%;bottom:calc(var(--fl) - 70px);width:58%">
+            <svg viewBox="0 0 180 130" aria-hidden="true"><defs><pattern id="trash-mesh" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v9M0 0h9" stroke="#3B2560" stroke-width="1.4"/></pattern></defs><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+              <g class="trash-pile"><path d="M16 58q-10-22 12-28q2-18 22-14q12-12 26 2q16-2 16 16q10 10 0 24z" fill="#E6F7A0"/><path d="M40 28q6-6 12 0" fill="none"/><path d="M100 60q-8-20 12-24q4-16 20-10q14-8 22 6q14 4 8 28z" fill="#FFFFFF"/><path d="M122 30q6-6 12 0" fill="none"/></g>
+              <path d="M10 54h80l-9 72H19z" fill="#FFFFFF"/><path d="M10 54h80l-9 72H19z" fill="url(#trash-mesh)" stroke="none" opacity=".35"/><rect x="6" y="50" width="88" height="9" rx="4" fill="#A6E3C2"/>
+              <path d="M96 58h76l-8 68h-60z" fill="#FFFFFF"/><path d="M96 58h76l-8 68h-60z" fill="url(#trash-mesh)" stroke="none" opacity=".35"/><rect x="92" y="54" width="84" height="9" rx="4" fill="#FFB3DE"/>
+            </g></svg>
+            <span class="area-task">ゴミ捨て</span><span class="who-dots"></span>
+          </button>
+        </div>
+      </div>
       <div class="scene" data-scene="entry" aria-label="玄関">
         <div class="sv sv-entry">
-          <span class="sv-label">玄関</span>
-          <section class="entry-board" aria-label="玄関のけ〜じばん">
-            <div class="entry-board-head"><p class="entry-board-title">け〜じばん</p><small id="entry-count"></small></div>
-            <ol class="timeline entry-timeline" id="entry-timeline" aria-label="みんなのタイムライン"></ol>
-            <button class="entry-board-more" type="button" id="entry-board-more">ぜんぶ見る ›</button>
-          </section>
+          <div class="okaeri" id="okaeri" aria-live="polite"></div>
           <svg class="sv-obj" data-furniture="entry-door" style="left:8%;bottom:calc(var(--fl) - 7px);width:31%" viewBox="0 0 110 200" aria-hidden="true"><use href="/furniture/entry-door.svg#art"/></svg>
-          <svg class="sv-obj" data-furniture="entry-coat-rack" style="left:43%;top:27%;width:21%" viewBox="0 0 80 100" aria-hidden="true"><use href="/furniture/entry-coat-rack.svg#art"/></svg>
-          <svg class="sv-obj" data-furniture="entry-shoe-cabinet" style="right:6%;bottom:calc(var(--fl) - 4px);width:36%" viewBox="0 0 130 92" aria-hidden="true"><use href="/furniture/entry-shoe-cabinet.svg#art"/></svg>
-          <button class="sv-hit" type="button" data-chore="trash" style="right:8%;bottom:6%;width:40%">
-            <svg viewBox="0 0 140 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M14 96q-10-40 18-56l-6-14q14 6 22 0l-4 14q26 16 18 56z" fill="#E6F7A0"/><path d="M28 22q8-10 18 0" fill="none"/><path d="M68 96q-8-34 16-48l-6-12q12 6 20 0l-4 12q24 14 16 48z" fill="#FFFFFF"/><path d="M80 34q8-8 16 0" fill="none"/><path fill="none" d="M30 64q10 4 20 0M82 70q10 4 20 0" stroke-width="2"/></g></svg>
-            <span class="area-task">ゴミ捨て</span><span class="who-dots"></span>
+          <button class="entry-board" type="button" id="open-board" aria-label="けーじばんをひらく">
+            <span class="entry-board-title">け〜じばん</span>
+            <span class="entry-board-grid" id="entry-board-grid"></span>
           </button>
         </div>
       </div>
       <div class="scene" data-scene="ldk" aria-label="リビング">
         <div class="sv sv-ldk">
-          <span class="sv-label">リビング</span>
-          <svg class="sv-obj" style="left:52%;top:24%;width:40%" viewBox="0 0 140 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round"><rect class="window-sky" x="16" y="8" width="108" height="78" rx="6" fill="#CFE9FF"/><circle class="window-sun" cx="96" cy="34" r="14" fill="#FFF4A8"/><path class="window-cloud" d="M34 35q0-9 9-9q5-10 14-2q12 0 12 11z" fill="#FFFFFF"/><path class="window-rain" d="M40 43l-3 6m15-6l-3 6m15-6l-3 6" stroke="#7DB6E0"/><path d="M70 8v78M16 47h108" stroke-width="2"/><path d="M4 4h132" stroke-width="3"/><path d="M8 4q10 40 0 90h14q-8-46 0-90z" fill="#FFB3DE"/><path d="M132 4q-10 40 0 90h-14q8-46 0-90z" fill="#FFB3DE"/></g></svg>
-          <svg class="sv-obj" style="left:40%;top:28%;width:9%" viewBox="0 0 30 30" role="img" aria-label="時計" id="room-clock"><g stroke="#3B2560" stroke-width="2.5" stroke-linecap="round"><circle cx="15" cy="15" r="12" fill="#FFFFFF"/><path class="clock-hour" d="M15 15V9"/><path class="clock-minute" d="M15 15V6" stroke-width="1.8"/></g></svg>
-          <button class="mini-fridge sv-fridge" type="button" id="open-fridge" aria-label="冷蔵庫をひらく（今日やる家事を決める）">
-            <span class="mini-board" id="mini-board" aria-hidden="true"></span>
-            <span class="mini-photos" id="mini-photos" aria-hidden="true"></span>
-            <span class="tap-hint">冷蔵庫</span>
-          </button>
-          <button class="sv-hit" type="button" data-chore="meal" style="left:40%;bottom:calc(var(--fl) - 42px);width:54%">
+          <svg class="sv-obj" style="left:20%;top:16%;width:60%" viewBox="0 0 140 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round"><rect class="window-sky" x="16" y="8" width="108" height="78" rx="6" fill="#CFE9FF"/><circle class="window-sun" cx="96" cy="34" r="14" fill="#FFF4A8"/><path class="window-cloud" d="M34 35q0-9 9-9q5-10 14-2q12 0 12 11z" fill="#FFFFFF"/><path class="window-rain" d="M40 43l-3 6m15-6l-3 6m15-6l-3 6" stroke="#7DB6E0"/><path d="M70 8v78M16 47h108" stroke-width="2"/><path d="M4 4h132" stroke-width="3"/><path d="M8 4q10 40 0 90h14q-8-46 0-90z" fill="#FFB3DE"/><path d="M132 4q-10 40 0 90h-14q8-46 0-90z" fill="#FFB3DE"/></g></svg>
+          <button class="sv-hit" type="button" data-chore="meal" style="left:6%;bottom:calc(var(--fl) - 46px);width:88%">
             <svg viewBox="0 0 180 120" data-furniture="dining-set" aria-hidden="true"><use href="/furniture/dining-set.svg#art"/><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M49 44q4 20 22 20t22-20" fill="#A8E6FF"/><path d="M49 43q0-8 8-8q3-10 11-5q8-7 14 3q10 0 11 10z" fill="#FFFFFF"/><path d="m59 40 3-2m8 1 3-2m7 5 3-2" stroke="#D4D4D4" stroke-width="1.5"/><ellipse cx="119" cy="51" rx="21" ry="8" fill="#FFFFFF"/><path d="M102 50q5-15 13-8q10-8 20 9z" fill="#E89A65"/><path d="m138 37 22 9m-21-13 22 9" stroke="#AF7955" stroke-width="3"/></g></svg>
             <span class="area-task">ごはん</span><span class="who-dots"></span>
           </button>
         </div>
       </div>
-      <div class="scene" data-scene="wash" aria-label="おふろば">
+      <div class="scene" data-scene="wash" aria-label="洗面所">
         <div class="sv sv-wash">
-          <span class="sv-label">おふろば</span>
-          <button class="sv-hit" type="button" data-chore="dryer" style="left:6%;bottom:calc(var(--fl) - 42px);width:56%">
+          <button class="sv-hit" type="button" data-chore="dryer" style="left:10%;bottom:calc(var(--fl) - 46px);width:64%">
             <svg viewBox="0 0 200 230" data-furniture="wash-vanity" aria-hidden="true"><use href="/furniture/wash-vanity.svg#art"/><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path d="M152 30h20" /><path d="M162 30v10"/><path d="M150 44h26a10 10 0 0 1 0 20h-26z" fill="#D9C2FF"/><path d="M158 64l-4 26h12l2-26z" fill="#D9C2FF"/></g></svg>
             <span class="area-task">ドライヤー</span><span class="who-dots"></span>
           </button>
-          <svg class="sv-obj" data-furniture="wash-washer" style="right:6%;bottom:calc(var(--fl) - 10px);width:32%" viewBox="0 0 110 162" aria-hidden="true"><use href="/furniture/wash-washer.svg#art"/></svg>
+          <svg class="sv-obj" data-furniture="wash-plant" style="right:5%;bottom:calc(var(--fl) - 8px);width:20%" viewBox="0 0 60 80" aria-hidden="true"><use href="/furniture/balcony-plant.svg#art"/></svg>
         </div>
       </div>
       <div class="scene" data-scene="balcony" aria-label="ベランダ">
         <div class="sv sv-balcony">
-          <span class="sv-label">ベランダ</span>
           <span class="sv-sun" aria-hidden="true"></span>
           <svg class="balcony-weather" viewBox="0 0 320 220" preserveAspectRatio="none" aria-hidden="true"><g class="balcony-clouds" fill="#C8CDDF"><path d="M20 60q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/><path d="M190 40q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/></g><path class="balcony-rain" d="M30 85l-8 18m46-12l-8 18m46-24l-8 18m110-40l-8 18m46-12l-8 18m46-24l-8 18M55 145l-8 18m70-12l-8 18m105-37l-8 18m65-7l-8 18" fill="none" stroke="#9ABED8" stroke-width="3" stroke-linecap="round"/></svg>
-          <button class="sv-hit sv-laundry" type="button" data-chore="laundry" style="left:4%;top:20%;width:92%">
-            <svg viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
-              <path d="M6 14h308" stroke-width="4"/>
-              <path d="M40 14l-15 12h30zM120 14l-15 12h30zM200 14l-15 12h30zM280 14l-15 12h30z" fill="#FFFDF6" stroke-width="2"/>
-              <path d="M29 25q11 11 22 0l17 9-7 20-12-5 2 44q-22 5-43 0l3-44-11 5-7-20z" transform="translate(10 0)" fill="#A8E6FF"/>
-              <path d="M98 27q22 4 44 0l2 65q-10 5-22 1-12 5-25 0z" fill="#FFB3DE"/>
-              <path d="M100 38h40M101 82q19 4 39 0" fill="none" stroke="#DA80AE" stroke-width="1.5"/>
-              <path d="M177 27q23 4 46 0l-5 73q-9 4-18 0l-1-43-4 43q-9 4-18 0z" fill="#E6F7A0"/>
-              <path d="M179 37h41M199 39v16" fill="none" stroke="#9FAE6D" stroke-width="1.5"/>
-              <path d="M269 27q11 10 22 0l18 9-7 19-10-6 2 47q-14 6-28 0l2-47-10 6-7-19z" fill="#D9C2FF"/>
-              <path d="M276 29q4 4 8 0M270 87q10 3 20 0" fill="none" stroke="#A082C6" stroke-width="1.5"/>
+          <span class="sv-rail" aria-hidden="true"></span>
+          <svg class="sv-obj balcony-pole" style="left:4%;top:16%;width:92%" viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+            <path d="M6 14h308" stroke-width="4"/><path d="M14 6v20M306 6v20" stroke-width="3"/>
+            <g class="hung-clothes"><path d="M60 14l-15 12h30zM160 14l-15 12h30zM260 14l-15 12h30z" fill="#FFFDF6" stroke-width="2"/>
+              <path d="M49 25q11 11 22 0l17 9-7 20-12-5 2 44q-22 5-43 0l3-44-11 5-7-20z" fill="var(--my-outfit, #A8E6FF)"/>
+              <path d="M138 27q22 4 44 0l2 65q-10 5-22 1-12 5-25 0z" fill="var(--my-outfit, #FFB3DE)"/>
+              <path d="M237 27q23 4 46 0l-5 73q-9 4-18 0l-1-43-4 43q-9 4-18 0z" fill="var(--my-outfit, #E6F7A0)"/>
+              <path d="M140 38h40M239 37h41" fill="none" stroke-width="1.5" opacity=".5"/></g>
+          </g></svg>
+          <button class="sv-hit laundry-basket" type="button" data-chore="laundry" style="left:24%;bottom:calc(var(--fl) - 40px);width:52%">
+            <svg viewBox="0 0 120 100" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+              <g class="basket-pile"><path d="M15 48q-5-24 20-22q5-20 27-7q28-7 31 17q18-5 15 18" fill="#FFB3DE"/><path d="M18 46q12-23 29-10q5-13 20-3l9 18" fill="#A8E6FF"/><path d="M62 30q10-12 22-4" fill="none"/></g>
+              <path d="M10 45h100l-12 45H22z" fill="#FFF4A8"/><path d="M32 57l4 22m16-22 2 22m16-22-2 22m20-22-4 22M18 67h84" fill="none"/><rect x="8" y="43" width="104" height="10" rx="5" fill="#F2D9C0"/>
             </g></svg>
             <span class="area-task">洗濯</span><span class="who-dots"></span>
           </button>
-          <span class="sv-rail" aria-hidden="true"></span>
-          <svg class="sv-obj laundry-basket" data-furniture="balcony-basket" style="left:10%;bottom:calc(var(--fl) - 24px);width:35%" viewBox="0 0 120 100" aria-hidden="true"><use href="/furniture/balcony-basket.svg#art"/></svg>
-          <svg class="sv-obj" data-furniture="balcony-plant" style="right:6%;bottom:calc(var(--fl) - 10px);width:18%" viewBox="0 0 60 80" aria-hidden="true"><use href="/furniture/balcony-plant.svg#art"/></svg>
         </div>
       </div>
-      <div class="scene" data-scene="rooms" aria-label="みんなの部屋">
-        <div class="sv sv-hall">
-          <span class="sv-label">みんなの部屋</span>
-          <button class="hall-moments btn" type="button" data-open-moments>みんなの今 📷</button>
-          <div class="doors">
-            <div class="door-slot" data-who="mochi"></div>
-            <div class="door-slot" data-who="[メンバー2]"></div>
-            <div class="door-slot" data-who="[メンバー3]"></div>
-            <div class="door-slot" data-who="[メンバー4]"></div>
-          </div>
-          <div class="door-chips" id="door-chips"></div>
-        </div>
       </div>
-      <div class="scene" data-scene="board" aria-label="け〜じばん"><div class="sv sv-board"><h2>け〜じばん</h2>    <div class="board-panel">
-      <p class="board-panel-title">リビングの掲示板</p>
-      <div class="memo">
-        <div class="memo-top"><span>今日のクリア</span><strong id="count">2 / 4人</strong></div>
-        <em id="count-note">あと2人〜！</em>
-        <span>ハウスのハピネス <b id="gauge-text">2 / 6</b></span>
-        <div class="gauge" id="gauge" role="progressbar" aria-label="ハウスのハピネスゲージ" aria-valuemin="0" aria-valuemax="6" aria-valuenow="2"><i id="gauge-fill"></i></div>
+      <div class="hall-bar" id="hall-bar" hidden>
+        <div class="hall-icons" id="hall-icons" aria-label="住人"></div>
+        <button class="hall-moments btn" type="button" data-open-moments>みんなの今 📷</button>
       </div>
-      <div class="timeline-box">
-        <p class="tl-title">タイムライン</p>
-        <ol class="timeline" id="timeline" aria-live="polite"></ol>
-      </div>
-      <div class="wall-notes">
+      <nav class="scene-dots" id="scene-dots" aria-label="場所"></nav>
+    </div>
+  </section>
+
+  <section class="board-view" id="board-view" hidden aria-labelledby="board-view-title">
+    <header class="board-head"><button class="back icon-only board-back" type="button" aria-label="玄関にもどる">←</button><h2 id="board-view-title">け〜じばん</h2></header>
+    <div class="board-notes">
         <div class="pose-card" id="pose-card">
           <div class="pose-shot" id="pose-shot"></div>
           <div class="pose-text">
@@ -143,13 +123,9 @@
           <p>え、うちら<br>シンクロしてんじゃん！！</p>
           <small id="sync-detail"></small>
         </div>
-      </div>
     </div>
-
-</div></div>
-      </div>
-      <button class="walk-arrow right" type="button" id="walk-right" aria-label="右の部屋へ">›</button>
-    </div>
+    <p class="pin-status" role="status"></p>
+    <div class="pin-grid" aria-label="みんなの記録"></div>
   </section>
 
   <section class="room-view" id="room-view" hidden aria-label="部屋">
@@ -159,40 +135,9 @@
     <div id="room-detail"></div>
   </section>
 
-  <section class="fridge-view" id="fridge-view" hidden aria-label="冷蔵庫">
-    <button class="back icon-only" type="button" id="back" aria-label="家にもどる">←</button>
-    <div class="fridge">
-      <div class="whiteboard" id="board" aria-labelledby="board-title">
-        <h2 class="board-title" id="board-title">今日やること</h2>
-        <p class="board-sub" id="board-sub" aria-live="polite">やる家事を貼ってね。1個でいいよ〜</p>
-        <div class="board-magnets" id="board-magnets"></div>
-      </div>
-      <p class="tray-label" id="tray-label">家事マグネット（タップかドラッグで今日やることに貼る）</p>
-      <div class="tray" id="tray" aria-labelledby="tray-label"></div>
-      <span class="fridge-seam" aria-hidden="true"></span>
-      <h3 class="fp-title">みんなの写真 <small id="fp-count"></small></h3>
-      <div class="fridge-photos" id="fridge-photos"></div>
-      <p class="fridge-foot">クリアした写真は、ここと自分の部屋の壁に飾られるよ</p>
-      <span class="handle" aria-hidden="true"></span>
-    </div>
-  </section>
 </main>
 
-<nav class="bar" aria-label="メインメニュー">
-  <div class="bar-inner">
-    <button class="nav-item" type="button" id="nav-home" aria-current="page" aria-label="家">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
-      家
-    </button>
-    <button class="shoot" type="button" id="shoot" aria-label="撮る・録る">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
-    </button>
-    <button class="nav-item" type="button" id="nav-room" aria-label="自分の部屋">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="1"/><circle cx="15" cy="12" r="1" fill="currentColor"/></svg>
-      自分の部屋
-    </button>
-  </div>
-</nav>
+
 
 <dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
   <div class="sheet-bar"><span>ｃｈｅｃｋ．ｅｘｅ</span><button class="sheet-close" type="button" id="sheet-close" aria-label="閉じる">×</button></div>
@@ -259,12 +204,12 @@
     <button class="sheet-close drawer-close" type="button" id="howto-close" aria-label="閉じる">×</button>
     <h2 class="settings-title" id="howto-title">あそびかた</h2>
     <ul class="howto-cards">
-      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="15" y="6" width="18" height="34" rx="4" fill="#E9DDFF"/><path d="M21 35h6"/><path d="M9 23H3m3-3l-3 3l3 3M39 23h6m-3-3l3 3l-3 3"/></svg><b>家の中を歩く</b><span>左右にスワイプ</span></li>
-      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M8 34c0-8 6-14 14-14h0c8 0 14 6 14 14z" fill="#FFB3DE"/><path d="M14 12l-2-4M22 9V5M30 12l2-4"/><path d="M24 28v-6a2 2 0 0 1 4 0v5h.5v-2a2 2 0 0 1 4 0v2.5a2 2 0 0 1 4 0V36a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.5L20 35a2 2 0 0 1 3-2.4z" fill="#FFFFFF"/></svg><b>ゆれてる物をタップ</b><span>そこから家事スタート</span></li>
+      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="15" y="6" width="18" height="34" rx="4" fill="#E9DDFF"/><path d="M21 35h6"/><path d="M9 23H3m3-3l-3 3l3 3M39 23h6m-3-3l3 3l-3 3"/></svg><b>家の中を歩く</b><span>スワイプか下の点をタップ</span></li>
+      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M8 34c0-8 6-14 14-14h0c8 0 14 6 14 14z" fill="#FFB3DE"/><path d="M14 12l-2-4M22 9V5M30 12l2-4"/><path d="M24 28v-6a2 2 0 0 1 4 0v5h.5v-2a2 2 0 0 1 4 0v2.5a2 2 0 0 1 4 0V36a7 7 0 0 1-7 7h-1a6 6 0 0 1-5-2.5L20 35a2 2 0 0 1 3-2.4z" fill="#FFFFFF"/></svg><b>家具をタップ</b><span>ゴミバコ・つくえ・洗面台・カゴから家事スタート</span></li>
       <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M4 16h6l3-4h10l3 4h4v18H4z" fill="#A8E6FF"/><circle cx="17" cy="25" r="5"/><rect x="34" y="8" width="8" height="16" rx="4" fill="#FFF4A8"/><path d="M31 20a7 7 0 0 0 14 0M38 27v6"/></svg><b>ポーズ・写真・音</b><span>カメラかマイクでクリア</span></li>
       <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="15" y="10" width="18" height="32" rx="1" fill="#FFF4A8"/><circle cx="28" cy="27" r="1.5" fill="#3B2560"/><path d="M9 8l3 3M39 8l-3 3M24 3v4M6 20h4M38 20h4"/></svg><b>部屋の電気がつく</b><span>1つやれば明るくなる</span></li>
-      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="11" y="4" width="26" height="40" rx="5" fill="#FFFFFF"/><path d="M11 20h26M32 9v6"/><rect x="15" y="25" width="12" height="6" rx="3" fill="#FFB3DE"/><rect x="18" y="34" width="12" height="6" rx="3" fill="#A8E6FF"/></svg><b>冷蔵庫に貼る</b><span>今日やることを選ぶ</span></li>
-      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="6" y="8" width="36" height="32" rx="8" fill="#E9DDFF"/><path d="M15 18h18M15 24h18M15 30h18" stroke-width="3"/></svg><b>け〜じばん</b><span>横スワイプでみんなの記録</span></li>
+      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="11" y="4" width="26" height="40" rx="5" fill="#FFFFFF"/><path d="M11 20h26M32 9v6"/><rect x="15" y="25" width="12" height="6" rx="3" fill="#FFB3DE"/><rect x="18" y="34" width="12" height="6" rx="3" fill="#A8E6FF"/></svg><b>テーマカラー</b><span>自分の部屋の色が、服やギャルの色になる</span></li>
+      <li><svg viewBox="0 0 48 48" fill="none" stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><rect x="6" y="8" width="36" height="32" rx="8" fill="#E9DDFF"/><path d="M15 18h18M15 24h18M15 30h18" stroke-width="3"/></svg><b>け〜じばん</b><span>玄関の掲示板からみんなの記録へ</span></li>
     </ul>
     <button class="btn btn-main howto-start" type="button" id="howto-start">はじめる</button>
   </div>

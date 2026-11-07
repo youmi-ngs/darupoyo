@@ -110,7 +110,11 @@ class MealFinish(Model):
 class Profile(Model):
     # Send either or both; omitted fields stay as they are.
     gal: Literal["heisei", "reiwa", "kuro", "hime", "random"] | None = None
-    theme: Literal["pink", "lilac", "cyan", "lime", "peach", "mint", "cream", "night"] | None = None
+    # One of themes.THEMES; a color another resident already uses is refused (409).
+    theme: Literal[
+        "pink", "cyan", "lilac", "lime", "peach", "mint", "cream", "night",
+        "coral", "sky", "grape", "leaf", "orange", "teal", "berry", "cocoa",
+    ] | None = None
     display_name: str | None = Field(default=None, min_length=1, max_length=40, pattern=r"\S")
 
     @model_validator(mode="after")

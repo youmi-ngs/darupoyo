@@ -29,7 +29,7 @@ export function setupDarupoyoRecords() {
   const status = el('p'); status.setAttribute('role','status');
   const list = el('div',null,'darupoyo-records'), more = el('button','もっと見る','btn'); more.type='button'; more.hidden=true;
   const retry = el('button','記録を読み直す','btn'); retry.type='button'; retry.hidden=true;
-  feed.append(status,list,more,retry); document.querySelector('.sv-board')?.append(feed);
+  feed.append(status,list,more,retry); // records are shown as cards on けーじばん (board-view.js)
   let dashboard, signature='', generation=0, nextCursor=null, composer=0, busy=false, previewUrl;
   const urls = new Set();
   const observer = new IntersectionObserver(entries => entries.forEach(entry => {
@@ -109,7 +109,7 @@ export function setupDarupoyoRecords() {
         discardPreview(); dialog.innerHTML='<h2>だるぽよ、残せたよ♡</h2><p>できなかった自分も、今日のじぶん。ゆるくいこ〜。</p><button type="button" class="btn btn-main">お部屋へ</button>';
         dialog.querySelector('button').onclick=()=>dialog.close();
         window.dispatchEvent(new CustomEvent('darupoyo:recorded',{detail:{houseId:house,record}}));
-        signature=''; void refresh().catch(()=>{}); void load();
+        signature=''; void refresh().catch(()=>{}); if(feed.isConnected) void load();
       }catch(e){ if(version===composer) { notice.textContent=e.message+' 同じ内容で再試行できます。'; save.textContent='共有を再試行'; save.disabled=close.disabled=false; } }
       finally{ busy=false; }
     };
@@ -125,7 +125,7 @@ export function setupDarupoyoRecords() {
       if(dashboard && dashboard.house.id!==data.house.id) { generation++; release(); list.replaceChildren(); dialog.close(); }
       dashboard=data;
       const next=JSON.stringify([data.house.id,data.state.day,data.state.darupoyo_updated_at,data.house.members]);
-      if(next!==signature){ signature=next; void load(); }
+      if(next!==signature){ signature=next; if(feed.isConnected) void load(); }
     },
   };
 }
