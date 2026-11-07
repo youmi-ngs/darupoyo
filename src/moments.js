@@ -1,3 +1,4 @@
+import { setBusy } from './busy.js';
 import { client, houseApi } from './api.js';
 import { capture } from './media.js';
 
@@ -58,13 +59,13 @@ export function setupMoments() {
       content.append(label,save,cancel);
       let mediaId;const requestId=crypto.randomUUID();
       save.onclick=async()=>{
-        if(busy || client.house!==house)return;busy=true;save.disabled=cancel.disabled=true;caption.disabled=true;
+        if(busy || client.house!==house)return;busy=true;setBusy(save,true,'共有しています…');cancel.disabled=true;caption.disabled=true;
         try {
           mediaId ||= (await houseApi('/media?kind=selfie',evidence.blob)).id;
           await houseApi('/moments',{request_id:requestId,media_id:mediaId,caption:caption.value});
           window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
           if(current===generation) await load();
-        }catch(e){if(current===generation){status.textContent=e.message;save.disabled=cancel.disabled=false;}}
+        }catch(e){if(current===generation){status.textContent=e.message;setBusy(save,false);save.disabled=cancel.disabled=false;}}
         finally{busy=false;}
       };
     }catch(e){if(current===generation && e.name!=='AbortError'){status.textContent=e.message;shoot.disabled=refresh.disabled=false;}}

@@ -1,6 +1,7 @@
 // Photos and sharing: profile photos (#96), photo comments (#88) and the
 // setting that shows records from other houses to this house (#99).
 import { houseApi, refresh } from './api.js';
+import { setBusy } from './busy.js';
 
 // A resident's round mark: their profile photo, or the first letter of their name.
 export function residentDot(member, name, color, className = 'who-dot') {
@@ -41,11 +42,11 @@ export function commentsBlock(post, ctx) {
     e.preventDefault();
     const text = input.value.trim(); if (!text) return;
     if (pending?.text !== text) pending = { text, id: crypto.randomUUID() };
-    send.disabled = true;
+    setBusy(send, true, '送信中…');
     try {
       post.comments = (await houseApi('/posts/' + post.id + '/comments', { request_id: pending.id, text })).comments;
       pending = null; input.value = ''; draw(); void refresh();
-    } catch (err) { ctx.toast(err.message); } finally { send.disabled = false; }
+    } catch (err) { ctx.toast(err.message); } finally { setBusy(send, false); send.disabled = false; }
   };
   draw();
   return box;
@@ -81,10 +82,11 @@ export function setupSocialSettings(getMe, toast) {
   };
   file.onchange = async () => {
     const chosen = file.files[0]; file.value = ''; if (!chosen) return;
+    const pick = card.querySelector('.avatar-pick'); pick.classList.add('is-busy'); pick.setAttribute('aria-busy', 'true'); // #144 (keeps the file input inside)
     try {
       const { id } = await houseApi('/media?kind=avatar', await squareJpeg(chosen));
       await houseApi('/avatar', { media_id: id }, 'PUT'); await refresh(); toast('プロフィール写真を変えたよ');
-    } catch (e) { toast(e.message); }
+    } catch (e) { toast(e.message); } finally { pick.classList.remove('is-busy'); pick.removeAttribute('aria-busy'); }
   };
   clear.onclick = async () => { clear.disabled = true; try { await houseApi('/avatar', undefined, 'DELETE'); await refresh(); } catch (e) { toast(e.message); } finally { clear.disabled = false; } };
   share.onclick = async () => {

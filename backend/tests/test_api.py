@@ -466,6 +466,8 @@ def test_notifications_friend_cleared_and_evening(client):
     assert client.post(f"/api/houses/{h}/completions", headers=auth(), json=body).status_code == 200
     # Only bob has a device; alice (who cleared) and carol (no device) get nothing.
     assert [m["uid"] for m in sent] == ["bob"]
+    # #143: the title says what happened (the phone already shows the app name).
+    assert sent[0]["title"] == "Aliceが髪を乾かしたよ"
     assert sent[0]["body"] in {
         line.format(name="Alice", chore="ドライヤー", reward="美髪") for line in notify.FRIEND_FALLBACK["kuro"]
     }
@@ -474,6 +476,7 @@ def test_notifications_friend_cleared_and_evening(client):
     sent.clear()
     assert client.post("/api/tasks/evening").json() == {"nudged": 1}
     assert [m["uid"] for m in sent] == ["bob"] and "休み" in sent[0]["body"]
+    assert sent[0]["title"] == "黒ギャルから"
     # Once a day per person.
     assert client.post("/api/tasks/evening").json() == {"nudged": 0}
 

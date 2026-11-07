@@ -32,6 +32,9 @@ FRIEND_RULE = (
     "家の友だちが家事をしたことを、スマホの通知でユーザーに知らせる一言を書く。"
     "その友だちをいっしょにほめに行こうと誘う。40文字以内の1文。かぎかっこは付けない。"
 )
+# Notification titles say what happened; the phone already shows the app name, so
+# a title of 「だるぽよ」 read as 「だるぽよ from だるぽよ」 (#143).
+DONE = {"laundry": "洗濯した", "meal": "ごはんを食べた", "dryer": "髪を乾かした", "garbage": "ゴミを出した"}
 EVENING_RULE = (
     "19時になっても、ユーザーは今日まだ家事をしていない。スマホの通知で声をかける一言を書く。"
     "責めない・急かさない。「今日は休みにしちゃう？」のように、休んでもいいと伝える。40文字以内の1文。かぎかっこは付けない。"
@@ -51,7 +54,7 @@ class Notifier:
         self.sent = []  # local/dev: what would have been sent
 
     # ---------- wording ----------
-    def _gemini(self, gal, rule, contents):
+    def _gemini(self, gal, rule, contents, chore=None):
         client = getattr(self.praise, "client", None)
         if client is None:
             return None
@@ -59,7 +62,9 @@ class Notifier:
             from google.genai import types
 
             sheet = gals.GALS[gal]
-            system = f"{rule}\nあなたは「{sheet['name']}」。{sheet['sheet']}"
+            # #145: meals follow the same wording rule as the praise (no cooking/eating-out guesses, no 「だるいのに」).
+            meal = "\n" + gals.MEAL_RULE if chore == "meal" else ""
+            system = f"{rule}{meal}\nあなたは「{sheet['name']}」。{sheet['sheet']}"
             result = client.models.generate_content(
                 model=self.settings.model,
                 contents=contents,
@@ -68,6 +73,8 @@ class Notifier:
                 ),
             )
             text = (result.text or "").strip().strip("「」\"")
+            if chore and not gals.acceptable(chore, text):
+                return None
             return text if 0 < len(text) <= 60 else None
         except Exception:  # noqa: BLE001 -- notifications are best effort
             logging.getLogger(__name__).warning("notify_text_unavailable")
@@ -76,7 +83,7 @@ class Notifier:
     def friend_text(self, gal, name, chore):
         gal = voice(gal)
         facts = dict(name=name, chore=gals.CHORES[chore], reward=gals.REWARDS[chore])
-        made = self._gemini(gal, FRIEND_RULE, "友だち：{name}／家事：{chore}／ごほうび：{reward}".format(**facts))
+        made = self._gemini(gal, FRIEND_RULE, "友だち：{name}／家事：{chore}／ごほうび：{reward}".format(**facts), chore=chore)
         return made or random.choice(FRIEND_FALLBACK[gal]).format(**facts)
 
     def evening_text(self, gal):
@@ -84,21 +91,21 @@ class Notifier:
         return self._gemini(gal, EVENING_RULE, "今日の家事：まだ0個") or random.choice(EVENING_FALLBACK[gal])
 
     # ---------- delivery ----------
-    def send(self, store, uid, body, link="/"):
+    def send(self, store, uid, body, link="/", title="だるぽよ"):
         """Send to every device of uid; drop tokens the push service says are gone."""
         record = store.get(f"notify/{uid}") or {}
         tokens = record.get("tokens", [])
         if not tokens:
             return 0
         if self.app is None:
-            self.sent.append({"uid": uid, "body": body, "tokens": list(tokens)})
+            self.sent.append({"uid": uid, "title": title, "body": body, "tokens": list(tokens)})
             return len(tokens)
         from firebase_admin import messaging
 
         message = messaging.MulticastMessage(
             tokens=tokens,
             # Data only: the page's service worker shows it, so it never appears twice.
-            data={"title": "だるぽよ", "body": body, "link": link},
+            data={"title": title, "body": body, "link": link},
             webpush=messaging.WebpushConfig(headers={"Urgency": "high", "TTL": "21600"}),
         )
         try:
@@ -130,7 +137,7 @@ class Notifier:
         for member in house["member_ids"]:
             record = store.get(f"notify/{member}") or {} if member != uid else {}
             if record.get("tokens"):
-                self.send(store, member, self.friend_text(record.get("gal"), name, chore))
+                self.send(store, member, self.friend_text(record.get("gal"), name, chore), title=f"{name}が{DONE[chore]}よ")
 
     def evening(self, store, day):
         """Nudge everyone who has done nothing today in any of their houses (once per person)."""
@@ -143,7 +150,8 @@ class Notifier:
         for uid in sorted(members - done):
             record = store.get(f"notify/{uid}") or {}
             if record.get("tokens") and record.get("last_evening") != day:
-                if self.send(store, uid, self.evening_text(record.get("gal"))):
+                gal = voice(record.get("gal"))
+                if self.send(store, uid, self.evening_text(gal), title=f"{gals.GALS[gal]['name']}から"):
                     nudged += 1
                 store.atomic(lambda tx, uid=uid: self._mark_evening(tx, uid, day))
         return nudged

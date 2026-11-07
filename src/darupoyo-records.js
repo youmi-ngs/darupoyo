@@ -1,3 +1,4 @@
+import { setBusy } from './busy.js';
 import { api, client, refresh } from './api.js';
 import { blobOf, photoCrop } from './camera.js';
 import './daily-tasks.css';
@@ -25,7 +26,7 @@ async function preparePhoto(file) {
 export function setupDarupoyoRecords() {
   const dialog = el('dialog', null, 'darupoyo-dialog'); dialog.setAttribute('aria-label', 'だるぽよを記録'); document.body.append(dialog);
   const feed = el('section', null, 'darupoyo-feed'); feed.setAttribute('aria-label', 'だるぽよの日');
-  feed.append(el('h3','だるぽよの日'), el('p','できなかった日も、そのままでかわいい。'));
+  feed.append(el('h3','だるぽよの日'), el('p','ゆるい日も、そのままでかわいい。'));
   const status = el('p'); status.setAttribute('role','status');
   const list = el('div',null,'darupoyo-records'), more = el('button','もっと見る','btn'); more.type='button'; more.hidden=true;
   const retry = el('button','記録を読み直す','btn'); retry.type='button'; retry.hidden=true;
@@ -82,10 +83,10 @@ export function setupDarupoyoRecords() {
     if(!client.house || !LABELS[chore]) return;
     const house=client.house, version=++composer; busy=false; discardPreview();
     let photo=null, photoVersion=0, preparing=false, submission=null;
-    dialog.innerHTML='<button type="button" class="btn" data-close>閉じる</button><h2></h2><p>できなかった日も、そのままでかわいい。写真か一言を残してね。同じハウスのみんなに共有されます。</p><label>写真を撮る・選ぶ（任意）<input type="file" accept="image/*" capture="environment"></label><img class="darupoyo-preview" alt="共有する写真の確認" hidden><button type="button" class="btn" data-remove hidden>写真を外す</button><label>ひとこと（任意・140文字まで）<textarea maxlength="140" rows="3" placeholder="今日は洗い物、そのまま〜"></textarea></label><p class="darupoyo-note">家事の完了にはならないよ。部屋の明かりもそのまま。</p><p role="status"></p><button type="button" class="btn btn-main" data-save disabled>このだるぽよを共有</button>';
+    dialog.innerHTML='<button type="button" class="btn" data-close>閉じる</button><h2></h2><p>今日はゆるっといこ。そのままのじぶんで大丈夫。写真やひとことも残せるよ（なくてもOK）。同じハウスのみんなに共有されます。</p><label>写真を撮る・選ぶ（任意）<input type="file" accept="image/*" capture="environment"></label><img class="darupoyo-preview" alt="共有する写真の確認" hidden><button type="button" class="btn" data-remove hidden>写真を外す</button><label>ひとこと（任意・140文字まで）<textarea maxlength="140" rows="3" placeholder="今日は洗い物、そのまま〜"></textarea></label><p class="darupoyo-note">家事の完了にはならないよ。部屋の明かりもそのまま。</p><p role="status"></p><button type="button" class="btn btn-main" data-save>このだるぽよを共有</button>';
     dialog.querySelector('h2').textContent=LABELS[chore]+'、今日はだるぽよ';
     const file=dialog.querySelector('input'), caption=dialog.querySelector('textarea'), preview=dialog.querySelector('img'), remove=dialog.querySelector('[data-remove]'), save=dialog.querySelector('[data-save]'), close=dialog.querySelector('[data-close]'), notice=dialog.querySelector('[role=status]');
-    const valid=()=>{ save.disabled=busy || preparing || (!photo && !caption.value.trim()); };
+    const valid=()=>{ save.disabled=busy || preparing; };
     caption.oninput=valid; close.onclick=()=>{ if(!busy) dialog.close(); };
     remove.onclick=()=>{ photoVersion++; photo=null; preparing=false; file.value=''; discardPreview(); preview.hidden=remove.hidden=true; notice.textContent=''; valid(); };
     file.onchange=async()=>{
@@ -101,16 +102,16 @@ export function setupDarupoyoRecords() {
     save.onclick=async()=>{
       if(busy || preparing || client.house!==house) return;
       submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim()};
-      busy=true; [file,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent='共有中…';
+      busy=true; [file,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent=''; setBusy(save,true,'共有しています…');
       try {
         if(photo && !submission.media_id) submission.media_id=(await scopedApi(house,'/media?kind=darupoyo',photo)).id;
         const {record}=await scopedApi(house,'/darupoyo',submission);
         if(version!==composer) return;
-        discardPreview(); dialog.innerHTML='<h2>だるぽよ、残せたよ♡</h2><p>できなかった自分も、今日のじぶん。ゆるくいこ〜。</p><button type="button" class="btn btn-main">お部屋へ</button>';
+        discardPreview(); dialog.innerHTML='<h2>だるぽよ、残せたよ♡</h2><p>今日のじぶんも、ちゃんとかわいい。ゆるくいこ〜。</p><button type="button" class="btn btn-main">お部屋へ</button>';
         dialog.querySelector('button').onclick=()=>dialog.close();
         window.dispatchEvent(new CustomEvent('darupoyo:recorded',{detail:{houseId:house,record}}));
         signature=''; void refresh().catch(()=>{}); if(feed.isConnected) void load();
-      }catch(e){ if(version===composer) { notice.textContent=e.message+' 同じ内容で再試行できます。'; save.textContent='共有を再試行'; save.disabled=close.disabled=false; } }
+      }catch(e){ if(version===composer) { setBusy(save,false); notice.textContent=e.message+' 同じ内容で再試行できます。'; save.textContent='共有を再試行'; save.disabled=close.disabled=false; } }
       finally{ busy=false; }
     };
     dialog.showModal(); close.focus();
@@ -118,7 +119,7 @@ export function setupDarupoyoRecords() {
   return {
     addChoice(root,chore,beforeOpen) {
       const button=el('button','だるぽよ','btn btn-sub darupoyo-choice'); button.type='button';
-      button.append(el('small','できなかった日も、そのまま残す'));
+      button.append(el('small','今日のゆるい気分を残す'));
       button.onclick=()=>{ beforeOpen?.(); open(chore); }; root.append(button);
     },
     update(data) {

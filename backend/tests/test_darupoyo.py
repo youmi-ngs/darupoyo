@@ -43,7 +43,10 @@ def test_record_shares_without_completion_and_retries_without_duplicates():
 def test_record_validates_content_and_photo_ownership():
     with TestClient(create_app(LOCAL)) as c:
         h = house(c); join(c,h); base = f'/api/houses/{h}'
-        for fields in ({'caption':'   '},{'caption':'x'*141},{'chore':'unknown'},{'media_id':str(uuid4())}):
+        # #142: 「だるぽよ」 alone (no photo, blank caption) is a record.
+        empty = c.post(base+'/darupoyo', headers=auth(), json=record(caption='   '))
+        assert empty.status_code == 201 and empty.json()['record']['caption'] == '' and empty.json()['record']['media_id'] is None
+        for fields in ({'caption':'x'*141},{'chore':'unknown'},{'media_id':str(uuid4())}):
             assert c.post(base+'/darupoyo', headers=auth(), json=record(**fields)).status_code == 422
         wrong_kind = upload(c,h)
         other_photo = photo(c,h,'bob')

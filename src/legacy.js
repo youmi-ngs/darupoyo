@@ -1,3 +1,4 @@
+import { setBusy } from './busy.js';
 import { setupUtilityMenu } from './utility-menu.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
@@ -432,7 +433,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       }
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
-        const button = $('post'); button.disabled = true; $('redo').disabled = true; $('sheet-close').disabled = true;
+        const button = $('post'); setBusy(button, true, '飾っています…'); $('redo').disabled = true; $('sheet-close').disabled = true;
         try {
           if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
           // A confirmed recording must not disappear silently on upload failure.
@@ -443,7 +444,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
           sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
           $('finish').onclick = () => { sheet.close(); showHouse(); toast('部屋に飾った。電気ついたね'); };
-        } catch (e) { toast(e.message); button.disabled = false; if ($('redo')) $('redo').disabled = false; }
+        } catch (e) { toast(e.message); setBusy(button, false); button.disabled = false; if ($('redo')) $('redo').disabled = false; }
         finally { $('sheet-close').disabled = false; }
       };
     } catch (e) {

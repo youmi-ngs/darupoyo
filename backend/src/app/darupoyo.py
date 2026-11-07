@@ -13,10 +13,9 @@ class DarupoyoRecord(Model):
     media_id: UUID | None = None
 
     @model_validator(mode="after")
-    def has_content(self):
+    def tidy(self):
+        # #142: a photo and a caption are both optional; 「だるぽよ」 by itself is a record.
         self.caption = self.caption.strip()
-        if not self.caption and not self.media_id:
-            raise ValueError("A photo or caption is required")
         return self
 
 
