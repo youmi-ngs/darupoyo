@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 120"><title>テーブルといす</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
-<rect x="8" y="16" width="32" height="52" rx="12" fill="#D9C2FF"/><path d="M15 26h18" stroke="#FFFFFF" stroke-width="3"/>
-<rect x="4" y="66" width="42" height="9" rx="4" fill="#C4A8F0"/><path d="M11 75v41M39 75v41" stroke-width="3.5"/>
-<rect x="140" y="16" width="32" height="52" rx="12" fill="#A8E6FF"/><path d="M147 26h18" stroke="#FFFFFF" stroke-width="3"/>
-<rect x="134" y="66" width="42" height="9" rx="4" fill="#86D4F5"/><path d="M141 75v41M169 75v41" stroke-width="3.5"/>
-<rect x="22" y="52" width="136" height="13" rx="5" fill="#F2D9C0"/>
-<rect x="32" y="65" width="116" height="6" rx="2" fill="#E2BF9E"/>
-<rect x="36" y="71" width="8" height="45" rx="3" fill="#E2BF9E"/><rect x="136" y="71" width="8" height="45" rx="3" fill="#E2BF9E"/>
+<rect vector-effect="non-scaling-stroke" x="8" y="16" width="32" height="52" rx="12" fill="#D9C2FF"/><path vector-effect="non-scaling-stroke" d="M15 26h18" stroke="#FFFFFF" stroke-width="3"/>
+<rect vector-effect="non-scaling-stroke" x="4" y="66" width="42" height="9" rx="4" fill="#C4A8F0"/><path vector-effect="non-scaling-stroke" d="M11 75v41M39 75v41" stroke-width="3.5"/>
+<rect vector-effect="non-scaling-stroke" x="140" y="16" width="32" height="52" rx="12" fill="#A8E6FF"/><path vector-effect="non-scaling-stroke" d="M147 26h18" stroke="#FFFFFF" stroke-width="3"/>
+<rect vector-effect="non-scaling-stroke" x="134" y="66" width="42" height="9" rx="4" fill="#86D4F5"/><path vector-effect="non-scaling-stroke" d="M141 75v41M169 75v41" stroke-width="3.5"/>
+<rect vector-effect="non-scaling-stroke" x="22" y="52" width="136" height="13" rx="5" fill="#F2D9C0"/>
+<rect vector-effect="non-scaling-stroke" x="32" y="65" width="116" height="6" rx="2" fill="#E2BF9E"/>
+<rect vector-effect="non-scaling-stroke" x="36" y="71" width="8" height="45" rx="3" fill="#E2BF9E"/><rect vector-effect="non-scaling-stroke" x="136" y="71" width="8" height="45" rx="3" fill="#E2BF9E"/>
 </g></svg>

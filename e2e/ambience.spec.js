@@ -6,12 +6,14 @@ test.beforeEach(async({context,page})=>{
 async function enter(page) {
  await page.goto('/');await page.getByLabel('あなたの名前').fill('空');await page.getByLabel('新しいハウスの名前').fill('東京');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
 }
-test('Tokyo weather and daylight follow time and weather (the living room has no clock in the redesign)',async({page})=>{
+test('clock, Tokyo weather and daylight follow time and weather',async({page})=>{
  await page.clock.setFixedTime(new Date(2026,10,7,9,30));await enter(page);
  await expect(page.locator('body')).toHaveAttribute('data-daylight','day');
  await expect(page.locator('body')).toHaveAttribute('data-weather','rain');
  await expect(page.locator('.weather-credit')).toHaveCount(0);
  await expect(page.getByText('東京の空', { exact: false })).toHaveCount(0);
+ await expect(page.locator('.clock-hour')).toHaveAttribute('transform','rotate(285 15 15)');
+ await expect(page.locator('.clock-minute')).toHaveAttribute('transform','rotate(180 15 15)');
  await page.clock.setFixedTime(new Date(2026,10,7,22,0));
  await page.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));
  await expect(page.locator('body')).toHaveAttribute('data-daylight','night');

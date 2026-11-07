@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 120"><title>部屋のライト</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
-<path d="M30 0v58"/><rect x="25" y="56" width="10" height="8" rx="2" fill="#FFFFFF"/>
-<circle cx="30" cy="104" r="16" style="fill:#FFF4A8;opacity:var(--mr-glow,0);stroke:none"/>
-<path d="M8 98q0-34 22-34t22 34z" style="fill:var(--mr-accent,#FFB3DE)"/>
-<path d="M16 90q2-14 11-19" stroke="#FFFFFF" stroke-width="3" fill="none" opacity=".7"/>
-<ellipse cx="30" cy="100" rx="9" ry="6" style="fill:var(--mr-bulb,#FFFFFF)"/>
+<path vector-effect="non-scaling-stroke" d="M30 0v58"/><rect vector-effect="non-scaling-stroke" x="25" y="56" width="10" height="8" rx="2" fill="#FFFFFF"/>
+<circle vector-effect="non-scaling-stroke" cx="30" cy="104" r="16" style="fill:#FFF4A8;opacity:var(--mr-glow,0);stroke:none"/>
+<path vector-effect="non-scaling-stroke" d="M8 98q0-34 22-34t22 34z" style="fill:var(--mr-accent,#FFB3DE)"/>
+<path vector-effect="non-scaling-stroke" d="M16 90q2-14 11-19" stroke="#FFFFFF" stroke-width="3" fill="none" opacity=".7"/>
+<ellipse vector-effect="non-scaling-stroke" cx="30" cy="100" rx="9" ry="6" style="fill:var(--mr-bulb,#FFFFFF)"/>
 </g></svg>

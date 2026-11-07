@@ -4,7 +4,7 @@ import './daily-tasks.css';
 // PC① may supply data-furniture-name on replacement artwork. Keep artwork and
 // task buttons intact; this adapter only adds keyboard/tap behavior to props.
 const SELECTOR = '.scene .sv > .sv-obj, .myroom > .mr-bed, .myroom > .mr-desk, .myroom > .mr-lamp, .myroom > .mr-window, [data-furniture-name]';
-const NAMES = { outside:['おうち'], entry:['玄関のドア'], ldk:['窓'], wash:['植木'], balcony:['物干しざお'] };
+const NAMES = { outside:['おうち'], entry:['玄関のドア'], ldk:['時計','窓'], wash:['植木'], balcony:['物干しざお'] };
 export function setupFurniturePlay() {
   let taps=0, house='', prize=null, expiry;
   const bound=new WeakSet(), animations=new WeakMap();

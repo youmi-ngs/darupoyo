@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 100"><title>玄関のフック</title><g id="art" stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
-<rect x="4" y="6" width="72" height="10" rx="5" fill="#E8C9A6"/>
-<path d="M22 16v6M58 16v6" stroke-width="3"/>
-<path d="M22 24q-13 2-15 15l-3 36h36l-3-36q-2-13-15-15z" fill="#A8E6FF"/>
-<path d="M15 27q7 11 14 0" fill="#86D4F5"/>
-<path d="M19 34v9M25 34v9" stroke-width="1.8"/>
-<rect x="11" y="56" width="22" height="10" rx="3" fill="#86D4F5" stroke-width="2"/>
-<path d="M50 34q8-14 16 0" fill="none"/>
-<path d="M44 34h28l-3 36q-11 3-22 0z" fill="#FFB3DE"/>
-<path d="M58 52q-4-5-7-1q-2 4 7 9q9-5 7-9q-3-4-7 1z" fill="#FFFFFF" stroke-width="1.8"/>
+<rect vector-effect="non-scaling-stroke" x="4" y="6" width="72" height="10" rx="5" fill="#E8C9A6"/>
+<path vector-effect="non-scaling-stroke" d="M22 16v6M58 16v6" stroke-width="3"/>
+<path vector-effect="non-scaling-stroke" d="M22 24q-13 2-15 15l-3 36h36l-3-36q-2-13-15-15z" fill="#A8E6FF"/>
+<path vector-effect="non-scaling-stroke" d="M15 27q7 11 14 0" fill="#86D4F5"/>
+<path vector-effect="non-scaling-stroke" d="M19 34v9M25 34v9" stroke-width="1.8"/>
+<rect vector-effect="non-scaling-stroke" x="11" y="56" width="22" height="10" rx="3" fill="#86D4F5" stroke-width="2"/>
+<path vector-effect="non-scaling-stroke" d="M50 34q8-14 16 0" fill="none"/>
+<path vector-effect="non-scaling-stroke" d="M44 34h28l-3 36q-11 3-22 0z" fill="#FFB3DE"/>
+<path vector-effect="non-scaling-stroke" d="M58 52q-4-5-7-1q-2 4 7 9q9-5 7-9q-3-4-7 1z" fill="#FFFFFF" stroke-width="1.8"/>
 </g></svg>
