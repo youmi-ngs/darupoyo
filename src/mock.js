@@ -14,7 +14,7 @@ function save(db) {
 }
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 const fail = (status, detail) => json({ detail }, status);
-const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date());
+const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Tokyo' }).format(new Date(Date.now() - 4 * 60 * 60 * 1000));
 const newDay = day => ({ day, goals: {}, completed: {}, poses: {}, recent: [], latest: {} });
 const postId = now => now.toISOString().replace(/[-:Z]/g, '').replace('.', '') + '000_' + crypto.randomUUID().replace(/-/g, '');
 const blobToDataUrl = blob => new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });

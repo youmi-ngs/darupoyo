@@ -24,6 +24,7 @@ test('camera capture, photo-only fallback, save and stream release',async({page,
   await page.getByRole('button',{name:'この写真を撮る'}).waitFor({state:'visible'});
   await page.evaluate(()=>{window.testStream=document.querySelector('video').srcObject;});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
+  expect(await page.locator('.capture canvas').evaluate(c => c.width / c.height)).toBeCloseTo(5 / 6);
   // 撮影直後に確認でき、撮り直してもカメラは動いたまま（#12 #13）
   await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('video')).toBeHidden();
   await page.getByRole('button',{name:'もう1回撮る'}).click();

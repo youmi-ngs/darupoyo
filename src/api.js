@@ -126,7 +126,7 @@ function subscribe() {
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'days'), sync, report));
     subscriptions.push(onSnapshot(collection(client.db, 'houses', client.house, 'posts'), sync, report));
   }
-  // Also handles midnight and recovery from missed notifications. Local mode polls.
+  // Also handles the 04:00 day boundary and recovery from missed notifications. Local mode polls.
   timer = setInterval(() => { if (!document.hidden) sync(); }, client.db ? 60000 : 2500);
   window.addEventListener('focus', sync);
 }

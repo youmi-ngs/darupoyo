@@ -41,3 +41,11 @@ export async function openMic(resources, signal) {
   resources.push(() => stream.getTracks().forEach(t => t.stop())); check(signal);
   return stream;
 }
+
+
+// Match the album's 5:6 photo frame without stretching the image.
+export function photoCrop(width, height) {
+  const cropWidth = Math.min(width, height * 5 / 6);
+  const cropHeight = cropWidth * 6 / 5;
+  return { x: (width - cropWidth) / 2, y: (height - cropHeight) / 2, width: cropWidth, height: cropHeight };
+}

@@ -45,8 +45,10 @@ class Domain:
     def __init__(self, store, settings, clock=utcnow):
         self.store, self.settings, self.clock = store, settings, clock
 
-    def day(self):
-        return self.clock().astimezone(ZoneInfo(self.settings.timezone)).date().isoformat()
+    def day(self, now=None):
+        # A household day runs from local 04:00 through the next 03:59.
+        local = (now or self.clock()).astimezone(ZoneInfo(self.settings.timezone))
+        return (local - timedelta(hours=4)).date().isoformat()
 
     def create_house(self, uid, body):
         house_id = str(uuid4())
@@ -147,7 +149,7 @@ class Domain:
 
     def complete(self, uid, house_id, body):
         now = self.clock()
-        day = now.astimezone(ZoneInfo(self.settings.timezone)).date().isoformat()
+        day = self.day(now)
         day_path = f"houses/{house_id}/days/{day}"
         request_path = f"houses/{house_id}/requests/{digest(uid + ':' + str(body.request_id))}"
         fingerprint = digest(json.dumps(body.model_dump(mode="json"), sort_keys=True))

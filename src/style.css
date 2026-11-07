@@ -1004,3 +1004,21 @@ body[data-weather="snow"] .window-rain { display: initial; stroke: white; stroke
 .moments-dialog .btn { margin: 5px 4px 5px 0; }
 
 .capture .is-mirrored { transform: scaleX(-1); }
+
+/* The fridge keeps its hint glow while swaying with the other furniture. */
+.plan.is-swaying #open-fridge { animation: fridgehalo 2.4s ease-in-out infinite, furniture-sway .65s ease-out; }
+.sv-fridge .mini-board { margin-top: 10px; }
+.balcony-weather { position: absolute; inset: 12% 0 auto; width: 100%; height: 50%; pointer-events: none; }
+.balcony-clouds, .balcony-rain { display: none; }
+body[data-weather="cloudy"] .balcony-clouds,
+body[data-weather="rain"] .balcony-clouds,
+body[data-weather="snow"] .balcony-clouds { display: initial; }
+body[data-weather="rain"] .balcony-rain, body[data-weather="snow"] .balcony-rain { display: initial; }
+body[data-weather="cloudy"] .sv-sun, body[data-weather="rain"] .sv-sun, body[data-weather="snow"] .sv-sun { opacity: .2; }
+body[data-weather="snow"] .balcony-rain { stroke: white; stroke-width: 5; stroke-dasharray: 1 9; }
+body[data-daylight="night"] .balcony-clouds { fill: #69738F; }
+@media (prefers-reduced-motion: reduce) { .plan.is-swaying #open-fridge { animation: none; } }
+
+.hall-moments { position: absolute; top: 14%; right: 5%; z-index: 3; padding: 8px 12px; font-size: 13px; }
+.capture .is-photo-frame { width: min(100%, 37.5vh); aspect-ratio: 5 / 6; margin-inline: auto; }
+.capture-live.is-photo-frame video { width: 100%; height: 100%; max-height: none; object-fit: cover; }

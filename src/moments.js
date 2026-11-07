@@ -42,7 +42,9 @@ export function setupMoments() {
     finally { if(current===generation) shoot.disabled=refresh.disabled=false; }
   }
   refresh.onclick = load;
-  document.querySelector('#open-moments').onclick = () => { document.querySelector('#menu').close(); dialog.showModal(); void load(); };
+  document.querySelectorAll('#open-moments, [data-open-moments]').forEach(button => {
+    button.onclick = () => { document.querySelector('#menu')?.close(); dialog.showModal(); void load(); };
+  });
   shoot.onclick = async () => {
     reset(); const current = generation, house = client.house; controller = new AbortController();
     shoot.disabled=refresh.disabled=true;status.textContent='';content.replaceChildren();
