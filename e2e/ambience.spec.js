@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 test.beforeEach(async({context,page})=>{
   await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
-  await page.route('https://api.open-meteo.com/**',route=>route.fulfill({json:{current:{weather_code:61}}}));
+  await page.route('**/api/weather',route=>route.fulfill({json:{kind:'rain',source:'google'}}));
 });
 async function enter(page) {
  await page.goto('/');await page.getByLabel('あなたの名前').fill('空');await page.getByLabel('新しいハウスの名前').fill('東京');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
@@ -10,7 +10,7 @@ test('clock, Tokyo weather and daylight follow time and weather',async({page})=>
  await page.clock.setFixedTime(new Date(2026,10,7,9,30));await enter(page);
  await expect(page.locator('body')).toHaveAttribute('data-daylight','day');
  await expect(page.locator('body')).toHaveAttribute('data-weather','rain');
- await expect(page.locator('.weather-credit')).toHaveCount(0);
+ await expect(page.locator('.weather-credit')).toHaveCount(3); // #125: Google's credit on each sky
  await expect(page.getByText('東京の空', { exact: false })).toHaveCount(0);
  await expect(page.locator('.clock-hour')).toHaveAttribute('transform','rotate(285 15 15)');
  await expect(page.locator('.clock-minute')).toHaveAttribute('transform','rotate(180 15 15)');

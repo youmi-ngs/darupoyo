@@ -46,8 +46,12 @@ done
 if [[ "$build_status" != SUCCESS ]]; then echo "Timed out waiting for Cloud Build $build_id" >&2; exit 1; fi
 # Public HTTP transport is intentional. Firebase ID tokens protect every data API;
 # Cloud Run IAM tokens are not Firebase ID tokens. /healthz is public.
+# #125: the Google Weather API key comes from Secret Manager when deploy/config.json names it.
+extra=()
+if [[ -n "${WEATHER_SECRET:-}" ]]; then extra+=(--update-secrets "GOOGLE_WEATHER_API_KEY=${WEATHER_SECRET}:latest"); fi
 gcloud run deploy "$service" --project "$PROJECT_ID" --region "$REGION" \
   --image "$image" --service-account "$SERVICE_ACCOUNT" --allow-unauthenticated \
   --port 8080 --memory 1Gi --cpu 1 --concurrency 4 --timeout 60 \
   --min-instances 0 --max-instances 3 \
+  ${extra[@]+"${extra[@]}"} \
   --set-env-vars "^|^APP_ENV=production|AUTH_MODE=firebase|DATA_BACKEND=firestore|PRAISE_BACKEND=${PRAISE_BACKEND}|GOOGLE_CLOUD_PROJECT=${PROJECT_ID}|GOOGLE_CLOUD_LOCATION=global|STORAGE_BUCKET=${STORAGE_BUCKET}|GEMINI_MODEL=${GEMINI_MODEL}|CORS_ORIGINS=${CORS_ORIGINS}|DAY_TIMEZONE=Asia/Tokyo|SYNC_WINDOW_SECONDS=300|FIREBASE_WEB_API_KEY=${FIREBASE_WEB_API_KEY}|FIREBASE_AUTH_DOMAIN=${FIREBASE_AUTH_DOMAIN}|FIREBASE_APP_ID=${FIREBASE_APP_ID}|FIREBASE_MESSAGING_SENDER_ID=${FIREBASE_MESSAGING_SENDER_ID}|FIREBASE_VAPID_KEY=${FIREBASE_VAPID_KEY}|SCHEDULER_EMAIL=${SCHEDULER_EMAIL}|SCHEDULER_AUDIENCE=${SCHEDULER_AUDIENCE}"

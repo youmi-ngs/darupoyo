@@ -1,0 +1,26 @@
+import { test, expect } from '@playwright/test';
+import { playRhythm, stillCamera, unlockStart, COUNTDOWN_MS } from './rhythm-helper.js';
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); await stillCamera(context); });
+test('retry', async ({ page, context }) => {
+  const logs = []; page.on('console', m => logs.push(m.type() + ' ' + m.text())); page.on('pageerror', e => logs.push('ERR ' + e.message));
+  await context.grantPermissions(['camera']);
+  await page.goto('/');
+  await page.getByLabel('あなたの名前').fill('r'); await page.getByLabel('新しいハウスの名前').fill('r');
+  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('.scene-dot').nth(4).click(); await page.locator('[data-chore="laundry"]').click();
+  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await playRhythm(page, 1);
+  await expect(page.getByText('おしい〜！')).toBeVisible();
+  await page.getByRole('button', { name: 'もう一回' }).click();
+  const start = page.getByRole('button', { name: 'リズムをはじめる' });
+  await start.waitFor({ timeout: 20000 });
+  await page.waitForTimeout(3000);
+  console.log('status:', await page.locator('.capture-status').textContent(), 'disabled:', await start.isDisabled());
+  await page.locator('.capture').dispatchEvent('test-upper-body');
+  console.log('after event disabled:', await start.isDisabled());
+  await start.click();
+  await page.waitForTimeout(1500);
+  console.log('count:', await page.locator('.rhythm-camera .capture-count').textContent().catch(() => 'none'), 'status:', await page.locator('.capture-status').textContent());
+  console.log(logs.filter(l => !l.startsWith('debug')).slice(-15).join('\n'));
+});

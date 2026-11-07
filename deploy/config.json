@@ -10,5 +10,6 @@
   "storageBucket": "darupoyo-8ed91.firebasestorage.app",
   "webPushKey": "BNXh8BsNBvDWB82yBn6_kOrjVFcX1rKga8kqZnCiFO5UIyimTsdMJNkBcM3IYQGV48ZX4qnzEUkHd5JuuiyrIwQ",
   "schedulerServiceAccount": "darupoyo-scheduler",
-  "schedulerAudience": "darupoyo-evening-nudge"
+  "schedulerAudience": "darupoyo-evening-nudge",
+  "weatherSecret": "google-weather-api-key"
 }

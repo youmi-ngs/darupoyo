@@ -1,9 +1,17 @@
 import { confirmMealVoice } from './meal-voice.js';
-import { action, blobOf, check, countdown, openCamera, photoCrop, timing } from './camera.js';
+import { blobOf, check, countdown, openCamera, photoCrop, timing } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
 import { createPoseLandmarker, hasFullBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
 import { createSegmenter, cutout } from './segment.js';
 import { sfx } from './sfx.js';
+
+// #120: upload a reviewed recording and ask the server whether 「いただきます」 is in it.
+async function verifyItadakimasu(blob) {
+  const { houseApi } = await import('./api.js'); // lazy, so this module also loads in unit tests
+  const { id } = await houseApi('/media?kind=voice', blob);
+  const { heard } = await houseApi('/media/' + id + '/itadakimasu', {});
+  return { heard, id };
+}
 export { poseSimilarity, countdown };
 
 function choose(root, options, signal) {
@@ -16,6 +24,39 @@ function choose(root, options, signal) {
     const abort = () => { buttons.forEach(b => b.remove()); reject(new DOMException('中止しました', 'AbortError')); };
     signal.addEventListener('abort', abort, { once: true });
   });
+}
+// #117: take the photo now, or choose one from the photo library. Resolves 'camera' or a File.
+function shootOrPick(root, signal, canShoot) {
+  return new Promise((resolve, reject) => {
+    const row = document.createElement('div'); row.className = 'capture-actions';
+    const done = value => { row.remove(); signal.removeEventListener('abort', abort); resolve(value); };
+    const abort = () => { row.remove(); reject(new DOMException('中止しました', 'AbortError')); };
+    signal.addEventListener('abort', abort, { once: true });
+    if (canShoot) { const shoot = document.createElement('button'); shoot.type = 'button'; shoot.className = 'btn btn-main'; shoot.textContent = 'この写真を撮る'; shoot.onclick = () => done('camera'); row.append(shoot); }
+    const pick = document.createElement('label'); pick.className = 'btn ' + (canShoot ? 'btn-sub' : 'btn-main') + ' capture-library'; pick.textContent = 'ライブラリからえらぶ';
+    const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.hidden = true;
+    input.onchange = () => { if (input.files[0]) done(input.files[0]); };
+    pick.append(input); row.append(pick); root.append(row);
+  });
+}
+// Draws a chosen library photo (EXIF rotation applied by the browser). Photos are cut to the 5:6 frame.
+async function drawPicked(file, canvas, ctx, crop5to6) {
+  if (file.size > 25 * 1024 * 1024) throw new Error('25MB以下の写真を選んでね');
+  const url = URL.createObjectURL(file), image = new Image();
+  try {
+    image.src = url;
+    try { await image.decode(); } catch { throw new Error('この写真は開けませんでした。JPEG・PNGなどの写真を選んでね'); }
+    const w = image.naturalWidth, h = image.naturalHeight;
+    if (crop5to6) {
+      const crop = photoCrop(w, h);
+      canvas.width = Math.max(5, Math.floor(Math.min(1000, crop.width) / 5) * 5); canvas.height = canvas.width * 6 / 5;
+      ctx.drawImage(image, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+    } else {
+      const scale = Math.min(1, 1280 / Math.max(w, h));
+      canvas.width = Math.round(w * scale); canvas.height = Math.round(h * scale);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    }
+  } finally { URL.revokeObjectURL(url); }
 }
 const TIMER_KEY = 'darupoyo-camera-timer', TIMER_CHOICES = [0, 3, 5, 10];
 function timerPicker(root) {
@@ -81,49 +122,61 @@ export async function capture(root, chore, choice, reference, signal) {
       return model;
     });
     landmarkerReady?.catch(() => {}); // the error is rethrown where it is awaited below
-    const stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal);
+    // Without a camera (no permission, none on the device) the photo library still works (#117).
+    let stream = null;
+    try { stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal); }
+    catch (e) { if (e.name === 'AbortError' || signal.aborted) throw e; live.hidden = true; }
     let landmarker, segmenter, segmenterReady, stopPreview = () => {};
     const canvas = document.createElement('canvas'); canvas.hidden = true; canvas.classList.toggle('is-photo-frame', isPhoto); box.append(canvas);
     // Mirror only the preview; retain raw pixels/landmarks for pose scoring and storage.
-    const facing = stream.getVideoTracks()[0]?.getSettings().facingMode;
+    const facing = stream?.getVideoTracks()[0]?.getSettings().facingMode;
     const mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
     video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored);
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const takePhoto = async () => {
-      live.hidden = false; canvas.hidden = true; status.textContent = liveText;
-      if (landmarker) stopPreview = livePreview(video, landmarker, choice, reference, status, resources);
-      const picker = (chore === 'meal' || chore === 'selfie') ? null : timerPicker(box);
-      await action(box, 'この写真を撮る', signal); check(signal);
+      live.hidden = !stream; canvas.hidden = true;
+      status.textContent = stream ? liveText : 'カメラを使えないので、ライブラリから写真をえらんでね';
+      if (landmarker && stream) stopPreview = livePreview(video, landmarker, choice, reference, status, resources);
+      const picker = (chore === 'meal' || chore === 'selfie' || !stream) ? null : timerPicker(box);
+      let how = await shootOrPick(box, signal, !!stream); check(signal);
+      // A photo that cannot be opened: say why and let them choose again.
+      while (how !== 'camera') {
+        try { status.textContent = '写真を読み込んでいます…'; await drawPicked(how, canvas, ctx, isPhoto); check(signal); break; }
+        catch (e) { if (e.name === 'AbortError') throw e; status.textContent = e.message; how = await shootOrPick(box, signal, !!stream); check(signal); }
+      }
       stopPreview();
       const seconds = picker ? picker.seconds() : 0; picker?.remove();
-      if (seconds) {
-        await countdown(seconds, left => { count.hidden = !left; count.textContent = left; if (left) status.textContent = left + '秒後に撮るよ'; }, signal);
-      }
-      if (isPhoto) {
-        const crop = photoCrop(video.videoWidth, video.videoHeight);
-        canvas.width = Math.floor(crop.width / 5) * 5; canvas.height = canvas.width * 6 / 5;
-        ctx.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
-      } else { canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); }
-      sfx.shutter();
+      if (how === 'camera') {
+        if (seconds) {
+          await countdown(seconds, left => { count.hidden = !left; count.textContent = left; if (left) status.textContent = left + '秒後に撮るよ'; }, signal);
+        }
+        if (isPhoto) {
+          const crop = photoCrop(video.videoWidth, video.videoHeight);
+          canvas.width = Math.floor(crop.width / 5) * 5; canvas.height = canvas.width * 6 / 5;
+          ctx.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+        } else { canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); }
+        canvas.classList.toggle('is-mirrored', mirrored);
+        sfx.shutter();
+      } else canvas.classList.remove('is-mirrored'); // a library photo is shown as it is
       live.hidden = true; canvas.hidden = false;
     };
-    const stopCamera = () => { stream.getTracks().forEach(t => t.stop()); live.remove(); };
+    const stopCamera = () => { stream?.getTracks().forEach(t => t.stop()); live.remove(); };
     if (chore === 'meal' || chore === 'selfie') {
       for (;;) {
         await takePhoto();
         status.textContent = '撮れた写真を確認してね。';
-        if (await choose(box, [{ label: 'この写真を使う', value: true }, { label: 'もう1回撮る', value: false, sub: true }], signal)) break;
+        if (await choose(box, [{ label: 'この写真を使う', value: true }, { label: stream ? 'もう1回撮る' : 'えらび直す', value: false, sub: true }], signal)) break;
       }
       stopCamera();
       if (chore === 'selfie') return { blob: await blobOf(canvas, 'image/jpeg'), kind: 'selfie' };
-      const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
       status.hidden = true;
-      const heard = await confirmMealVoice(box, Speech, signal);
+      const heard = await confirmMealVoice(box, signal, verifyItadakimasu);
       if (heard.matched) {
         evidence.method = 'photo_voice';
         evidence.itadakimasu = true;
-        if (heard.voice) evidence.voice = heard.voice;
+        evidence.voice = heard.voice; // for playback before saving
+        evidence.voice_media_id = heard.voiceMediaId; // already uploaded and checked
       }
       return evidence;
     }

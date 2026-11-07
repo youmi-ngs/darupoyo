@@ -55,11 +55,13 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   if (process.env.VITE_API_BASE_URL) expect(apiRequests.some(url => url.startsWith(process.env.VITE_API_BASE_URL + '/houses'))).toBe(true);
 });
 
-test('camera permission failure does not create a completion', async ({ page }) => {
+test('without camera permission a meal photo can come from the library, and nothing is recorded by itself (#117)', async ({ page }) => {
   await page.addInitScript(()=>{ navigator.mediaDevices.getUserMedia = async()=>{throw new DOMException('Denied','NotAllowedError');}; });
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('camera'); await page.getByLabel('新しいハウスの名前').fill('permission'); await page.getByRole('button',{name:'ハウスを作る',exact:true}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button',{name:'ごはんを撮る'}).click();
-  await expect(page.locator('#toast')).toContainText('利用を許可');
+  await expect(page.locator('.capture-status')).toContainText('カメラを使えないので');
+  await expect(page.locator('.capture-library')).toBeVisible();
+  await expect(page.getByRole('button',{name:'この写真を撮る'})).toHaveCount(0);
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
   await expect(page.locator('#post')).toHaveCount(0);
 });

@@ -68,8 +68,8 @@ class Completion(Model):
             raise ValueError("Unsupported method for chore")
         if self.method == "pose" and (not self.media_id or not self.landmarks):
             raise ValueError("Pose requires cutout media and 33 landmarks")
-        if self.method == "photo_voice" and (not self.media_id or not self.itadakimasu):
-            raise ValueError("Meal requires photo and itadakimasu confirmation")
+        if self.method == "photo_voice" and (not self.media_id or not self.itadakimasu or not self.voice_media_id):
+            raise ValueError("Meal requires photo and a checked itadakimasu recording")
         if self.method == "photo" and not self.media_id:
             raise ValueError("Meal requires a photo")
         if self.voice_media_id and self.method != "photo_voice":

@@ -24,7 +24,7 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('#open-menu').click();
-  await page.getByRole('button', { name: '友だちを招待する' }).click();
+  await page.getByRole('button', { name: '招待リンク', exact: true }).click();
   const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
   await page.locator('#sheet-close').click();
 
@@ -44,7 +44,7 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
 
   // The friend clears laundry with the camera rhythm.
-  await friend.locator('[data-go="3"].scene-tab').click();
+  await friend.locator('.scene-dot').nth(4).click();
   await friend.locator('[data-chore="laundry"]').click();
   await friend.getByRole('button', { name: /バサバサでリズム/ }).click();
   await playRhythm(friend, 8);

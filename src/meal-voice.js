@@ -1,19 +1,20 @@
-// Recording and speech recognition must not compete for the microphone on iOS.
-// Let the resident review and confirm the recording instead of running both.
-export function recordMealVoice(box, phrase, signal, { optional = true } = {}) {
+// Recording and speech recognition must not compete for the microphone on iOS, so the
+// resident records and reviews 「いただきます」 here, and the server checks the recording
+// with Gemini (#120). verify(blob) → { heard, id }; only a recording that passed is used.
+export function recordMealVoice(box, phrase, signal, verify) {
   const panel = document.createElement('section'); panel.className = 'meal-voice';
   panel.innerHTML = `<h3 class="meal-voice-heading"></h3><p role="status" aria-live="polite"></p>
     <button type="button" class="btn btn-main meal-voice-toggle">マイクをオンにする</button>
     <audio controls hidden aria-label="録音した声を確認"></audio>
     <button type="button" class="btn btn-main meal-voice-use" hidden>この音声を使う</button>
     <button type="button" class="btn btn-sub meal-voice-next"></button>
-    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>最大10秒録音します。内容を確認して保存した声だけを、ハウスの住人が再生できます。音声認識サービスには送信しません。</p></details>`;
+    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>最大10秒録音します。「この音声を使う」を押すと、「いただきます」と言えているかを Google の Gemini で確認します。記録した声は、ハウスの住人が再生できます。</p></details>`;
   panel.querySelector('h3').textContent = phrase + 'を残そう';
   box.insertBefore(panel, box.querySelector('canvas'));
   const status = panel.querySelector('[role=status]'), toggle = panel.querySelector('.meal-voice-toggle');
   const use = panel.querySelector('.meal-voice-use'), next = panel.querySelector('.meal-voice-next'), audio = panel.querySelector('audio');
-  next.textContent = optional ? '写真だけで進む' : 'やめる';
-  let done = false, stream, recorder, blob, url, timer, stopTimer, attempt = 0;
+  next.textContent = '写真だけで進む';
+  let done = false, checked = null, stream, recorder, blob, url, timer, stopTimer, attempt = 0;
   const release = () => { stream?.getTracks().forEach(t => t.stop()); stream = null; };
   const clearPreview = () => { audio.pause(); audio.removeAttribute('src'); audio.hidden = use.hidden = true; if (url) URL.revokeObjectURL(url); url = null; blob = null; };
   const show = (state, text) => { panel.dataset.state = state; status.textContent = text; };
@@ -26,13 +27,25 @@ export function recordMealVoice(box, phrase, signal, { optional = true } = {}) {
       release(); audio.pause(); if (url) URL.revokeObjectURL(url);
       signal.removeEventListener('abort', abort);
       toggle.onclick = use.onclick = next.onclick = null;
-      if (error) reject(error); else resolve({ matched: Boolean(blob), voice: blob || null });
+      if (error) reject(error); else resolve({ matched: Boolean(checked), voice: checked ? blob : null, voiceMediaId: checked?.id || null });
     };
     const abort = () => settle(new DOMException('中止しました', 'AbortError'));
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) { abort(); return; }
-    next.onclick = () => { blob = null; settle(); };
-    use.onclick = () => settle();
+    next.onclick = () => { checked = null; settle(); };
+    use.onclick = async () => {
+      if (!blob) return;
+      const current = attempt; use.disabled = toggle.disabled = true; show('checking', '「' + phrase + '」が聞こえるか確認しています…');
+      try {
+        const result = await verify(blob);
+        if (done || current !== attempt) return;
+        if (result.heard) { checked = result; settle(); return; }
+        show('error', '「' + phrase + '」が聞き取れなかったよ。もう一度録音してね');
+      } catch (error) {
+        if (done || current !== attempt) return;
+        show('error', '確認できませんでした。もう一度試すか、写真だけで進んでね');
+      } finally { if (!done) { use.disabled = toggle.disabled = false; } }
+    };
     const fail = message => {
       clearTimeout(timer); clearTimeout(stopTimer); release();
       toggle.disabled = false; toggle.textContent = 'もう一度録音する';
@@ -78,4 +91,4 @@ export function recordMealVoice(box, phrase, signal, { optional = true } = {}) {
   });
 }
 
-export const confirmMealVoice = (box, _Speech, signal) => recordMealVoice(box, 'いただきます', signal);
+export const confirmMealVoice = (box, signal, verify) => recordMealVoice(box, 'いただきます', signal, verify);

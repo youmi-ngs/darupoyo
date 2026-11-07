@@ -32,6 +32,7 @@ from .models import (
 )
 from .notify import Notifier
 from . import social
+from . import itadakimasu, weather
 from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image, normalize_voice
 from .store import FirestoreStore, MemoryStore
 
@@ -354,6 +355,16 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         data, content_type = social.history_media(
             app.state.store, app.state.media, uid, str(house_id), member_id, str(source_id), str(media_id))
         return Response(data, media_type=content_type)
+
+    # 「いただきます」 check of an uploaded recording (#120).
+    @app.post("/api/houses/{house_id}/media/{media_id}/itadakimasu")
+    def itadakimasu_check(house_id: UUID, media_id: UUID, uid=Depends(current_user)):
+        return itadakimasu.check(app.state.store, app.state.media, app.state.praise, app.state.settings, uid, str(house_id), str(media_id))
+
+    # Sky for the house scenes from Google's Weather API (#125); signed-in residents only.
+    @app.get("/api/weather")
+    def current_weather(uid=Depends(current_user)):
+        return weather.current()
 
     @app.api_route("/api/{unknown:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
     def unknown_api(unknown: str):
