@@ -28,6 +28,9 @@ test('records on iPhone without competing recognition, previews, and saves only 
   expect(await page.evaluate(() => outcome)).toBe('pending');
   expect(await page.evaluate(() => testMic.getTracks().every(t => t.readyState === 'ended'))).toBe(true);
   await page.getByRole('button', { name: 'この音声を使う' }).click();
+  // #130: the check result is shown before moving on
+  await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'success');
+  await expect(page.locator('.meal-voice [role=status]')).toHaveText('「いただきます」聞こえた！');
   await expect.poll(() => page.evaluate(() => outcome)).toBe(true);
   expect(await page.evaluate(() => voiceSize)).toBeGreaterThan(0);
 });
@@ -79,4 +82,12 @@ test('a recording without 「いただきます」 is not used: record again, th
   await page.getByRole('button', { name: 'この音声を使う' }).click();
   await expect.poll(() => page.evaluate(() => outcome)).toBe(true);
   expect(await page.evaluate(() => [window.checked, window.voiceId])).toEqual([2, 'voice-2']);
+});
+
+test('no spinning ring around the record button while the microphone starts (#131)', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => { navigator.mediaDevices.getUserMedia = () => new Promise(() => {}); }); // permission prompt stays open
+  await page.getByRole('button', { name: 'マイクをオンにする' }).click();
+  await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'starting');
+  expect(await page.locator('.meal-voice-toggle').evaluate(b => getComputedStyle(b, '::after').animationName)).toBe('none');
 });

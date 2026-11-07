@@ -17,14 +17,12 @@
 .meal-voice-privacy p{margin:6px 0}
 .meal-voice[data-state="listening"] .meal-voice-toggle{background:#a32862;color:white;box-shadow:none;animation:voice-pulse 1.2s ease-in-out infinite}
 .meal-voice:is([data-state="starting"],[data-state="processing"]) .meal-voice-toggle{background:#fff0bc;box-shadow:none}
-.meal-voice:is([data-state="starting"],[data-state="processing"]) .meal-voice-toggle::after{content:"";position:absolute;inset:-8px;border:3px solid #3b256022;border-top-color:#3b2560;border-radius:50%;animation:voice-spin 1s linear infinite}
 .meal-voice:is([data-state="starting"],[data-state="listening"],[data-state="processing"]) .voice-mic{display:none}
 .meal-voice:is([data-state="starting"],[data-state="listening"],[data-state="processing"]) .voice-stop{display:block;width:26px;height:26px;border-radius:5px;background:currentColor}
 .meal-voice[data-state="success"] .meal-voice-toggle{background:#d8f5df;box-shadow:none;cursor:default}
 .meal-voice[data-state="success"] .voice-mic{display:none}
 .meal-voice[data-state="success"] .voice-check{display:block}
 @keyframes voice-pulse{50%{box-shadow:0 0 0 12px #a328621a}}
-@keyframes voice-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.meal-voice .meal-voice-toggle,.meal-voice .meal-voice-toggle::after{animation:none!important;transition:none}}
 
 /* Rename yourself and the house from the settings account card. */

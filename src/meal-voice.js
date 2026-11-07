@@ -39,12 +39,13 @@ export function recordMealVoice(box, phrase, signal, verify) {
       try {
         const result = await verify(blob);
         if (done || current !== attempt) return;
-        if (result.heard) { checked = result; settle(); return; }
+        // #130: say that it was heard, then move on.
+        if (result.heard) { checked = result; show('success', '「' + phrase + '」聞こえた！'); setTimeout(() => settle(), 900); return; }
         show('error', '「' + phrase + '」が聞き取れなかったよ。もう一度録音してね');
       } catch (error) {
         if (done || current !== attempt) return;
         show('error', '確認できませんでした。もう一度試すか、写真だけで進んでね');
-      } finally { if (!done) { use.disabled = toggle.disabled = false; } }
+      } finally { if (!done && !checked) { use.disabled = toggle.disabled = false; } }
     };
     const fail = message => {
       clearTimeout(timer); clearTimeout(stopTimer); release();

@@ -47,3 +47,7 @@ dialog.album-calendar::backdrop { background: rgba(59, 37, 96, .45); }
 /* ---------- photo library (#117) ---------- */
 .capture .capture-library { display: flex; align-items: center; justify-content: center; box-sizing: border-box; cursor: pointer; }
 .capture .capture-library:focus-within { outline: 3px solid var(--ink); outline-offset: 2px; }
+
+/* #130: the いただきます check shows its result. */
+.meal-voice[data-state="checking"] [role=status] { color: var(--ink-soft); }
+.meal-voice[data-state="success"] [role=status] { font-weight: 900; font-size: 18px; color: #2F8A4E; }
