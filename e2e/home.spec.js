@@ -30,7 +30,7 @@ test('your gal peeks out of the door and says おかえり every time the app op
   await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('#okaeri')).toHaveClass(/is-out/);
   await expect(page.locator('.okaeri-bubble')).toHaveText('おかえり〜！');
-  await expect(page.locator('.okaeri-gal .gal-face.has-outfit')).toHaveCount(1);
+  await expect(page.locator('.okaeri-gal .resident-character')).toHaveCount(1);
 });
 
 test('rooms: own room first, three doors a page, others dimmed, icons enter rooms', async ({ page }) => {
@@ -49,6 +49,7 @@ test('rooms: own room first, three doors a page, others dimmed, icons enter room
   await page.locator('#hall-icons .hall-icon').last().click();
   await expect(page.locator('#room-view')).toBeVisible();
   await expect(page.locator('.mr-plate b')).toHaveText('ななの部屋');
+  await expect(page.locator('.mr-dark p')).toHaveText('ななはまだ寝てるっぽい…');
   await page.locator('#room-back').click();
   await expect(page.locator('.rooms-page[data-page="1"]')).toBeInViewport({ ratio: .9 });
   await page.locator('.scene-dot').nth(1).click();
@@ -111,4 +112,61 @@ test('the bird on the pole talks in gal slang and the black cat stays only while
     await refresh();
   });
   await expect(page.locator('.trash-cat')).toHaveCSS('opacity', '0');
+});
+
+
+test('furniture touch has no outline; keyboard focus remains visible (#132)', async ({ page }) => {
+  await enter(page);
+  await page.locator('.scene-dot').first().click();
+  const furniture = page.locator('.outside-house');
+  await furniture.tap();
+  await expect(furniture).toHaveCSS('outline-style', 'none');
+  await expect(furniture).toHaveCSS('-webkit-tap-highlight-color', 'rgba(0, 0, 0, 0)');
+  await furniture.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await expect(furniture).toBeFocused();
+  await expect(furniture).toHaveCSS('outline-style', 'solid');
+  await expect(furniture).toHaveCSS('outline-width', '3px');
+});
+
+test('diners sit on the existing chairs, stay centered and fit a six-person house (#135 #141)', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await enter(page);
+  await page.locator('.scene-dot').nth(2).click();
+  await expect.poll(async () => Math.abs((await page.locator('[data-scene=ldk]').boundingBox()).x)).toBeLessThan(1);
+  await page.evaluate(async () => {
+    const { renderActivities } = await import('/src/resident-activities.js');
+    const ids = ['one','two','three','four','five','six'];
+    const gals = ['heisei','reiwa','kuro','hime'];
+    renderActivities({ house: { member_ids: ids, members: Object.fromEntries(ids.map((id,i) => [id, { display_name:id, gal:gals[i%4], theme:'pink' }])) }, state: { activity: Object.fromEntries(ids.map(id => [id, { chore:'meal', at:new Date().toISOString(), phase:'started', gal:'reiwa' }])) } });
+  });
+  // Measure chair alignment without the scene's decorative sway animation.
+  await page.addStyleTag({ content: '.plan, .plan * { animation: none !important; transition: none !important; }' });
+  const seats = page.locator('.meal-seats .resident-avatar');
+  await expect(seats).toHaveCount(6);
+  const layout = await page.locator('.meal-seats').evaluate(group => {
+    const box = group.getBoundingClientRect();
+    return [...group.children].map(figure => {
+      const b=figure.getBoundingClientRect(), head=figure.querySelector('.resident-face').getBoundingClientRect(), body=figure.querySelector('.resident-body').getBoundingClientRect();
+      return { x:(b.x+b.width/2-box.x)/box.width, seatY:(b.y+75-box.y)/box.height, centered:Math.abs(head.x+head.width/2-body.x-body.width/2), left:b.x,right:b.right };
+    });
+  });
+  expect(layout[0].x).toBeCloseTo(25/180, 2);
+  expect(layout[1].x).toBeCloseTo(155/180, 2);
+  expect(layout[0].seatY).toBeCloseTo(70/120, 2);
+  for(const item of layout) { expect(item.centered).toBeLessThan(1); expect(item.left).toBeGreaterThanOrEqual(0); expect(item.right).toBeLessThanOrEqual(390); }
+});
+
+test('outside house is complete artwork clipped at the edge; balcony moon stays above the pole (#139 #137)', async ({ page }) => {
+  await page.setViewportSize({ width:390,height:667 });
+  await enter(page); await page.locator('.scene-dot').first().click();
+  await expect.poll(async () => Math.abs((await page.locator('[data-scene=outside]').boundingBox()).x)).toBeLessThan(1);
+  const outside=page.locator('.outside-house');
+  expect(await outside.locator('use').getAttribute('href')).toBe('/furniture/outside-house.svg#art');
+  const bounds=await outside.boundingBox(); expect(bounds.x).toBeGreaterThan(0); expect(bounds.x+bounds.width).toBeGreaterThan(390);
+  await page.locator('.scene-dot').nth(4).click();
+  await page.evaluate(()=>document.body.dataset.daylight='night');
+  await expect.poll(async () => Math.abs((await page.locator('[data-scene=balcony]').boundingBox()).x)).toBeLessThan(1);
+  const moon=await page.locator('.sv-balcony .sv-sun').boundingBox(), pole=await page.locator('.balcony-pole').boundingBox();
+  expect(moon.y+moon.height).toBeLessThan(pole.y+16);
 });

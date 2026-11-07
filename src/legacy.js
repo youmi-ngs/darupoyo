@@ -13,7 +13,7 @@ import { setAppIcon } from './app-icon.js';
 import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { setupBoardView } from './board-view.js';
 import { THEMES, residentThemes } from './themes.js';
-import { galIcon as dressedGalIcon, outfitOf } from './gal-figure.js';
+import { galCharacter, galIcon as dressedGalIcon, outfitOf } from './gal-figure.js';
 import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
 import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
@@ -318,7 +318,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     renderPaint();
     box.querySelector('.mr-plate b').textContent = (nameOf(who) + (who === ME ? '（自分）' : '')) + 'の部屋';
     box.querySelector('.mr-plate span').textContent = lit ? '電気ついてる・今日' + mine.length + '個クリア' : 'まだ真っ暗';
-    box.querySelector('.mr-dark p').textContent = 'まだ真っ暗…家事を1つでもやると電気がつくよ';
+    box.querySelector('.mr-dark p').textContent = who === ME ? 'まだ真っ暗…家事を1つでもやると電気がつくよ' : nameOf(who) + 'はまだ寝てるっぽい…';
     box.querySelector('.mr-album').addEventListener('click', () => openLog(who));
     if (window.__tapMark) window.__tapMark(box.querySelector('.mr-album'));
     const fr = box.querySelector('.mr-frames');
@@ -662,7 +662,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   let greeted = false;
   function greet() {
     const box = $('okaeri'), gal = GALS[galPref] ? galPref : pickGal();
-    box.innerHTML = '<span class="okaeri-peek"><span class="okaeri-gal">' + dressedGalIcon(gal, themeOf(ME)) + '</span></span><p class="okaeri-bubble">おかえり〜！</p>';
+    box.innerHTML = '<span class="okaeri-peek"><span class="okaeri-gal">' + galCharacter(gal, themeOf(ME)) + '</span></span><p class="okaeri-bubble">おかえり〜！</p>';
     box.classList.remove('is-out'); void box.offsetWidth; box.classList.add('is-out');
     setTimeout(() => galVoice(gal, 'おかえり〜！'), 450);
     setTimeout(() => box.classList.remove('is-out'), 4200);

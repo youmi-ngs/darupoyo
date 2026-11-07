@@ -15,7 +15,7 @@ export async function unlockStart(page) {
 export async function playRhythm(page, hits) {
   const start = await unlockStart(page);
   await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
   await start.click();
   await page.clock.runFor(COUNTDOWN_MS); // 3・2・1 (#107)
   for (let k = 0; k < TOTAL_BEATS; k++) {
