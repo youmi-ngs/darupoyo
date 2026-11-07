@@ -657,12 +657,15 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     note.hidden = !PUSH_NOTES[state]; note.textContent = PUSH_NOTES[state] || '';
   }
   $('push-toggle').addEventListener('click', async () => {
-    const button = $('push-toggle'); button.disabled = true;
+    const button = $('push-toggle'), note = $('push-note'); button.disabled = true;
+    button.textContent = '設定中…'; note.hidden = true;
+    let error;
     try {
       if (pushOn()) { await disablePush(); toast('通知をオフにしたよ'); }
       else { await enablePush(galPref); toast('通知をオンにしたよ'); }
-    } catch (e) { toast(e.message); }
+    } catch (e) { error = e.message; toast(error); }
     await renderPush();
+    if (error) { note.hidden = false; note.textContent = error; }
   });
   listenInApp((body) => { sfx.ding(); toast(body); });
   // ---------- sound effects (#8 #17) ----------

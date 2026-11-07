@@ -41,8 +41,10 @@ test('preset pose shows live guidance and rejects a frame without a person',asyn
   await context.grantPermissions(['camera']);
   await page.goto('/');await page.getByLabel('あなたの名前').fill('pose');await page.getByLabel('新しいハウスの名前').fill('pose flow');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="trash"]').click();await page.getByRole('button',{name:/サンタのポーズ/}).click();
+  await expect(page.locator('.capture video')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
   await expect(page.locator('.capture-status')).toHaveText('全身が入るように、少し離れてね',{timeout:30000});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
+  await expect(page.locator('.capture canvas')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
   await expect(page.locator('.capture-status')).toContainText('全身を見つけられませんでした');
   await expect(page.getByRole('button',{name:'もう1回撮る'})).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(0);

@@ -35,3 +35,16 @@ test('body edge returns outline points of the person and nothing for an empty fr
   }
   assert.deepEqual(bodyEdge(new Float32Array(W * H), W, H), []);
 });
+
+test('motion sparkles follow the moving area in mirrored camera coordinates', async () => {
+  const { motionEdge } = await import('../src/rhythm.js');
+  const width = 64, height = 48, before = new Uint8ClampedArray(width * height * 4), after = before.slice();
+  for (let y = 8; y < 30; y++) for (let x = 4; x < 20; x++) {
+    const i = (y * width + x) * 4;
+    after[i] = after[i + 1] = after[i + 2] = 255;
+  }
+  const points = motionEdge(before, after, width, height);
+  assert.equal(points.length, 14);
+  assert.ok(points.every(p => p.x > .68 && p.x < .94 && p.y > .16 && p.y < .63));
+  assert.deepEqual(motionEdge(before, before, width, height), []);
+});

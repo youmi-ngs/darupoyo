@@ -84,6 +84,7 @@ test('stop, timeout, photo fallback and dismissal release recognition and ignore
   expect(await page.evaluate(() => voiceSize)).toBe(0);
   await setup(page);
   await page.locator('.meal-voice-toggle').click();
+  await emit(page, 'onaudiostart');
   await page.evaluate(() => controller.abort());
   await expect.poll(() => page.evaluate(() => ({ outcome, stopped: attempts[0].aborted }))).toEqual({ outcome: 'AbortError', stopped: true });
 });
@@ -94,6 +95,7 @@ test('dismissing a pending microphone request settles and releases a late stream
     navigator.mediaDevices.getUserMedia = () => new Promise(resolve => { window.grantMic = resolve; });
   });
   await page.locator('.meal-voice-toggle').click();
+  await emit(page, 'onaudiostart');
   await page.evaluate(() => controller.abort());
   await expect.poll(() => page.evaluate(() => outcome)).toBe('AbortError');
   await page.evaluate(() => {
@@ -101,4 +103,21 @@ test('dismissing a pending microphone request settles and releases a late stream
     grantMic({getTracks: () => [{stop: () => { window.lateMicStopped = true; }}]});
   });
   await expect.poll(() => page.evaluate(() => lateMicStopped)).toBe(true);
+});
+
+
+test('iPhone recognition never competes with a recording stream (#80)', async ({ page }) => {
+  await setup(page);
+  await page.evaluate(() => {
+    Object.defineProperty(navigator, 'userAgent', { value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)', configurable: true });
+    window.micRequests = 0;
+    navigator.mediaDevices.getUserMedia = async () => { window.micRequests++; throw new Error('competing microphone'); };
+  });
+  await page.locator('.meal-voice-toggle').click();
+  await emit(page, 'onaudiostart');
+  await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'listening');
+  await emit(page, 'onresult', { results: [[{ transcript: 'いただきます' }]] });
+  await page.getByRole('button', { name: '次へ' }).click();
+  await expect.poll(() => page.evaluate(() => outcome)).toBe(true);
+  expect(await page.evaluate(() => ({ micRequests, voiceSize }))).toEqual({ micRequests: 0, voiceSize: 0 });
 });

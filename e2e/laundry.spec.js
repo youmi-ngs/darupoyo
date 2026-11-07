@@ -19,6 +19,8 @@ test('laundry is one camera rhythm; no tap or mic mode (#35)', async ({ page }) 
 
 test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async ({ page, context }) => {
   await context.grantPermissions(['camera']);
+  const modelRequests = [];
+  page.on('request', request => { if (request.url().includes('/models/')) modelRequests.push(request.url()); });
   await openLaundry(page, 'six');
   await page.getByRole('button', { name: /バサバサでリズム/ }).click();
   await expect(page.locator('.rhythm-camera video')).toBeVisible();
@@ -30,6 +32,12 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   await page.clock.install(); await page.clock.pauseAt(new Date());
   await start.click();
   await page.clock.runFor(800);
+  const alignment = await page.evaluate(() => {
+    const note = document.querySelector('.rhythm-note').getBoundingClientRect();
+    const target = document.querySelector('.rhythm-target').getBoundingClientRect();
+    return Math.abs(note.x + note.width / 2 - target.x - target.width / 2);
+  });
+  expect(alignment).toBeLessThan(3);
   await page.locator('.capture').dispatchEvent('test-slap');
   await expect(page.locator('.capture-status')).toHaveText('1 / 8 ヒット（6回でクリア）');
   await expect(page.locator('.rhythm-camera .fx-spark').first()).toBeAttached();
@@ -38,6 +46,7 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   await expect(page.locator('#post')).toBeVisible();
   await expect(page.locator('.result-main')).toHaveText('6 / 8 ヒット');
   expect(await page.evaluate(() => window.testVideo.getTracks().every((t) => t.readyState === 'ended'))).toBe(true);
+  expect(modelRequests).toEqual([]);
 });
 
 test('fewer than 6 hits shows a gal cheer and a retry, and records nothing (#34)', async ({ page }) => {

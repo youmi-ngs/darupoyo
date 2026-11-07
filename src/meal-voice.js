@@ -1,5 +1,6 @@
 // 「いただきます」を聞いている間、声も録音しておく（#9）。言えたときだけ残して、アルバムで再生できる。
-// 録音と音声認識を同時に使えない端末もあるので、2回うまくいかなかったら録音なしで聞く。
+// iOSでは録音用ストリームが音声認識を中断するため、聞き取りだけを使う。
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 function startRecording() {
   if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) return null;
   const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported?.(t));
@@ -51,7 +52,7 @@ export function confirmMealVoice(box, Speech, signal) {
       <strong id="meal-voice-title"></strong><p></p>
     </div>
     <button type="button" class="meal-voice-next">写真だけで進む</button>
-    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>音声はブラウザの音声認識サービスに送信される場合があります。「いただきます」が聞こえたときだけ、その声をハウスのアルバムに残して、住人が再生できます。</p></details>`;
+    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>音声はブラウザの音声認識サービスに送信される場合があります。録音に対応した端末では、「いただきます」が聞こえたときだけ、その声をハウスのアルバムに残して、住人が再生できます。</p></details>`;
   box.insertBefore(panel, box.querySelector('canvas'));
   const title = panel.querySelector('strong'), hint = panel.querySelector('.meal-voice-status p');
   const toggle = panel.querySelector('.meal-voice-toggle'), next = panel.querySelector('.meal-voice-next');
@@ -71,7 +72,7 @@ export function confirmMealVoice(box, Speech, signal) {
     const previous = active;
     active = null;
     if (previous) {
-      previous.onaudiostart = previous.onspeechstart = previous.onaudioend = previous.onspeechend = previous.onresult = previous.onnomatch = previous.onerror = previous.onend = null;
+      previous.onstart = previous.onaudiostart = previous.onspeechstart = previous.onaudioend = previous.onspeechend = previous.onresult = previous.onnomatch = previous.onerror = previous.onend = null;
       try { previous.abort(); } catch { /* Already stopped. */ }
     }
   }
@@ -79,6 +80,9 @@ export function confirmMealVoice(box, Speech, signal) {
     stop();
     if (stopRecording) { const end = stopRecording; stopRecording = null; voice = end(matched); if (!matched) misses++; }
     show(state, heading, detail);
+    // Do not reopen the microphone while the previous recorder is releasing it.
+    toggle.disabled = true;
+    void voice.finally(() => { if (!done) toggle.disabled = matched; });
     if (matched) next.focus();
   }
   show('idle', 'いただきます、しよう', 'マイクをタップ');
@@ -110,7 +114,11 @@ export function confirmMealVoice(box, Speech, signal) {
         speech.interimResults = false;
         show('starting', '準備中…', 'マイクの許可が出たら「許可」');
         const current = fn => (...args) => { if (!done && active === speech) fn(...args); };
-        speech.onaudiostart = current(() => show('listening', '「いただきます」と言ってね', '聞いてるよ'));
+        speech.onstart = current(() => show('starting', '準備中…', 'もうすぐ聞き取るよ'));
+        speech.onaudiostart = current(() => {
+          show('listening', '「いただきます」と言ってね', '聞いてるよ');
+          if (!isIOS() && misses < 2 && !stopRecording) stopRecording = startRecording();
+        });
         speech.onspeechstart = current(() => show('listening', 'うん、聞いてるよ', ''));
         const processing = current(() => show('processing', '確認中…', 'もう話さなくてOK'));
         speech.onspeechend = processing;
@@ -132,7 +140,6 @@ export function confirmMealVoice(box, Speech, signal) {
         });
         timer = setTimeout(current(() => finish('error', 'もう一回、言ってみて', 'マイクをタップで再開')), 15000);
         speech.start();
-        if (misses < 2) stopRecording = startRecording();
       } catch {
         finish('error', 'マイクが使えないみたい', 'ブラウザのマイク設定を確認してね');
       }

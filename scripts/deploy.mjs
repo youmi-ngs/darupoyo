@@ -34,7 +34,7 @@ try {
     SERVICE_ACCOUNT: `${config.runtimeServiceAccount}@${project}.iam.gserviceaccount.com`,
     STORAGE_BUCKET: bucket,
     CORS_ORIGINS: `https://${site}.web.app,https://${site}.firebaseapp.com`,
-    FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId,
+    FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId, FIREBASE_MESSAGING_SENDER_ID: web.messagingSenderId,
     PRAISE_BACKEND: config.praiseBackend, GEMINI_MODEL: config.geminiModel || '',
     FIREBASE_VAPID_KEY: config.webPushKey || '',
     SCHEDULER_EMAIL: config.schedulerServiceAccount ? `${config.schedulerServiceAccount}@${project}.iam.gserviceaccount.com` : '',
