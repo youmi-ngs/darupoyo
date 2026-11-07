@@ -1,6 +1,7 @@
 // In-browser stand-in for the Backend API (backend/docs/api.md), used only in development
 // when no Backend answers. Same paths and response shapes; data stays in this browser.
 // Tabs of the same browser share it through localStorage, so two tabs can play two users.
+import { socialRoute, scrubSocial } from './mock-social.js';
 const KEY = 'darupoyo-mock';
 const LABELS = { laundry: '洗濯', meal: 'ごはん', dryer: 'ドライヤー', garbage: 'ゴミ捨て' };
 const REWARDS = { laundry: 'いい匂いの服', meal: 'ツヤ肌', dryer: '美髪', garbage: 'スッキリ玄関' };
@@ -54,6 +55,7 @@ export async function mockFetch(url, init = {}) {
       Object.values(state.latest).forEach(v => delete v[uid]);
       state.recent = state.recent.filter(p => p.user_id !== uid).map(p => ({...p, sync_with: p.sync_with.filter(m => m !== uid)}));
     }
+    scrubSocial(db, uid);
     for (const [key, id] of Object.entries(db.requests)) if (key.startsWith(uid + ':') || removedPosts.has(id)) delete db.requests[key];
     for (const [key, invite] of Object.entries(db.invites)) if (invite.created_by === uid || removedHouses.has(invite.house_id)) delete db.invites[key];
     save(db); return new Response(null, {status: 204});
@@ -83,6 +85,14 @@ export async function mockFetch(url, init = {}) {
   const day = today(), dayKey = houseId + '/' + day;
   const state = db.days[dayKey] || newDay(day);
   const posts = Object.values(db.posts).filter(p => p.house_id === houseId);
+  const readMedia = async id => {
+    if (media.has(id)) return new Response(media.get(id));
+    let data = null; try { data = localStorage.getItem(KEY + '-media-' + id); } catch {}
+    return data ? fetch(data) : fail(404, 'Image not found');
+  };
+  const dropMedia = id => { media.delete(id); try { localStorage.removeItem(KEY + '-media-' + id); } catch {} delete db.media[id]; };
+  const social = socialRoute({ db, uid, houseId, house, rest, method, body, save, readMedia, dropMedia });
+  if (social) return social;
 
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
   if (rest === '/invites') {

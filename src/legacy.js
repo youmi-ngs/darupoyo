@@ -6,6 +6,10 @@ import { recordMealVoice } from './meal-voice.js';
 import { renderActivities } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
 import { sfx, galVoice, soundOn, setSound } from './sfx.js';
+import { timelineEntries, renderTimeline as drawTimeline } from './timeline.js';
+import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
+import { otherHouseRecords, forgetHistory } from './history.js';
+import { openCalendar } from './album-calendar.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
   const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -13,6 +17,9 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   const nameOf = uid => dashboard?.house.members[uid]?.display_name || '住人';
   const toApi = id => id === 'trash' ? 'garbage' : id;
   const fromApi = id => id === 'garbage' ? 'trash' : id;
+  const convertPost = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:dashboard?.timezone || 'Asia/Tokyo', hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise?.text, galLine:p.praise?.text });
+  // A resident's round mark with their profile photo (#96), or their initial.
+  const dotOf = uid => residentDot(dashboard?.house.members[uid], nameOf(uid), RESIDENTS.find(x => x.who === uid)?.color || 'pink');
   let savingGoals = Promise.resolve(), pendingGoals = 0;
   function saveGoals() {
     const chores = state.board.map(b => toApi(b.id)); pendingGoals++;
@@ -42,21 +49,44 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
 
   const dayName = (off) => off === dayOffset ? '今日' : dayLabel(off);
+  const dayIso = off => { const d = new Date((dashboard?.state.day || new Date().toISOString().slice(0,10)) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+off); return d.toISOString().slice(0,10); };
+  const offOf = day => Math.round((Date.parse(day) - Date.parse(dashboard.state.day)) / 86400000);
+  let logWho = null, logDays = [], logCounts = [];
+  // Album pages: this house, plus the resident's records from other houses when allowed (#99).
+  function albumDays(foreign) {
+    const days = [{ off: dayOffset, posts: state.posts }, ...state.history].map(d => ({ off: d.off, posts: [...d.posts] }));
+    foreign.forEach(p => { const off = offOf(p.day); let d = days.find(x => x.off === off); if (!d) days.push(d = { off, posts: [] }); d.posts.push(p); });
+    return days.sort((a, b) => b.off - a.off);
+  }
   function openLog(who) {
+    logWho = who;
+    drawLog(who, []);
+    $('log-modal').showModal();
+    requestAnimationFrame(() => { $('log-list').scrollLeft = 0; });
+    const allowed = who === ME || !!dashboard.house.members[who]?.share_history;
+    otherHouseRecords(client.house, who, allowed).then(raw => {
+      if (logWho !== who || !$('log-modal').open || !raw.length) return;
+      const list = $('log-list'), page = Math.round(list.scrollLeft / list.clientWidth);
+      drawLog(who, raw.map(convertPost));
+      requestAnimationFrame(() => { list.style.scrollBehavior = 'auto'; list.scrollLeft = page * list.clientWidth; list.style.scrollBehavior = ''; });
+    });
+  }
+  function drawLog(who, foreign) {
     $('log-title').textContent = (nameOf(who)) + 'のアルバム';
     const list = $('log-list'); list.replaceChildren();
-    const days = [{ off: dayOffset, posts: state.posts }, ...state.history];
+    const days = albumDays(foreign);
     const all = [];
     const SLOT = ['laundry', 'meal', 'trash'];
     days.forEach((d) => d.posts.filter((p) => p.who === who && p.kind !== 'sound').sort((a, b) => SLOT.indexOf(a.task) - SLOT.indexOf(b.task)).forEach((p) => all.push({ p, day: dayName(d.off), off: d.off })));
+    logDays = days; logCounts = days.map(d => all.filter(x => x.off === d.off).length);
     days.forEach((d) => {
       const mine = all.filter((x) => x.off === d.off);
-      const sec = document.createElement('section'); sec.className = 'log-day' + (mine.length ? '' : ' is-empty');
+      const sec = document.createElement('section'); sec.className = 'log-day' + (mine.length ? '' : ' is-empty'); sec.dataset.day = dayIso(d.off);
       const h = document.createElement('h3'); h.textContent = (d.off === dayOffset ? '今日 ' : '') + dayLabel(d.off);
       const n = document.createElement('span'); n.className = 'log-n'; n.textContent = mine.length ? mine.length + '' : '−'; h.append(n);
       sec.append(h);
       const g = document.createElement('div'); g.className = 'log-grid';
-      mine.forEach((x, k) => { const f = document.createElement('button'); f.type = 'button'; f.className = 'fp'; f.style.setProperty('--r', ((k % 3) - 1) * 3 + 'deg'); f.append(shotEl(x.p)); f.setAttribute('aria-label', dayLabel(d.off) + ' ' + x.p.time + 'の' + TASKS[x.p.task].label); f.addEventListener('click', () => openPhotos(all, all.indexOf(x))); g.append(f); });
+      mine.forEach((x, k) => { const f = document.createElement('button'); f.type = 'button'; f.className = 'fp' + (x.p.foreign ? ' is-foreign' : ''); f.style.setProperty('--r', ((k % 3) - 1) * 3 + 'deg'); f.append(shotEl(x.p)); if (x.p.foreign) { const tag = document.createElement('span'); tag.className = 'foreign-tag'; tag.textContent = '別ハウス'; f.append(tag); } f.setAttribute('aria-label', dayLabel(d.off) + ' ' + x.p.time + 'の' + TASKS[x.p.task].label + (x.p.foreign ? '（別のハウス）' : '')); f.addEventListener('click', () => openPhotos(all, all.indexOf(x))); g.append(f); });
       for (let q = mine.length; q < 6; q++) { const e = document.createElement('span'); e.className = 'log-empty'; g.append(e); }
       g.classList.add(mine.length > 6 ? 'n-many' : 'n-more');
       sec.append(g);
@@ -67,9 +97,17 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     const mark = () => { const k = Math.round(list.scrollLeft / list.clientWidth); [...dots.children].forEach((d, q) => d.classList.toggle('on', q === k)); };
     list.onscroll = () => { clearTimeout(list._t); list._t = setTimeout(mark, 50); };
     $('log-total').textContent = all.length + '枚';
-    $('log-modal').showModal();
-    requestAnimationFrame(() => { list.scrollLeft = 0; mark(); });
+    requestAnimationFrame(mark);
   }
+  // Calendar button (#91): jump to a day's page.
+  const calButton = document.createElement('button'); calButton.type = 'button'; calButton.className = 'btn log-cal'; calButton.id = 'log-calendar'; calButton.textContent = '📅 カレンダー';
+  $('log-total').after(calButton);
+  calButton.addEventListener('click', () => {
+    const list = $('log-list'), page = Math.round(list.scrollLeft / list.clientWidth);
+    openCalendar({ today: dayIso(dayOffset), selected: logDays[page] ? dayIso(logDays[page].off) : dayIso(dayOffset),
+      days: logDays.map((d, i) => ({ day: dayIso(d.off), count: logCounts[i] })),
+      onPick: day => { const i = logDays.findIndex(d => dayIso(d.off) === day); if (i >= 0) list.scrollTo({ left: i * list.clientWidth, behavior: 'smooth' }); } });
+  });
   $('log-close').addEventListener('click', () => $('log-modal').close());
   $('log-modal').addEventListener('click', (e) => { if (e.target === $('log-modal')) $('log-modal').close(); });
 
@@ -85,10 +123,15 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sl.querySelector('.gal-slot').outerHTML = galIcon(pg);
       sl.querySelector('.gal-text').textContent = postLine(p);
       sl.querySelector('.tl-get').textContent = REWARD[p.task].item;
-      if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => voiceOf(p.voice_media_id)));
-      if (p.finished_voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => voiceOf(p.finished_voice_media_id), 'ごちそうさま'));
+      const sound = id => p.foreign ? p.loadMedia(id) : voiceOf(id);
+      if (p.foreign) sl.querySelector('.pm-meta').textContent += '（別のハウスでの記録）';
+      if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => sound(p.voice_media_id)));
+      if (p.finished_voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => sound(p.finished_voice_media_id), 'ごちそうさま'));
+      if (!p.foreign) {
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
       ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
+      sl.append(commentsBlock(p, { me: ME, nameOf, dotOf, toast }));
+      }
       track.append(sl);
     });
     const dots = $('pm-dots'); dots.replaceChildren(); dots.hidden = items.length < 2;
@@ -158,6 +201,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       b.addEventListener('click', () => showRoom(r.who));
       slot.replaceChildren(b);
       const col = document.createElement('div');
+      const face = dotOf(r.who); face.classList.add('chip-face'); col.append(face);
       [...new Set(mine.map((p) => p.task))].forEach((t) => { const c = document.createElement('span'); c.className = 'chore m-' + TASKS[t].color; c.textContent = TASKS[t].label; col.append(c); });
       chipsBox.append(col);
     });
@@ -290,20 +334,11 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
 
   let newestPost = null;
   function renderTimeline() {
-    const ol = $('timeline'); ol.replaceChildren();
-    const items = [...state.posts].sort((a, b) => toMin(b.time) - toMin(a.time));
-    if (!items.length) { const li = document.createElement('li'); li.className = 'tl-empty'; li.textContent = 'まだ静か。だれが一番乗りかな'; ol.append(li); return; }
-    items.forEach((p) => {
-      const r = RESIDENTS.find((x) => x.who === p.who);
-      const li = document.createElement('li'); li.className = 'tl-item' + (p === newestPost ? ' is-new' : '');
-      li.innerHTML = '<span class="tl-time"></span><span class="who-dot" aria-hidden="true"></span><span class="tl-text"><b></b> <span class="tl-verb"></span><span class="tl-get"></span>をゲット</span>';
-      li.querySelector('.tl-time').textContent = p.time;
-      const d = li.querySelector('.who-dot'); d.classList.add('m-' + r.color); d.textContent = nameOf(p.who).slice(0,1);
-      li.querySelector('b').textContent = nameOf(p.who);
-      li.querySelector('.tl-verb').textContent = REWARD[p.task].verb + '、';
-      li.querySelector('.tl-get').textContent = REWARD[p.task].item;
-      ol.append(li);
-    });
+    const entries = timelineEntries({ dashboard, posts: state.posts }, REWARD);
+    const view = { nameOf, dotOf, timeZone: dashboard?.timezone || 'Asia/Tokyo', newestId: newestPost?.id };
+    drawTimeline($('timeline'), entries, view);
+    drawTimeline($('entry-timeline'), entries, view);
+    $('entry-count').textContent = $('count').textContent;
     newestPost = null;
   }
 
@@ -377,7 +412,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('room-back').addEventListener('click', () => { closePaint(); window.__toHall = true; showHouse(); });
   $('open-fridge').addEventListener('click', showFridge);
   $('back').addEventListener('click', () => { showHouse(); $('open-fridge').focus(); });
-  $('nav-home').addEventListener('click', () => { if (!$('house-view').hidden && window.__goLdk) { window.__goLdk(); return; } window.__toScene = 1; showHouse(); });
+  $('nav-home').addEventListener('click', () => { if (!$('house-view').hidden && window.__goLdk) { window.__goLdk(); return; } window.__toScene = 0; showHouse(); });
   $('nav-room').addEventListener('click', () => showRoom(ME));
 
   function openRoom(who) {
@@ -601,7 +636,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     doors.style.gridTemplateColumns = 'repeat('+RESIDENTS.length+',minmax(0,1fr))';
     $('door-chips').style.gridTemplateColumns = doors.style.gridTemplateColumns;
     document.querySelectorAll('[data-who-map]').forEach((el,i) => { const r = RESIDENTS[i]; el.hidden = !r; if (r) { el.dataset.whoMap = r.who; el.textContent = nameOf(r.who) + 'のへや'; } });
-    const convert = p => ({ ...p, who:p.user_id, task:fromApi(p.chore), kind:p.method.startsWith('photo')?'photo':p.method, pose:0, time: new Intl.DateTimeFormat('ja-JP', { timeZone:data.timezone, hour:'2-digit', minute:'2-digit' }).format(new Date(p.created_at)), comment:p.praise.text, galLine:p.praise.text });
+    const convert = convertPost;
     state.posts = data.posts.filter(p=>p.day===data.state.day).map(convert);
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
     state.doneToday = {};
@@ -611,7 +646,9 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
     document.querySelector('.account-row b').textContent = nameOf(ME);
     document.querySelector('.account-row small').textContent = data.house.name + '・' + RESIDENTS.length + '人';
-    document.querySelector('.account-icon').textContent = nameOf(ME).slice(0,1);
+    const icon = document.querySelector('.account-icon'), meEntry = data.house.members[ME];
+    if (meEntry?.avatar) { const img = document.createElement('img'); img.src = meEntry.avatar; img.alt = ''; icon.replaceChildren(img); } else icon.textContent = nameOf(ME).slice(0,1);
+    forgetHistory(); renderSocial();
     renderAccountForm();
     renderAll();
     renderActivities(data);
@@ -671,6 +708,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     catch (e) { deleteDialog.querySelector('[role=status]').textContent = '削除を完了できませんでした。再試行できます。' + e.message; }
     finally { deleting = false; confirmDelete.disabled = cancelDelete.disabled = acknowledged.disabled = false; }
   };
+  const renderSocial = setupSocialSettings(() => dashboard?.house.members[ME], (m) => toast(m));
   start(receive, e => toast(e.message)).catch(e => { const notice = document.createElement('p'); notice.className = 'connection-status'; notice.textContent = e.message + '。Backend起動後に再読み込みしてください。'; document.body.append(notice); });
 
   document.body.classList.add('no-scroll');
@@ -679,7 +717,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   startAmbience();
   setupMoments();
   const plan = $('plan'), scenes = [...plan.querySelectorAll('.scene')], tabs = [...document.querySelectorAll('.scene-tab')];
-  let sceneIdx = 1;
+  let sceneIdx = 0;
   function goScene(i, instant) {
     sceneIdx = Math.max(0, Math.min(scenes.length - 1, i));
     plan.scrollTo({ left: sceneIdx * plan.clientWidth, behavior: instant ? 'auto' : 'smooth' });
@@ -695,11 +733,12 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('walk-left').addEventListener('click', () => goScene(sceneIdx - 1));
   $('walk-right').addEventListener('click', () => goScene(sceneIdx + 1));
   tabs.forEach((t) => t.addEventListener('click', () => goScene(Number(t.dataset.go))));
+  $('entry-board-more').addEventListener('click', () => goScene(scenes.findIndex(sc => sc.dataset.scene === 'board')));
   document.addEventListener('keydown', (e) => { if ($('house-view').hidden || document.querySelector('dialog[open]')) return; if (e.key === 'ArrowLeft') goScene(sceneIdx - 1); if (e.key === 'ArrowRight') goScene(sceneIdx + 1); });
   window.addEventListener('resize', () => goScene(sceneIdx, true));
   new MutationObserver(markScene).observe(plan, { subtree: true, attributes: true, attributeFilter: ['class'] });
   const settings = $('settings');
-  $('open-settings').addEventListener('click', () => { renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
+  $('open-settings').addEventListener('click', () => { renderSocial(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
   // ---------- phone notifications (#58) ----------
   const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
   async function renderPush() {
@@ -736,6 +775,6 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     $('howto-page').showModal();
   });
   window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = 4; window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
-  window.__goLdk = () => goScene(1);
-  requestAnimationFrame(() => goScene(1, true));
+  window.__goLdk = () => goScene(0);
+  requestAnimationFrame(() => goScene(0, true));
 })();

@@ -135,3 +135,17 @@ class Moment(Model):
     request_id: UUID
     media_id: UUID
     caption: str = Field(default="", max_length=140)
+
+
+class Comment(Model):
+    # Generated once by the client; becomes the comment id, so a retry never duplicates.
+    request_id: UUID
+    text: str = Field(min_length=1, max_length=200, pattern=r"\S")
+
+
+class Avatar(Model):
+    media_id: UUID
+
+
+class HistorySharing(Model):
+    enabled: bool
