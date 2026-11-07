@@ -9,6 +9,20 @@ from . import gals
 LABELS = {"laundry": "洗濯", "meal": "ごはん", "dryer": "ドライヤー", "garbage": "ゴミ捨て"}
 REWARDS = {"laundry": "いい匂いの服", "meal": "ツヤ肌", "dryer": "美髪", "garbage": "スッキリ玄関"}
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
+# A few seconds of "いただきます" (Opus/AAC) is far below this.
+MAX_VOICE_BYTES = 512 * 1024
+
+
+def normalize_voice(raw: bytes):
+    """Accept a short browser recording (WebM, Ogg or MP4 audio) and name its type."""
+    if 200 <= len(raw) <= MAX_VOICE_BYTES:
+        if raw[:4] == b"\x1a\x45\xdf\xa3":
+            return raw, "audio/webm"
+        if raw[:4] == b"OggS":
+            return raw, "audio/ogg"
+        if raw[4:8] == b"ftyp":
+            return raw, "audio/mp4"
+    raise HTTPException(422, "Invalid voice recording")
 
 
 def normalize_image(raw: bytes, kind: str):

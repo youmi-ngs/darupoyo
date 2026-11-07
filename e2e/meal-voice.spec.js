@@ -16,7 +16,7 @@ async function setup(page) {
     }
     const { confirmMealVoice } = await import('/src/meal-voice.js');
     window.outcome = 'pending';
-    confirmMealVoice(box, Speech, controller.signal).then(value => window.outcome = value, error => window.outcome = error.name);
+    confirmMealVoice(box, Speech, controller.signal).then(value => { window.voiceSize = value.voice?.size || 0; window.outcome = value.matched; }, error => window.outcome = error.name);
   });
 }
 async function emit(page, name, data) {
@@ -38,7 +38,9 @@ test('shows readiness, listening, processing and persistent success before conti
   await expect(page.getByText('聞こえた！')).toBeVisible();
   expect(await page.evaluate(() => ({ outcome, stopped: attempts[0].aborted }))).toEqual({ outcome: 'pending', stopped: true });
   await page.getByRole('button', { name: '次へ' }).click();
-  expect(await page.evaluate(() => outcome)).toBe(true);
+  await expect.poll(() => page.evaluate(() => outcome)).toBe(true);
+  // 言えたときの声は録音して返す（#9）。
+  expect(await page.evaluate(() => voiceSize)).toBeGreaterThan(0);
 });
 
 test('silent end, denial, nonmatching results and thrown starts offer retry', async ({ page }) => {
@@ -56,7 +58,8 @@ test('silent end, denial, nonmatching results and thrown starts offer retry', as
   await page.locator('.meal-voice-toggle').click();
   await expect(page.getByText('マイクが使えないみたい')).toBeVisible();
   await page.getByRole('button', { name: '写真だけで進む' }).click();
-  expect(await page.evaluate(() => outcome)).toBe(false);
+  await expect.poll(() => page.evaluate(() => outcome)).toBe(false);
+  expect(await page.evaluate(() => voiceSize)).toBe(0);
 });
 
 test('stop, timeout, photo fallback and dismissal release recognition and ignore stale events', async ({ page }) => {
@@ -73,9 +76,10 @@ test('stop, timeout, photo fallback and dismissal release recognition and ignore
   await page.locator('.meal-voice-toggle').click();
   await page.getByRole('button', { name: '写真だけで進む' }).click();
   expect(await page.evaluate(() => attempts.every(s => s.aborted))).toBe(true);
-  expect(await page.evaluate(() => outcome)).toBe(false);
+  await expect.poll(() => page.evaluate(() => outcome)).toBe(false);
+  expect(await page.evaluate(() => voiceSize)).toBe(0);
   await setup(page);
   await page.locator('.meal-voice-toggle').click();
   await page.evaluate(() => controller.abort());
-  expect(await page.evaluate(() => ({ outcome, stopped: attempts[0].aborted }))).toEqual({ outcome: 'AbortError', stopped: true });
+  await expect.poll(() => page.evaluate(() => ({ outcome, stopped: attempts[0].aborted }))).toEqual({ outcome: 'AbortError', stopped: true });
 });

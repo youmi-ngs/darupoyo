@@ -47,3 +47,27 @@ test('preset pose shows live guidance and rejects a frame without a person',asyn
   await expect(page.getByRole('button',{name:'もう1回撮る'})).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(0);
 });
+test('いただきます is recorded with the meal and plays back from the album (#9 #33)',async({page,context})=>{
+  await context.grantPermissions(['camera','microphone']);
+  // 音声認識の代わり：はじめるとすぐ「いただきます」が聞こえたことにする（録音は本物のマイク＝テスト用の音）。
+  await context.addInitScript(()=>{window.SpeechRecognition=window.webkitSpeechRecognition=class{start(){setTimeout(()=>{this.onaudiostart?.();setTimeout(()=>this.onresult?.({results:[[{transcript:'いただきます'}]]}),600);},50);}abort(){}};});
+  await page.goto('/');await page.getByLabel('あなたの名前').fill('itadaki');await page.getByLabel('新しいハウスの名前').fill('voice');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:'ごはんを撮る'}).click();
+  await page.getByRole('button',{name:'この写真を撮る'}).click();await page.getByRole('button',{name:'この写真を使う'}).click();
+  await page.getByRole('button',{name:'マイクをオンにする'}).click();
+  await expect(page.getByText('聞こえた！')).toBeVisible();
+  await page.getByRole('button',{name:'次へ'}).click();
+  await expect(page.locator('.result-main')).toHaveText('いただきます 言えた！');
+  await expect(page.locator('.result-card .voice-play')).toBeVisible();
+  const saved=page.waitForResponse(r=>r.url().includes('/completions'));
+  await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();
+  const post=(await (await saved).json()).post;
+  expect(post.method).toBe('photo_voice');expect(post.voice_media_id).toBeTruthy();
+  await page.getByRole('button',{name:'お部屋へ',exact:true}).click();await page.locator('#nav-room').click();
+  await expect(page.locator('.mr-frame .voice-badge')).toHaveCount(1);
+  await page.locator('.mr-frame').first().click();
+  const voice=page.waitForResponse(r=>r.url().includes('/media/'+post.voice_media_id));
+  await page.locator('#photo-modal .voice-play').click();
+  expect((await voice).headers()['content-type']).toMatch(/^audio\//);
+  await expect(page.locator('#toast')).not.toHaveText('声を再生できなかった…');
+});

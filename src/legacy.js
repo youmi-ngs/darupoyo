@@ -1,6 +1,7 @@
 import { client, start, houseApi, refresh, inviteCode, logout, switchHouse } from './api.js';
 import { capture } from './media.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
+import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_THEMES } from './data.js';
 (() => {
   const toMin = (t) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -32,6 +33,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       : p.kind === 'photo' ? '<span class="mini-sun"></span>' + MEAL_SVG
       : '<span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
     if (p.image) { const img = document.createElement('img'); img.src = p.image; img.alt = TASKS[p.task].label + 'の記録'; d.replaceChildren(img); }
+    if (p.voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
     return d;
   }
 
@@ -79,6 +81,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       sl.querySelector('.gal-slot').outerHTML = galIcon(pg);
       sl.querySelector('.gal-text').textContent = postLine(p);
       sl.querySelector('.tl-get').textContent = REWARD[p.task].item;
+      if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => voiceOf(p.voice_media_id)));
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
       ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
       track.append(sl);
@@ -93,6 +96,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   }
   function openPhoto(p, day) { openPhotos([{ p, day }], 0); }
   $('pm-close').addEventListener('click', () => $('photo-modal').close());
+  $('photo-modal').addEventListener('close', () => playing?.pause());
   $('photo-modal').addEventListener('click', (e) => { if (e.target === $('photo-modal')) $('photo-modal').close(); });
 
   // ---------- gal AIs ----------
@@ -115,7 +119,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
       else { b.innerHTML = galIcon(id) + '<small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + GALS[id].title + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); });
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} renderGalPicker(); syncPushGal(id); if (GALS[id]) galVoice(id, GALS[id].title); });
       return b;
     };
     GAL_IDS.forEach((g) => box.append(mk(g)));
@@ -171,8 +175,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   document.querySelectorAll('[data-chore]').forEach((el) => el.addEventListener('click', () => {
     const id = el.dataset.chore;
     if (id !== 'meal' && (state.doneToday[id] || []).includes(ME)) { toast('今日の' + TASKS[id].label + 'はクリア済み'); return; }
-    if (!state.board.some((b) => b.id === id)) { state.board.push({ id, done: false }); saveGoals(); }
-    renderAll();
+    // 冷蔵庫の「今日やること」は自分で貼ったものだけ。ここでは勝手に貼らない（#23）。
     openSheet(id);
   }));
 
@@ -249,7 +252,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       if (!item.done) {
         const x = document.createElement('button'); x.type = 'button'; x.className = 'unstick'; x.textContent = '×';
         x.setAttribute('aria-label', TASKS[item.id].label + 'をボードから外す');
-        x.addEventListener('click', () => { state.board = state.board.filter((b) => b.id !== item.id); saveGoals(); renderAll(); });
+        x.addEventListener('click', () => { sfx.unpop(); state.board = state.board.filter((b) => b.id !== item.id); saveGoals(); renderAll(); });
         wrap.append(x);
       }
       boardMagnets.append(wrap);
@@ -263,7 +266,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const m = magnetEl(id); m.setAttribute('aria-label', TASKS[id].label + 'をボードに貼る'); bindDrag(m, id); trayEl.append(m);
     });
   }
-  function stick(id) { if (state.board.some((b) => b.id === id)) return; state.board.push({ id, done: false }); saveGoals(); renderAll(id); }
+  function stick(id) { if (state.board.some((b) => b.id === id)) return; sfx.pop(); state.board.push({ id, done: false }); saveGoals(); renderAll(id); }
   function bindDrag(el, id) {
     let start = null, ghost = null, dragged = false;
     el.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; start = { x: e.clientX, y: e.clientY }; dragged = false; el.setPointerCapture(e.pointerId); });
@@ -444,21 +447,28 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       const evidence = await capture(sheetBody, id, c, state.originals[id], signal);
       if (signal.aborted) return;
       const gal = pickGal();
-      const { blob, kind, ...fields } = evidence;
+      const { blob, kind, result, voice, ...fields } = evidence;
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
-      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><p class="sheet-text"></p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
-      sheetBody.querySelector('p').textContent = fields.similarity !== undefined ? 'まねっこ度 ' + fields.similarity + '%'
-        : fields.method === 'rhythm' ? fields.hits + ' / ' + fields.total_beats + ' ヒット！お部屋に残そう。' : 'できたことをお部屋に残そう。';
+      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
+      const shown = resultOf(c, fields, result || {});
+      sheetBody.querySelector('.result-label').textContent = shown.label;
+      sheetBody.querySelector('.result-main').textContent = shown.main;
+      sheetBody.querySelector('.result-sub').textContent = shown.sub || '';
+      sheetBody.querySelector('.result-sub').hidden = !shown.sub;
+      if (voice) { const url = URL.createObjectURL(voice); sheetBody.querySelector('.result-card').append(voiceButton(() => url)); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       if (blob) { const img = document.createElement('img'); const url = URL.createObjectURL(blob); img.src = url; img.style.cssText = 'width:100%;max-height:30vh;object-fit:contain'; sheetBody.querySelector('p').after(img); signal.addEventListener('abort', () => URL.revokeObjectURL(url), { once: true }); }
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
         const button = $('post'); button.disabled = true; $('redo').disabled = true; $('sheet-close').disabled = true;
         try {
           if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
+          // 声が送れなくても、ごはんの記録はできるようにする。
+          if (voice && !body.voice_media_id) body.voice_media_id = await houseApi('/media?kind=voice', voice).then(r => r.id, () => undefined);
           const result = await houseApi('/completions', body);
           await refresh();
           sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
+          sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
           $('finish').onclick = () => { sheet.close(); showHouse(); toast('部屋に飾った。電気ついたね'); };
         } catch (e) { toast(e.message); button.disabled = false; if ($('redo')) $('redo').disabled = false; }
         finally { $('sheet-close').disabled = false; }
@@ -469,12 +479,41 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
       openSheet(id); toast(deviceMessage(e, id));
     }
   }
+  // 録音した「いただきます」を再生するボタン（#9）。src() は再生する音の URL を返す。
+  const voiceUrls = new Map();
+  const voiceOf = (id) => { if (!voiceUrls.has(id)) voiceUrls.set(id, houseApi('/media/' + id).then(URL.createObjectURL).catch((e) => { voiceUrls.delete(id); throw e; })); return voiceUrls.get(id); };
+  let playing = null;
+  function voiceButton(src) {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'voice-play';
+    b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>いただきます を聞く</span>';
+    b.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      try {
+        playing?.pause();
+        const audio = new Audio(await src()); playing = audio;
+        b.classList.add('is-playing'); audio.onended = audio.onpause = () => b.classList.remove('is-playing');
+        await audio.play();
+      } catch (err) { b.classList.remove('is-playing'); toast('声を再生できなかった…'); }
+    });
+    return b;
+  }
+  // 「記録する？」に出す結果（#33）。家事ごとに、何がどれだけできたかを1行で。
+  function resultOf(c, fields, result) {
+    if (fields.method === 'rhythm') return { label: 'リズム', main: fields.hits + ' / ' + fields.total_beats + ' ヒット', sub: '良 ' + (result.good || 0) + '・可 ' + (fields.hits - (result.good || 0)) };
+    if (fields.method === 'sound') return { label: 'ドライヤーの音', main: Math.floor(fields.duration_seconds) + '秒 聞こえた', sub: '10秒でクリア' };
+    if (fields.method === 'photo_voice') return { label: 'ごはん', main: 'いただきます 言えた！', sub: '写真といっしょに残すよ' };
+    if (fields.method === 'photo') return { label: 'ごはん', main: '写真で記録', sub: 'ちゃんと食べてえらい' };
+    if (fields.similarity !== undefined) return { label: 'まねっこ度', main: fields.similarity + '%', sub: 'お手本：' + c.title.replace(/のオリジナル$/, '') };
+    if (c.mode === 'original-new') return { label: 'オリジナルのポーズ', main: '今日の一番乗り！', sub: 'みんなのお手本になるよ' };
+    return { label: c.title, main: (result.score ?? '') + '%', sub: 'ポーズの決まり度' };
+  }
   // Rhythm ended without enough hits: a gal cheers you on and offers another go (nothing is recorded).
   function showNoHit(id, c, e) {
     const gal = pickGal();
     sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">おしい〜！</h2><p class="sheet-text"></p><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="retry">もう一回</button><button class="btn btn-sub" id="other-way">ほかのやり方</button>';
     sheetBody.querySelector('.sheet-text').textContent = (e.hits || 0) + ' / ' + e.totalBeats + ' ヒット' + (e.pass ? '（' + e.pass + '回でクリア）' : '');
     sheetBody.querySelector('.gal-text').textContent = e.message + '。もう一回いこ！';
+    sfx.miss(); setTimeout(() => galVoice(gal, 'おしい！もう一回いこ！'), 600);
     $('retry').onclick = () => judge(id, c);
     $('other-way').onclick = () => openSheet(id);
     $('retry').focus();
@@ -602,7 +641,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   $('open-menu').addEventListener('click', () => { document.querySelectorAll('.map-cell').forEach((c) => c.classList.toggle('is-here', Number(c.dataset.go) === sceneIdx)); menu.showModal(); });
   $('menu-close').addEventListener('click', () => menu.close());
   const settings = $('settings');
-  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); renderPush(); settings.showModal(); });
+  $('open-settings').addEventListener('click', () => { menu.close(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); });
   // ---------- phone notifications (#58) ----------
   const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
   async function renderPush() {
@@ -621,7 +660,10 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     } catch (e) { toast(e.message); }
     await renderPush();
   });
-  listenInApp((body) => toast(body));
+  listenInApp((body) => { sfx.ding(); toast(body); });
+  // ---------- sound effects (#8 #17) ----------
+  function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.textContent = on ? 'オン' : 'オフ'; b.setAttribute('aria-pressed', String(on)); }
+  $('sound-toggle').addEventListener('click', () => { setSound(!soundOn()); renderSound(); sfx.pop(); });
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { menu.close(); $('howto-page').showModal(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());

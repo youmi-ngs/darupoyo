@@ -36,7 +36,7 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   for (let k = 1; k < 8; k++) { await page.clock.runFor(800); if (k < 6) await page.locator('.capture').dispatchEvent('test-slap'); }
   await page.clock.runFor(1120); await page.clock.resume();
   await expect(page.locator('#post')).toBeVisible();
-  await expect(page.locator('.sheet-text')).toHaveText('6 / 8 ヒット！お部屋に残そう。');
+  await expect(page.locator('.result-main')).toHaveText('6 / 8 ヒット');
   expect(await page.evaluate(() => window.testVideo.getTracks().every((t) => t.readyState === 'ended'))).toBe(true);
 });
 

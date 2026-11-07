@@ -43,6 +43,7 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
     } catch { return []; } finally { result.close(); }
   };
   const hit = new Set();
+  let good = 0;
   let lastSlap = -Infinity, gradeTimer;
   const slap = (x, y) => {
     const now = performance.now();
@@ -50,7 +51,7 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
     lastSlap = now;
     const result = judgeHit(now - start, hit);
     if (!result) return;
-    hit.add(result.beat); notes[result.beat].classList.add('is-hit');
+    hit.add(result.beat); notes[result.beat].classList.add('is-hit'); if (result.grade === 'good') good++;
     playSparkle(context);
     const points = outline();
     if (points.length) sparkleOutline(stage, points); else sparkle(stage, 1 - x, y);
@@ -91,7 +92,8 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
     const e = new Error('音符が丸に重なったらバサッと動かしてね');
     e.name = 'NoHitError'; e.hits = hit.size; e.totalBeats = TOTAL_BEATS; e.pass = PASS_HITS; throw e;
   }
-  return { method: 'rhythm', hits: hit.size, total_beats: TOTAL_BEATS, duration_seconds: (performance.now() - start) / 1000 };
+  // result は画面に出すだけで、APIには送らない。
+  return { method: 'rhythm', hits: hit.size, total_beats: TOTAL_BEATS, duration_seconds: (performance.now() - start) / 1000, result: { good } };
 }
 
 export async function dryerSound(box, status, signal, resources) {

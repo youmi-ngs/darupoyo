@@ -26,7 +26,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await expect(page.locator('.rhythm-camera video')).toBeVisible();
   await expect(page.locator('.rhythm-note')).toHaveCount(8);
   await playRhythm(page, 7);
-  await expect(page.locator('.sheet-text')).toHaveText('7 / 8 ヒット！お部屋に残そう。');
+  await expect(page.locator('.result-main')).toHaveText('7 / 8 ヒット');
   await page.getByRole('button', {name:'部屋に飾る',exact:true}).click();
   await expect(page.getByText('記録できた！')).toBeVisible();
   await page.getByRole('button', {name:'お部屋へ',exact:true}).click();

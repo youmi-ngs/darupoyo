@@ -1,3 +1,26 @@
+// 「いただきます」を聞いている間、声も録音しておく（#9）。言えたときだけ残して、アルバムで再生できる。
+// 録音と音声認識を同時に使えない端末もあるので、2回うまくいかなかったら録音なしで聞く。
+function startRecording() {
+  if (!window.MediaRecorder || !navigator.mediaDevices?.getUserMedia) return null;
+  const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => MediaRecorder.isTypeSupported?.(t));
+  let recorder, stream;
+  const chunks = [];
+  const ready = navigator.mediaDevices.getUserMedia({ audio: true }).then(s => {
+    stream = s;
+    recorder = new MediaRecorder(s, { ...(type ? { mimeType: type } : {}), audioBitsPerSecond: 32000 });
+    recorder.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+    recorder.start();
+  }).catch(() => {});
+  // keep=true なら録音した音を返す。どちらでもマイクは必ず止める。
+  return async keep => {
+    await ready;
+    const done = recorder && recorder.state !== 'inactive' ? new Promise(r => { recorder.onstop = r; recorder.stop(); }) : Promise.resolve();
+    await done;
+    stream?.getTracks().forEach(t => t.stop());
+    return keep && chunks.length ? new Blob(chunks, { type: recorder?.mimeType || type || 'audio/webm' }) : null;
+  };
+}
+
 // Keep microphone state visible until the user chooses to continue.
 export function confirmMealVoice(box, Speech, signal) {
   const panel = document.createElement('section');
@@ -11,18 +34,18 @@ export function confirmMealVoice(box, Speech, signal) {
       <strong id="meal-voice-title"></strong><p></p>
     </div>
     <button type="button" class="meal-voice-next">写真だけで進む</button>
-    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>音声はブラウザの音声認識サービスに送信される場合があります。</p></details>`;
+    <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>音声はブラウザの音声認識サービスに送信される場合があります。「いただきます」が聞こえたときだけ、その声をハウスのアルバムに残して、住人が再生できます。</p></details>`;
   box.insertBefore(panel, box.querySelector('canvas'));
   const title = panel.querySelector('strong'), hint = panel.querySelector('.meal-voice-status p');
-  const voice = panel.querySelector('.meal-voice-toggle'), next = panel.querySelector('.meal-voice-next');
-  let active, timer, done = false, matched = false;
+  const toggle = panel.querySelector('.meal-voice-toggle'), next = panel.querySelector('.meal-voice-next');
+  let active, timer, done = false, matched = false, stopRecording = null, voice = Promise.resolve(null), misses = 0;
   function show(state, heading, detail) {
     panel.dataset.state = state;
     title.textContent = heading;
     hint.textContent = detail;
     hint.hidden = !detail;
-    voice.setAttribute('aria-label', matched ? '聞き取り完了' : active ? '音声認識をやめる' : state === 'idle' ? 'マイクをオンにする' : 'もう一度試す');
-    voice.disabled = matched;
+    toggle.setAttribute('aria-label', matched ? '聞き取り完了' : active ? '音声認識をやめる' : state === 'idle' ? 'マイクをオンにする' : 'もう一度試す');
+    toggle.disabled = matched;
     next.className = matched ? 'meal-voice-next btn btn-main' : 'meal-voice-next';
     next.textContent = matched ? '次へ' : '写真だけで進む';
   }
@@ -37,6 +60,7 @@ export function confirmMealVoice(box, Speech, signal) {
   }
   function finish(state, heading, detail) {
     stop();
+    if (stopRecording) { const end = stopRecording; stopRecording = null; voice = end(matched); if (!matched) misses++; }
     show(state, heading, detail);
     if (matched) next.focus();
   }
@@ -46,15 +70,17 @@ export function confirmMealVoice(box, Speech, signal) {
       if (done) return;
       done = true;
       stop();
+      if (stopRecording) { voice = stopRecording(false); stopRecording = null; }
       signal.removeEventListener('abort', abort);
-      voice.onclick = next.onclick = null;
-      if (error) reject(error); else resolve(matched);
+      toggle.onclick = next.onclick = null;
+      if (error) { voice.then(() => reject(error)); return; }
+      resolve(voice.then(blob => ({ matched, voice: matched ? blob : null })));
     };
     const abort = () => settle(new DOMException('中止しました', 'AbortError'));
     signal.addEventListener('abort', abort, { once: true });
     if (signal.aborted) { abort(); return; }
     next.onclick = () => settle();
-    voice.onclick = () => {
+    toggle.onclick = () => {
       if (active) {
         finish('idle', 'いただきます、しよう', 'マイクをタップ');
         return;
@@ -89,6 +115,7 @@ export function confirmMealVoice(box, Speech, signal) {
         });
         timer = setTimeout(current(() => finish('error', 'もう一回、言ってみて', 'マイクをタップで再開')), 15000);
         speech.start();
+        if (misses < 2) stopRecording = startRecording();
       } catch {
         finish('error', 'マイクが使えないみたい', 'ブラウザのマイク設定を確認してね');
       }

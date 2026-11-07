@@ -37,7 +37,7 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
 | PUT | /api/houses/{id}/goals | 今日やる家事マグネット（空でもOK） |
 | PUT | /api/houses/{id} | 家の名前を変更 `{name}`（1〜60文字）。住人なら誰でも |
 | PUT | /api/houses/{id}/profile | 自分の部屋のテーマ `theme`（pink/lilac/cyan/lime/peach/mint/cream/night）と表示名 `display_name`（1〜40文字）。片方だけでも可 |
-| POST | /api/houses/{id}/media?kind=meal または cutout | 画像バイナリをアップロード |
+| POST | /api/houses/{id}/media?kind=meal / cutout / voice | 画像、または「いただきます」の録音（WebM・Ogg・MP4、512KBまで）をアップロード |
 | GET | /api/houses/{id}/media/{mediaId} | 所属者だけ画像を取得 |
 | POST | /api/houses/{id}/completions | 達成記録、AIほめコメント |
 | GET | /api/houses/{id}/posts?limit=30&before=... | 新しい順の履歴、アルバム |
@@ -85,9 +85,13 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
   "chore": "meal",
   "method": "photo_voice",
   "media_id": "a56ae906-baba-4986-8612-13eff3d2ce22",
-  "itadakimasu": true
+  "itadakimasu": true,
+  "voice_media_id": "0f4c1c1e-7a52-4a39-9d55-2d0c9b6f7e10"
 }
 ```
+
+`voice_media_id` は省略可。「いただきます」が聞こえたときの録音を `kind=voice` でアップロードしたid（`photo_voice` のときだけ）。
+postにも `voice_media_id` が入り、住人は `GET /api/houses/{id}/media/{voice_media_id}` で再生できる。
 
 「いただきます」は対応ブラウザのSpeechRecognitionで確認する。写真のみへの切替を常に用意する。trueはFrontendからの確認結果であってサーバー音声認識ではない。
 食事は回数制限なし。別の投稿は別request_id、同じ投稿の再送は同じrequest_idと同じ本文を使う。

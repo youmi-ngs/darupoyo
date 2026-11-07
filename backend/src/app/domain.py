@@ -145,6 +145,10 @@ class Domain:
                 expected = "cutout" if body.method == "pose" else "meal"
                 if not media or media["owner_id"] != uid or media["kind"] != expected:
                     raise HTTPException(422, "Missing or incompatible owned media")
+            if body.voice_media_id:
+                voice = tx.get(f"houses/{house_id}/media/{body.voice_media_id}")
+                if not voice or voice["owner_id"] != uid or voice["kind"] != "voice":
+                    raise HTTPException(422, "Missing or incompatible owned voice")
             # All reads precede writes for Firestore transactions.
             first = chore not in state["poses"] and body.method == "pose"
             template = state["poses"].get(chore)
@@ -177,6 +181,7 @@ class Domain:
                 "method": body.method,
                 "created_at": now.isoformat(),
                 "media_id": str(body.media_id) if body.media_id else None,
+                "voice_media_id": str(body.voice_media_id) if body.voice_media_id else None,
                 "duration_seconds": body.duration_seconds,
                 "hits": body.hits,
                 "total_beats": body.total_beats,

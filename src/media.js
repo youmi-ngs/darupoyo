@@ -3,6 +3,7 @@ import { action, blobOf, check, openCamera } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
 import { createPoseLandmarker, hasFullBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
 import { createSegmenter, cutout } from './segment.js';
+import { sfx } from './sfx.js';
 export { poseSimilarity };
 
 function choose(root, options, signal) {
@@ -95,7 +96,7 @@ export async function capture(root, chore, choice, reference, signal) {
       if (seconds) {
         await countdown(seconds, left => { count.hidden = !left; count.textContent = left; if (left) status.textContent = left + '秒後に撮るよ'; }, signal);
       }
-      canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0);
+      canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); sfx.shutter();
       live.hidden = true; canvas.hidden = false;
     };
     const stopCamera = () => { stream.getTracks().forEach(t => t.stop()); live.remove(); };
@@ -110,9 +111,11 @@ export async function capture(root, chore, choice, reference, signal) {
       const evidence = { method: 'photo', blob: await blobOf(canvas, 'image/jpeg'), kind: 'meal' };
       if (!Speech) return evidence;
       status.hidden = true;
-      if (await confirmMealVoice(box, Speech, signal)) {
+      const heard = await confirmMealVoice(box, Speech, signal);
+      if (heard.matched) {
         evidence.method = 'photo_voice';
         evidence.itadakimasu = true;
+        if (heard.voice) evidence.voice = heard.voice;
       }
       return evidence;
     }
@@ -146,7 +149,7 @@ export async function capture(root, chore, choice, reference, signal) {
         status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
         if (!await choose(box, [{ label: 'この切り抜きを使う', value: true }, { label: 'もう1回撮る', value: false, sub: true }], signal)) continue;
         check(signal); stopCamera();
-        const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x,y,z,visibility }) => ({ x,y,z,visibility })), pose_name: choice.title };
+        const evidence = { method: 'pose', blob: await blobOf(canvas), kind: 'cutout', landmarks: landmarks.map(({ x,y,z,visibility }) => ({ x,y,z,visibility })), pose_name: choice.title, result: { score } };
         if (choice.mode === 'original-copy' && reference) { evidence.reference_post_id = reference.post_id; evidence.similarity = poseSimilarity(landmarks, reference.landmarks); }
         return evidence;
       } finally { result.close(); }
