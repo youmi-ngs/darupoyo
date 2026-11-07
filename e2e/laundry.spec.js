@@ -25,7 +25,7 @@ test('start waits for the upper body, then counts down 3-2-1 before the notes mo
   await expect(start).toBeDisabled({ timeout: 20000 });
   await unlockStart(page);
   await expect(start).toBeEnabled();
-  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await page.clock.install(); await page.clock.pauseAt(new Date(Date.now() + 1000));
   await start.click();
   await expect(page.locator('.rhythm-camera .capture-count')).toHaveText('3');
   const notePosition = () => page.evaluate(() => document.querySelector('.rhythm-note').getBoundingClientRect().x);
@@ -57,7 +57,7 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   const tracks = await page.evaluate(() => { window.testVideo = document.querySelector('.rhythm-camera video').srcObject; return window.testVideo.getAudioTracks().length; });
   expect(tracks).toBe(0); // camera only
   const start = await unlockStart(page);
-  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await page.clock.install(); await page.clock.pauseAt(new Date(Date.now() + 1000));
   await start.click();
   await page.clock.runFor(3000 + 800);
   const alignment = await page.evaluate(() => {

@@ -140,6 +140,8 @@ test('diners sit on the existing chairs, stay centered and fit a six-person hous
     const gals = ['heisei','reiwa','kuro','hime'];
     renderActivities({ house: { member_ids: ids, members: Object.fromEntries(ids.map((id,i) => [id, { display_name:id, gal:gals[i%4], theme:'pink' }])) }, state: { activity: Object.fromEntries(ids.map(id => [id, { chore:'meal', at:new Date().toISOString(), phase:'started', gal:'reiwa' }])) } });
   });
+  // Measure chair alignment without the scene's decorative sway animation.
+  await page.addStyleTag({ content: '.plan, .plan * { animation: none !important; transition: none !important; }' });
   const seats = page.locator('.meal-seats .resident-avatar');
   await expect(seats).toHaveCount(6);
   const layout = await page.locator('.meal-seats').evaluate(group => {
