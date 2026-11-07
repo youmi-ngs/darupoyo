@@ -177,8 +177,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
   document.querySelectorAll('[data-chore]').forEach((el) => el.addEventListener('click', () => {
     const id = el.dataset.chore;
     if (id !== 'meal' && (state.doneToday[id] || []).includes(ME)) { toast('今日の' + TASKS[id].label + 'はクリア済み'); return; }
-    if (!state.board.some((b) => b.id === id)) { state.board.push({ id, done: false }); saveGoals(); }
-    renderAll();
+    // 冷蔵庫の「今日やること」は自分で貼ったものだけ。ここでは勝手に貼らない（#23）。
     openSheet(id);
   }));
 
@@ -568,10 +567,7 @@ import { TASKS, ORDER, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, ROOM_T
     state.history = [...new Set(data.posts.map(p=>p.day))].filter(day=>day!==data.state.day).map(day=>({ off:Math.round((Date.parse(day)-Date.parse(data.state.day))/86400000), posts:data.posts.filter(p=>p.day===day).map(convert) }));
     state.doneToday = {};
     Object.entries(data.state.completed).forEach(([uid,chores])=>chores.forEach(t=>{ (state.doneToday[fromApi(t)] ||= []).push(uid); }));
-    if (!pendingGoals) {
-      // その日まだ「今日やること」を触っていなければ、洗濯とゴミ捨てを最初から貼っておく（#23）。
-      state.board = (data.state.goals[ME] || []).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
-    }
+    if (!pendingGoals) state.board = (data.state.goals[ME] || []).map(t=>({ id:fromApi(t), done:(data.state.completed[ME]||[]).includes(t) }));
     state.originals = Object.fromEntries(Object.entries(data.state.poses).map(([t,p])=>[fromApi(t),{ ...p, fig:0, by:p.user_id }]));
     if (!data.house.member_ids.includes(currentRoom)) currentRoom = ME;
     document.querySelector('.account-row b').textContent = nameOf(ME);
