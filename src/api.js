@@ -180,8 +180,9 @@ function subscribe() {
   window.addEventListener('focus', sync);
 }
 // Forget the remembered house and reopen the house list (stays signed in).
-export function switchHouse() {
-  remove('darupoyo-house-' + client.uid);
+export function switchHouse(houseId) {
+  if (typeof houseId === 'string' && houseId) write('darupoyo-house-' + client.uid, houseId);
+  else remove('darupoyo-house-' + client.uid);
   location.reload();
 }
 export async function logout() {

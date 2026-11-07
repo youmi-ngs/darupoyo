@@ -4,6 +4,7 @@ test('how-to opens automatically only on the first entry (#14)', async ({ browse
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('はじめて'); await page.getByLabel('新しいハウスの名前').fill('howto'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('#howto-page')).toBeVisible();
+  await page.locator('.howto-card.is-active').getByRole('button', { name: '4ページ目へ' }).click();
   await page.getByRole('button', { name: 'はじめる', exact: true }).click();
   await expect(page.locator('#howto-page')).toBeHidden();
   await page.locator('#open-menu').click(); await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible(); await page.locator('#howto-close').click();
@@ -12,13 +13,15 @@ test('how-to opens automatically only on the first entry (#14)', async ({ browse
   await expect(page.locator('#howto-page')).toBeHidden();
   await context.close();
 });
-test('how-to is six picture cards that fit a small phone without scrolling (#57)', async ({ browser }) => {
+test('how-to has four swipe cards on a small phone', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 375, height: 667 } }); const page = await context.newPage();
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('え'); await page.getByLabel('新しいハウスの名前').fill('pics'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('#howto-page')).toBeVisible();
-  await expect(page.locator('.howto-cards li')).toHaveCount(6);
-  await expect(page.locator('.howto-cards li svg')).toHaveCount(6);
-  expect(await page.locator('#howto-page .drawer-inner').evaluate(el => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
+  await expect(page.locator('.howto-card')).toHaveCount(4);
+  await expect(page.locator('.howto-illustration')).toHaveCount(4);
+  expect(await page.locator('#howto-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
+  await page.locator('.howto-card.is-active').getByRole('button', { name: '4ページ目へ' }).click();
+  await page.locator('#howto-start').scrollIntoViewIfNeeded();
   await expect(page.getByRole('button', { name: 'はじめる', exact: true })).toBeInViewport();
   await context.close();
 });

@@ -24,7 +24,7 @@ test('the entrance board opens けーじばん and the menu contains only three 
   await enter(page); await expect(page.locator('#open-menu')).toBeVisible();
   await expect(page.locator('#open-settings')).not.toBeVisible();
   await page.locator('#open-menu').click();
-  await expect(page.locator('#utility-menu [data-menu-action]')).toHaveText(['設定','遊び方','招待リンク']);
+  await expect(page.locator('#utility-menu [data-menu-action]')).toHaveText(['マイページ','遊び方','ハウス切り替え']);
   await page.keyboard.press('Escape'); await expect(page.locator('#utility-menu')).not.toBeVisible();
   await page.locator('.scene-dot').nth(1).click(); await page.locator('#open-board').click();
   await expect(page.locator('#board-view')).toBeVisible(); await page.locator('.board-back').click(); await expect(page.locator('#house-view')).toBeVisible();
