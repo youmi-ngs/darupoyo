@@ -13,7 +13,7 @@ export function setupMoments() {
   const shoot = dialog.querySelector('[data-shoot]'), refresh = dialog.querySelector('[data-refresh]');
   let controller, urls = [], generation = 0, busy = false;
   const clearUrls = () => { urls.forEach(URL.revokeObjectURL); urls = []; };
-  const reset = () => { generation++; controller?.abort(); controller = null; clearUrls(); busy = false; shoot.disabled = refresh.disabled = false; };
+  const reset = () => { generation++; controller?.abort(); controller = null; clearUrls(); busy = false; shoot.disabled = refresh.disabled = false; dialog.classList.remove('is-shooting'); };
   dialog.addEventListener('close', reset);
   dialog.querySelector('[data-close]').onclick = () => dialog.close();
   async function load() {
@@ -51,6 +51,7 @@ export function setupMoments() {
   });
   shoot.onclick = async () => {
     reset(); const current = generation, house = client.house; controller = new AbortController();
+    dialog.classList.add('is-shooting'); // #161: the camera and its shutter get the whole dialog
     shoot.disabled=refresh.disabled=true;status.textContent='';content.replaceChildren();
     try {
       const evidence=await capture(content,'selfie',{title:'今のじぶん'},null,controller.signal);
