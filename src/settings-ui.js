@@ -1,4 +1,5 @@
-import { api, client, inviteCode, switchHouse } from './api.js';
+import { api, client, houseApi, inviteCode, switchHouse } from './api.js';
+import { setBusy } from './busy.js';
 import './utility-menu.css';
 import { sfx } from './sfx.js';
 
@@ -78,6 +79,7 @@ export function setupSettingsUI() {
   new ResizeObserver(() => { if ($('howto-page').open) move(active); }).observe(track);
   cards[0].classList.add('is-active');
 
+  setupHouseRemoval();
   $('house-switch-close').onclick = () => $('house-switcher').close();
   $('house-add').onclick = () => switchHouse();
   async function openHouses() {
@@ -104,7 +106,44 @@ export function setupSettingsUI() {
   }
 }
 
+// Moving out (any resident) and deleting the house (only its last resident).
+let shownHouse = null;
+function setupHouseRemoval() {
+  const dialog = document.createElement('dialog'); dialog.className = 'house-remove-dialog';
+  dialog.innerHTML = '<h2></h2><p data-what></p><p>この操作は元に戻せません。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="btn btn-sub" data-cancel>やめる</button><button type="button" class="btn btn-main" data-confirm disabled></button>';
+  document.body.append(dialog);
+  const title = dialog.querySelector('h2'), what = dialog.querySelector('[data-what]'), check = dialog.querySelector('input');
+  const status = dialog.querySelector('[role=status]'), cancel = dialog.querySelector('[data-cancel]'), confirm = dialog.querySelector('[data-confirm]');
+  let busy = false, action = null;
+  check.onchange = () => { confirm.disabled = !check.checked; };
+  cancel.onclick = () => dialog.close();
+  dialog.addEventListener('cancel', e => { if (busy) e.preventDefault(); });
+  const open = leaving => {
+    const name = shownHouse?.name || 'このハウス';
+    dialog.setAttribute('aria-label', leaving ? 'ハウスから退去の確認' : 'ハウス削除の確認');
+    title.textContent = leaving ? `「${name}」から退去しますか？` : `「${name}」を削除しますか？`;
+    what.textContent = leaving
+      ? 'このハウスでのあなたの写真・音声・記録・自撮り・だるぽよと、ほかの住人の記録に付けたコメント・リアクションを削除します。ほかの住人の記録は残ります。'
+      : 'このハウスと、中の写真・音声・記録をすべて削除します。';
+    confirm.textContent = leaving ? '退去する' : 'ハウスを削除';
+    action = leaving ? () => houseApi('/leave', {}) : () => houseApi('', undefined, 'DELETE');
+    check.checked = false; confirm.disabled = true; status.textContent = '';
+    $('settings').close(); dialog.showModal();
+  };
+  $('leave-house').onclick = () => open(true);
+  $('delete-house').onclick = () => open(false);
+  confirm.onclick = async () => {
+    busy = true; check.disabled = cancel.disabled = true; setBusy(confirm, true, '削除しています…');
+    try { await action(); switchHouse(); } // back to the start: pick another house or make a new one
+    catch (e) { status.textContent = '削除できませんでした。もう一度試してね。' + e.message; setBusy(confirm, false); check.disabled = cancel.disabled = false; confirm.disabled = !check.checked; busy = false; }
+  };
+}
+
 export function updateSettingsHouse(house, nameOf, me) {
+  shownHouse = house;
+  const alone = house.member_ids.length === 1 && house.member_ids[0] === me;
+  $('leave-house').hidden = alone; // the last resident deletes instead
+  $('delete-house').disabled = !alone; $('delete-house-note').hidden = alone;
   const avatar = $('profile-avatar'), member = house.members[me];
   avatar.src = member?.avatar || asset('2dc1e');
   avatar.classList.toggle('has-avatar', !!member?.avatar);

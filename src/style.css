@@ -1034,10 +1034,10 @@ body[data-daylight="night"] .balcony-clouds { fill: #69738F; }
 .meal-voice [hidden] { display: none !important; }
 
 .delete-account { display: block; margin: 12px auto; border: 0; background: transparent; color: #96375A; text-decoration: underline; font: inherit; cursor: pointer; }
-.delete-dialog { width: min(92vw, 440px); max-height: 88dvh; overflow: auto; padding: 24px; border: 3px solid var(--ink); border-radius: 20px; background: var(--paper); color: var(--ink); }
-.delete-dialog label { display: flex; gap: 10px; margin: 20px 0; align-items: start; }
-.delete-dialog .btn { display: block; width: 100%; margin-top: 10px; }
-.delete-dialog [data-confirm] { background: #FFD7DF; }
+:is(.delete-dialog, .house-remove-dialog) { width: min(92vw, 440px); max-height: 88dvh; overflow: auto; padding: 24px; border: 3px solid var(--ink); border-radius: 20px; background: var(--paper); color: var(--ink); }
+:is(.delete-dialog, .house-remove-dialog) label { display: flex; gap: 10px; margin: 20px 0; align-items: start; }
+:is(.delete-dialog, .house-remove-dialog) .btn { display: block; width: 100%; margin-top: 10px; }
+:is(.delete-dialog, .house-remove-dialog) [data-confirm] { background: #FFD7DF; }
 .utility-actions { position: fixed; z-index: 5; top: calc(env(safe-area-inset-top, 0px) + 50px); right: 12px; display: flex; gap: 6px; }
 .utility-actions .settings-row, .utility-actions .btn { width: auto; margin: 0; padding: 5px 9px; border: 2px solid var(--ink); border-radius: 999px; background: var(--paper); font-size: 11px; box-shadow: var(--soft-shadow); }
 .utility-actions .settings-row svg { width: 15px; height: 15px; }

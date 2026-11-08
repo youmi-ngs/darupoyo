@@ -18,7 +18,7 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await expect(settings.getByText('プロフィール写真', { exact: true })).toHaveCount(0);
   await expect(settings.getByText('準備中です')).toHaveCount(0);
   await expect(page.locator('#settings-members span')).toHaveText(['なまえ']);
-  await expect(page.locator('.account-management button')).toHaveText(['アカウントを削除', 'ハウスを削除', 'ログアウト']);
+  await expect(page.locator('.account-management button:visible')).toHaveText(['アカウントを削除', 'ハウスを削除', 'ログアウト']);
   await expect(settings.locator('#share-history')).toHaveCount(0);
   await expect(settings.locator('#social-card')).toBeHidden();
   await expect(settings.getByText('ほかのハウスの記録を見せる')).toHaveCount(0);

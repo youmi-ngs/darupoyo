@@ -1,4 +1,4 @@
-import { mockDarupoyo, deleteMockDarupoyo } from './mock-darupoyo.js';
+import { mockDarupoyo } from './mock-darupoyo.js';
 // In-browser stand-in for the Backend API (backend/docs/api.md), used only in development
 // when no Backend answers. Same paths and response shapes; data stays in this browser.
 // Tabs of the same browser share it through localStorage, so two tabs can play two users.
@@ -24,6 +24,45 @@ const newDay = day => ({ day, goals: {}, completed: {}, poses: {}, recent: [], l
 const postId = now => now.toISOString().replace(/[-:Z]/g, '').replace('.', '') + '000_' + crypto.randomUUID().replace(/-/g, '');
 const blobToDataUrl = blob => new Promise(resolve => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });
 
+
+// Removes a resident's records: from every house (account deletion) or from one (moving out).
+// Other residents' records stay; a house left with nobody goes entirely.
+function removeResident(db, uid, only = null) {
+  const here = houseId => !only || houseId === only;
+  const removedHouses = new Set();
+  for (const [id, h] of Object.entries(db.houses)) {
+    if (!h.member_ids.includes(uid) || !here(id)) continue;
+    h.member_ids = h.member_ids.filter(m => m !== uid); delete h.members[uid];
+    if (!h.member_ids.length) { removedHouses.add(id); delete db.houses[id]; }
+    else if (h.owner_id === uid) h.owner_id = h.member_ids[0];
+  }
+  const removedPosts = new Set();
+  for (const [id, post] of Object.entries(db.posts)) {
+    if (!here(post.house_id)) continue;
+    if (post.user_id === uid || removedHouses.has(post.house_id)) { removedPosts.add(id); delete db.posts[id]; }
+    else { delete post.reactions[uid]; post.sync_with = (post.sync_with || []).filter(m => m !== uid); if (post.comments) post.comments = post.comments.filter(c => c.user_id !== uid); }
+  }
+  for (const post of Object.values(db.posts)) if (removedPosts.has(post.pose_template_post_id)) post.pose_template_post_id = null;
+  for (const [id, moment] of Object.entries(db.moments)) if (here(moment.house_id) && (moment.user_id === uid || removedHouses.has(moment.house_id))) delete db.moments[id];
+  for (const [id, meta] of Object.entries(db.media)) {
+    if (here(meta.house_id) && (meta.owner_id === uid || removedHouses.has(meta.house_id))) { media.delete(id); try { localStorage.removeItem(KEY + '-media-' + id); } catch {} delete db.media[id]; }
+  }
+  for (const [key, state] of Object.entries(db.days)) {
+    if (!here(key.split('/')[0])) continue;
+    if (removedHouses.has(key.split('/')[0])) { delete db.days[key]; continue; }
+    delete state.goals[uid]; delete state.completed[uid]; if (state.activity) delete state.activity[uid];
+    for (const [chore, pose] of Object.entries(state.poses)) if (pose.user_id === uid) delete state.poses[chore];
+    Object.values(state.latest).forEach(v => delete v[uid]);
+    state.recent = state.recent.filter(p => p.user_id !== uid).map(p => ({...p, sync_with: p.sync_with.filter(m => m !== uid)}));
+  }
+  if (!only) scrubSocial(db, uid);
+  for (const [key, id] of Object.entries(db.requests)) if ((!only && key.startsWith(uid + ':')) || removedPosts.has(id)) delete db.requests[key];
+  for (const [key, invite] of Object.entries(db.invites)) if (here(invite.house_id) && (invite.created_by === uid || removedHouses.has(invite.house_id))) delete db.invites[key];
+  for (const collection of ['darupoyo_records', 'darupoyo_requests']) {
+    for (const [key, value] of Object.entries(db[collection] || {})) if (here(value.house_id) && (value.user_id === uid || removedHouses.has(value.house_id))) delete db[collection][key];
+  }
+}
+
 export async function mockFetch(url, init = {}) {
   const { pathname, searchParams } = new URL(url, location.origin);
   const path = pathname.replace(/^.*?\/api/, '');
@@ -34,37 +73,7 @@ export async function mockFetch(url, init = {}) {
 
   if (path === '/config') return json({ auth_mode: 'dev', timezone: 'Asia/Tokyo', firebase: {}, mock: true });
   if (!uid) return fail(401, 'Local token format: dev:alice');
-  if (path === '/me' && method === 'DELETE') {
-    const removedHouses = new Set();
-    for (const [id, h] of Object.entries(db.houses)) {
-      if (!h.member_ids.includes(uid)) continue;
-      h.member_ids = h.member_ids.filter(m => m !== uid); delete h.members[uid];
-      if (!h.member_ids.length) { removedHouses.add(id); delete db.houses[id]; }
-      else if (h.owner_id === uid) h.owner_id = h.member_ids[0];
-    }
-    const removedPosts = new Set();
-    for (const [id, post] of Object.entries(db.posts)) {
-      if (post.user_id === uid || removedHouses.has(post.house_id)) { removedPosts.add(id); delete db.posts[id]; }
-      else { delete post.reactions[uid]; post.sync_with = (post.sync_with || []).filter(m => m !== uid); }
-    }
-    for (const post of Object.values(db.posts)) if (removedPosts.has(post.pose_template_post_id)) post.pose_template_post_id = null;
-    for (const [id, moment] of Object.entries(db.moments)) if (moment.user_id === uid || removedHouses.has(moment.house_id)) delete db.moments[id];
-    for (const [id, meta] of Object.entries(db.media)) {
-      if (meta.owner_id === uid || removedHouses.has(meta.house_id)) { media.delete(id); try { localStorage.removeItem(KEY + '-media-' + id); } catch {} delete db.media[id]; }
-    }
-    for (const [key, state] of Object.entries(db.days)) {
-      if (removedHouses.has(key.split('/')[0])) { delete db.days[key]; continue; }
-      delete state.goals[uid]; delete state.completed[uid]; if (state.activity) delete state.activity[uid];
-      for (const [chore, pose] of Object.entries(state.poses)) if (pose.user_id === uid) delete state.poses[chore];
-      Object.values(state.latest).forEach(v => delete v[uid]);
-      state.recent = state.recent.filter(p => p.user_id !== uid).map(p => ({...p, sync_with: p.sync_with.filter(m => m !== uid)}));
-    }
-    scrubSocial(db, uid);
-    for (const [key, id] of Object.entries(db.requests)) if (key.startsWith(uid + ':') || removedPosts.has(id)) delete db.requests[key];
-    for (const [key, invite] of Object.entries(db.invites)) if (invite.created_by === uid || removedHouses.has(invite.house_id)) delete db.invites[key];
-    deleteMockDarupoyo(db, uid, removedHouses);
-    save(db); return new Response(null, {status: 204});
-  }
+  if (path === '/me' && method === 'DELETE') { removeResident(db, uid); save(db); return new Response(null, {status: 204}); }
   if (path === '/me') return json({ uid, deletion_pending: false });
   // #125: no Google key in the mock; the house simply shows no weather.
   if (path === '/weather') return fail(503, 'Weather is not configured');
@@ -102,6 +111,11 @@ export async function mockFetch(url, init = {}) {
   if (social) return social;
 
   if (rest === '' && method === 'PUT') { house.name = body.name.trim(); save(db); return json(house); }
+  if (rest === '/leave' && method === 'POST') { removeResident(db, uid, houseId); save(db); return new Response(null, {status: 204}); }
+  if (rest === '' && method === 'DELETE') {
+    if (house.member_ids.some(m => m !== uid)) return fail(409, 'Other residents still live in this house');
+    removeResident(db, uid, houseId); save(db); return new Response(null, {status: 204});
+  }
   if (rest === '/invites') {
     const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', token = Array.from(crypto.getRandomValues(new Uint8Array(8)), n => abc[n % 32]).join(''), expires_at = new Date(Date.now() + 7 * 86400000).toISOString();
     db.invites[token] = { house_id: houseId, expires_at, created_by: uid }; save(db); return json({ token, expires_at }, 201);

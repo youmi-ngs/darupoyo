@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.concurrency import run_in_threadpool
 
 from .config import Settings
-from .accounts import delete_account, require_active
+from .accounts import delete_account, leave_house, require_active
 from .darupoyo import register_darupoyo_routes
 from .domain import Domain, require_member
 from .models import (
@@ -193,6 +193,18 @@ def create_app(settings=None, store=None, praise=None, clock=None):
     @app.get("/api/houses")
     def houses(uid=Depends(current_user)):
         return {"items": app.state.store.list("houses", member=uid)}
+
+    # Moving out removes only this resident's records; the last one out takes the house.
+    @app.post("/api/houses/{house_id}/leave", status_code=204)
+    def leave(house_id: UUID, uid=Depends(current_user)):
+        leave_house(app.state.store, app.state.media, uid, str(house_id))
+        return Response(status_code=204)
+
+    # Deleting a house is only for its last resident, so nobody's records vanish under them.
+    @app.delete("/api/houses/{house_id}", status_code=204)
+    def delete_house(house_id: UUID, uid=Depends(current_user)):
+        leave_house(app.state.store, app.state.media, uid, str(house_id), only_if_alone=True)
+        return Response(status_code=204)
 
     @app.post("/api/houses/{house_id}/invites", status_code=201)
     def invite(house_id: UUID, uid=Depends(current_user)):
