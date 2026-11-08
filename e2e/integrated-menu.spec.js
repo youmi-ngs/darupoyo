@@ -13,7 +13,7 @@ test('menu keeps exactly three actions and the invite link opens the join flow',
   await expect(page.locator('#howto-page')).toBeVisible();await page.locator('#howto-close').click();
   await page.getByRole('button',{name:'メニューを開く'}).click();await page.locator('#open-settings').click();
   await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: t => { window.copied = t; return Promise.resolve(); } } }));
-  await page.getByRole('button',{name:'招待リンクをコピー'}).click(); await expect(page.locator('#invite-status')).toContainText('コピーしたよ');
+  await page.getByRole('button',{name:'招待リンクをコピー'}).click(); await expect(page.locator('#invite-status')).toContainText('招待リンクをコピーしたよ');
   const link=await page.evaluate(() => window.copied);
   expect(new URLSearchParams(new URL(link).hash.slice(1)).get('invite')).toBe(await page.locator('#settings-invite').textContent());
   const context=await browser.newContext();const friend=await context.newPage();await friend.goto(link);

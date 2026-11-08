@@ -19,7 +19,8 @@ dialog.settings-page { background: #ede6f8; }
 #settings-members { display:flex; flex-wrap:wrap; gap:0 12px; margin:0; min-height:20px; color:var(--ink-soft); font-size:12px; line-height:19.2px; overflow-wrap:anywhere; }
 .invite-row { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-top:16px; color:var(--ink-soft); }
 #settings-invite { line-height:19.2px; }
-#settings-invite { font-size:16px; overflow-wrap:anywhere; }
+#settings-invite { padding:0; border:0; background:none; color:inherit; font:inherit; font-size:16px; text-align:left; overflow-wrap:anywhere; cursor:pointer; }
+#settings-invite:disabled { opacity:.6; }
 #settings-invite:empty { display:none; }
 .invite-row .pink-pill { padding:4px 16px; min-height:24px; font-weight:400; flex:none; }
 #invite-status { margin:0; font-size:12px; color:var(--ink-soft); }

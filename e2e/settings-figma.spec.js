@@ -59,3 +59,15 @@ test('each menu page closes from the same spot as the hamburger, on phone and PC
     }
   }
 });
+
+test('tapping the house invite code copies the code itself', async ({ page }) => {
+  await enter(page);
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: t => { window.copied = t; return Promise.resolve(); } } }));
+  const code = page.locator('#settings-invite');
+  await expect(code).not.toHaveText('友だちを招待しよう');
+  await expect(code).toHaveAccessibleName(/^招待コード .+ をコピー$/);
+  await code.click();
+  await expect(page.locator('#invite-status')).toContainText('招待コードをコピーしたよ');
+  expect(await page.evaluate(() => window.copied)).toBe(await code.textContent());
+});
