@@ -1001,12 +1001,6 @@ body[data-daylight="night"] .sv-sun { background: #FFFCE3; box-shadow: 0 0 24px 
 @media (prefers-reduced-motion: reduce) { .plan.is-swaying .sv-obj, .plan.is-swaying .sv-hit, .plan.is-swaying .sv-fridge { animation: none; } }
 
 body[data-weather="snow"] .window-rain { display: initial; stroke: white; stroke-width: 4; stroke-dasharray: 1 5; }
-.moments-dialog { width: min(94vw, 480px); max-height: 90dvh; overflow:auto; padding: 20px; border: 3px solid var(--ink); border-radius: 24px; background: var(--paper); color: var(--ink); }
-.moments-dialog article { padding: 16px 0; border-bottom: 1px solid #3b256033; }
-.moments-dialog img { display:block; width:100%; max-height:55vh; object-fit:contain; border-radius:16px; margin-top:8px; }
-.moments-dialog time { display:block; font-size:12px; }
-.moments-dialog input { display:block; width:100%; padding:10px; margin:8px 0; }
-.moments-dialog .btn { margin: 5px 4px 5px 0; }
 
 .capture .is-mirrored { transform: scaleX(-1); }
 
@@ -1024,7 +1018,6 @@ body[data-weather="snow"] .balcony-rain { stroke: white; stroke-width: 5; stroke
 body[data-daylight="night"] .balcony-clouds { fill: #69738F; }
 @media (prefers-reduced-motion: reduce) { .plan.is-swaying #open-fridge { animation: none; } }
 
-.hall-moments { position: absolute; top: 14%; right: 5%; z-index: 3; padding: 8px 12px; font-size: 13px; }
 .capture .is-photo-frame { width: min(100%, 37.5vh); aspect-ratio: 5 / 6; margin-inline: auto; }
 .capture-live.is-photo-frame video { width: 100%; height: 100%; max-height: none; object-fit: cover; }
 
@@ -1097,12 +1090,21 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
   dialog.drawer { left: var(--app-x); right: auto; width: 430px; max-width: 430px; }
   dialog.sheet { width: 430px; }
 }
-/* #161: while taking a selfie, the intro and list buttons step aside and the shutter row stays on screen. */
-.moments-dialog.is-shooting > :is(h2, p:not([role=status]), [data-shoot], [data-refresh]) { display: none; }
-.moments-dialog .capture-actions { position: sticky; bottom: -20px; z-index: 1; margin: 0 -20px -20px; padding: 10px 20px 20px; background: var(--paper); }
-.capture-flip { position: absolute; top: 10px; right: 10px; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid var(--ink); border-radius: 50%; background: #ffffffd9; color: var(--ink); }
-.capture-flip svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.capture-flip:disabled { opacity: .5; }
-.moments-dialog.is-shooting .capture .is-photo-frame { width: min(100%, 37.5vh, calc((90dvh - 300px) * 5 / 6)); }
-.moments-dialog .capture-actions { display: flex; gap: 8px; }
-.moments-dialog .capture-actions > * { flex: 1; min-width: 0; margin: 0; padding-inline: 8px; font-size: 13px; white-space: nowrap; }
+/* Every photo task uses the うちらのなう frame: a rounded photo with library, shutter and switch on it. */
+.capture .capture-frame { position: relative; margin: 8px auto 0; overflow: hidden; border-radius: 16px; background: #eee; }
+.capture .capture-frame.is-body-frame { width: min(100%, 34vh); aspect-ratio: 3 / 4; }
+.capture .capture-frame video, .capture .capture-frame canvas { width: 100%; height: 100%; max-height: none; object-fit: cover; border-radius: 0; background: none; }
+.capture .capture-frame.is-body-frame canvas { object-fit: contain; }
+.capture-note { position: absolute; inset: 0 16px 80px; display: grid; place-items: center; margin: 0; text-align: center; font-size: 13px; line-height: 1.6; color: #6a5590; }
+.capture-controls { position: absolute; left: 10px; right: 10px; bottom: 13px; z-index: 2; display: flex; align-items: center; justify-content: space-between; height: 50px; }
+.capture-controls .capture-library { display: block; width: 38px; height: 38px; margin: 0; padding: 0; border-radius: 6px; cursor: pointer; }
+.capture-controls .capture-library img, .capture-controls .capture-shutter img { display: block; width: 100%; height: 100%; }
+.capture-controls .capture-shutter { width: 50px; height: 50px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
+.capture-controls .capture-shutter:active { transform: scale(.93); }
+.capture-controls .capture-shutter[hidden] { display: block !important; visibility: hidden; }
+.capture-controls .capture-flip { display: grid; place-items: center; width: 38px; height: 38px; margin: 0; padding: 0; border: 0; border-radius: 22px; background: #ffffffd9; box-shadow: none; }
+.capture-controls .capture-flip img { display: block; width: 24px; height: 24px; }
+.capture-controls .capture-flip.is-empty { visibility: hidden; }
+.capture-controls .capture-flip:disabled { opacity: .5; }
+.capture .capture-retake { position: absolute; top: 10px; left: 10px; z-index: 2; width: 27px; height: 27px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
+.capture .capture-retake img { display: block; }

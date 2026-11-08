@@ -55,6 +55,8 @@ class Completion(Model):
     hits: int | None = Field(default=None, ge=0, le=1000)
     total_beats: int | None = Field(default=None, ge=1, le=1000)
     gal: Literal["heisei", "reiwa", "kuro", "hime"] = "reiwa"
+    # A word from the resident about this chore (optional), shown with the record.
+    caption: str = Field(default="", max_length=140)
 
     @model_validator(mode="after")
     def evidence(self):

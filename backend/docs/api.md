@@ -72,6 +72,7 @@ Firebase AuthユーザーとFirestoreクライアントはBackendと同じプロ
 `{"request_id":"UUID", "chore":"laundry", "method":"rhythm", "hits":4, "total_beats":8, "duration_seconds":7}`。
 5秒以上・1ヒット以上が必要。hitsはtotal_beatsを超えない。古い洗濯pose/sound方式は受理しない。
 すべての達成に任意の `gal`（heisei/reiwa/kuro/hime、既定reiwa）を指定できる。
+任意の `caption`（ひとこと、140文字まで・前後の空白は除く）も付けられる。投稿に `caption` として保存し、ほめ言葉の Gemini にも「本人のひとこと」として渡す。
 
 ### ごはん
 
@@ -167,5 +168,5 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 
 - コメントは投稿の `comments: [{id, user_id, text, created_at}]` に入る。投稿の購読・一覧にそのまま含まれる
 - プロフィール写真は `house.members[uid].avatar_media_id`、共有設定は `house.members[uid].share_history`
-- 別ハウスの記録に含めるのは本人の内容だけ（`id, day, chore, method, created_at, media_id, voice_media_id, finished_voice_media_id, reward, praise, gal, source_house_id`）。リアクション・コメント・シンクロ相手は含めない
+- 別ハウスの記録に含めるのは本人の内容だけ（`id, day, chore, method, created_at, media_id, voice_media_id, finished_voice_media_id, reward, praise, gal, caption, source_house_id`）。リアクション・コメント・シンクロ相手は含めない
 - アカウント削除では、本人のコメント（他人の投稿上も）・プロフィール写真・共有設定も消える

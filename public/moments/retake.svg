@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="27" height="27" viewBox="0 0 27 27" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Button">
+<rect width="27" height="27" rx="13.5" fill="white" fill-opacity="0.56"/>
+<g id="Vector">
+<path d="M10.4318 10.4318L16.5682 16.5682ZM16.5682 10.4318L10.4318 16.5682Z" fill="black"/>
+<path d="M10.4318 10.4318L16.5682 16.5682M16.5682 10.4318L10.4318 16.5682" stroke-width="1.7" stroke-linecap="round" stroke="#65517E"/>
+</g>
+</g>
+</svg>

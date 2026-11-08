@@ -20,7 +20,7 @@ HISTORY_MEDIA_KINDS = {"meal", "cutout", "voice"}
 # and sync partners belong to the original house's residents.
 HISTORY_FIELDS = (
     "id", "day", "chore", "method", "created_at", "media_id", "voice_media_id",
-    "finished_voice_media_id", "reward", "praise", "gal",
+    "finished_voice_media_id", "reward", "praise", "gal", "caption",
 )
 
 

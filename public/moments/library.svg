@@ -1,0 +1,19 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Mask group">
+<mask id="mask0_0_9" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="38" height="38">
+<rect id="Rectangle 2" width="38" height="38" rx="6" fill="#D9D9D9"/>
+</mask>
+<g mask="url(#mask0_0_9)">
+<rect id="Rectangle 1" width="38" height="38" rx="6" fill="url(#paint0_linear_0_9)"/>
+<circle id="Ellipse 2" cx="28.3529" cy="17.3529" r="7.35294" fill="#FF8D54"/>
+<path id="Polygon 1" d="M11.9211 14C17.0823 14 41.4211 38 41.4211 38H-17.5789C-17.5789 38 6.75996 14 11.9211 14Z" fill="#329520"/>
+</g>
+</g>
+<defs>
+<linearGradient id="paint0_linear_0_9" x1="19" y1="0" x2="19" y2="38" gradientUnits="userSpaceOnUse">
+<stop stop-color="#D9C2FF"/>
+<stop offset="0.134615" stop-color="#FFB3DE"/>
+<stop offset="0.711538" stop-color="#FFD84D"/>
+</linearGradient>
+</defs>
+</svg>
