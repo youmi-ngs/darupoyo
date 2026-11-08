@@ -141,6 +141,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       sl.querySelector('.tl-get').textContent = REWARD[p.task].item;
       const sound = id => p.foreign ? p.loadMedia(id) : voiceOf(id);
       if (p.foreign) sl.querySelector('.pm-meta').textContent += '（別のハウスでの記録）';
+      if (p.caption) { const word = document.createElement('p'); word.className = 'pm-caption'; word.textContent = p.caption; sl.querySelector('.pm-meta').after(word); }
       if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => sound(p.voice_media_id)));
       if (!p.foreign) {
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
@@ -419,7 +420,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       const gal = pickGal();
       const { blob, kind, result, voice, ...fields } = evidence;
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
-      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
+      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><label class="post-caption"><span>ひとこと（30文字まで・なくてもOK）</span><input maxlength="30" placeholder="きょうもえらかった〜" autocomplete="off"></label><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
       const shown = resultOf(c, fields, result || {});
       sheetBody.querySelector('.result-label').textContent = shown.label;
       sheetBody.querySelector('.result-main').textContent = shown.main;
@@ -437,6 +438,9 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
         const button = $('post'); setBusy(button, true, '飾っています…'); $('redo').disabled = true; $('sheet-close').disabled = true;
+        // The word goes with the first try and stays the same on a retry (same request).
+        const word = sheetBody.querySelector('.post-caption input');
+        if (!word.disabled) { body.caption = word.value.trim(); word.disabled = true; }
         try {
           if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
           // A confirmed recording must not disappear silently on upload failure.

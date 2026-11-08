@@ -175,6 +175,8 @@ def details(context):
         facts.append(f"友だちのポーズをまねっこして、まねっこ度{round(context['similarity'])}%")
     if context.get("sync_with"):
         facts.append("友だちとほぼ同じタイミングで同じ家事をした（シンクロ）")
+    if context.get("caption"):
+        facts.append(f"本人のひとこと「{context['caption']}」")
     return "。".join(facts)
 
 

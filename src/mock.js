@@ -187,7 +187,7 @@ export async function mockFetch(url, init = {}) {
     if (first) template = state.poses[chore] = { user_id: uid, post_id: id, media_id: body.media_id, name: body.pose_name || '今日のオリジナルポーズ', landmarks: body.landmarks };
     const sync = Object.entries(state.latest[chore] || {}).filter(([other, at]) => other !== uid && now - Date.parse(at) <= 300000).map(([other]) => other);
     const post = { id, house_id: houseId, user_id: uid, day, chore, method: body.method, created_at: now.toISOString(), media_id: body.media_id || null, voice_media_id: body.voice_media_id || null,
-      duration_seconds: body.duration_seconds ?? null, hits: body.hits ?? null, total_beats: body.total_beats ?? null, gal: body.gal || 'reiwa', similarity: body.similarity ?? null,
+      duration_seconds: body.duration_seconds ?? null, hits: body.hits ?? null, total_beats: body.total_beats ?? null, gal: body.gal || 'reiwa', caption: (body.caption || '').trim(), similarity: body.similarity ?? null,
       pose_template_post_id: template?.post_id || null, is_first_pose: first, sync_with: sync, reward: REWARDS[chore], reactions: {},
       praise: { text: LABELS[chore] + 'できたのえらすぎ！今日の自分に拍手〜✨', source: 'fallback' } };
     const done = state.completed[uid] ||= [];

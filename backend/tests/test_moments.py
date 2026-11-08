@@ -71,3 +71,16 @@ def test_gemini_reads_only_the_caption_and_a_line_about_looks_is_not_used():
     praise.client = FakeGemini(["メイクいいね", "服かわいい"])
     assert praise.moment("kuro", "")["source"] == "fallback"
     assert praise.client.calls[0][0] == "ひとこと：（なし）"
+
+
+def test_a_chore_record_keeps_its_word_and_the_gal_hears_it(client):
+    from tests.test_api import sound
+    h = house(client)
+    body = {**sound("dryer"), "caption": "  髪さらさら〜  "}
+    post = client.post(f"/api/houses/{h}/completions", headers=auth(), json=body).json()["post"]
+    assert post["caption"] == "髪さらさら〜"
+    assert client.get(f"/api/houses/{h}/posts", headers=auth()).json()["items"][0]["caption"] == "髪さらさら〜"
+    assert client.post(f"/api/houses/{h}/completions", headers=auth(), json={**sound(), "caption": "あ" * 141}).status_code == 422
+    # without a word nothing changes
+    assert client.post(f"/api/houses/{h}/completions", headers=auth(), json=sound()).json()["post"]["caption"] == ""
+    assert "本人のひとこと「髪さらさら〜」" in gals.prompt("dryer", "reiwa", {"caption": "髪さらさら〜"})[1]
