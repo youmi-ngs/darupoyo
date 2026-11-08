@@ -21,10 +21,10 @@ test('a meal photo can come from the photo library (#117)', async ({ page, conte
   await expect(page.locator('.capture canvas')).toBeVisible();
   // a library photo is cut to the album's 5:6 frame and is not mirrored
   expect(await page.locator('.capture canvas').evaluate(c => [c.width * 6 === c.height * 5, c.classList.contains('is-mirrored')])).toEqual([true, false]);
-  await page.getByRole('button', { name: 'この写真を使う' }).click();
+  await page.getByRole('button', { name: 'いただきますをする' }).click();
   await page.getByRole('button', { name: '写真だけで進む' }).click();
-  await page.getByRole('button', { name: '部屋に飾る', exact: true }).click();
-  await expect(page.getByText('記録できた！')).toBeVisible();
+  await page.getByRole('button', { name: 'みんなに見せる' }).click();
+  await expect(page.getByText('記録できたよん。今日もえらい！')).toBeVisible();
   const posts = await page.evaluate(async () => { const { houseApi } = await import('/src/api.js'); return (await houseApi('/posts')).items; });
   expect(posts.map(p => [p.chore, p.method, !!p.media_id])).toEqual([['meal', 'photo', true]]);
 });

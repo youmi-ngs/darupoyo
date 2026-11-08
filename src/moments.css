@@ -1,0 +1,45 @@
+/* うちらのなう — Figma 207:914 (358 wide, 28 padding, a 302×380 camera frame). */
+dialog.now-dialog { box-sizing: border-box; width: min(358px, calc(100% - 32px)); max-height: 94dvh; margin: auto; inset: 0; overflow: auto; padding: 28px; border: 1px solid #ffffffbf; border-radius: 28px; background: linear-gradient(97.16deg, #fff5fcfa 0%, #f2edfff7 100%); box-shadow: 0 12px 32px -8px #2b1a451f; color: #3b2560; font-family: var(--font-ui); }
+dialog.now-dialog[open] { display: flex; flex-direction: column; gap: 16px; }
+dialog.now-dialog::backdrop { background: #3b256059; }
+.now-head { display: flex; align-items: center; gap: 8px; }
+.now-head h2 { flex: 1; margin: 0; font-size: 22px; font-weight: 700; line-height: 36px; }
+.now-close { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 12px; background: #ffffff8f; box-shadow: none; }
+.now-close img { display: block; width: 16px; height: 16px; }
+.now-lead { margin: 0; font-size: 14px; line-height: 23px; color: #6a5590; }
+/* The frame keeps the design's shape and shrinks on short screens so the share button stays in reach. */
+.now-frame { position: relative; flex: none; align-self: center; height: min(380px, calc(94dvh - 380px), (100vw - 88px) * 380 / 302); min-height: 200px; aspect-ratio: 302 / 380; overflow: hidden; border-radius: 16px; background: #eee; }
+.now-frame video, .now-frame canvas { display: block; width: 100%; height: 100%; object-fit: cover; }
+.now-frame [hidden] { display: none !important; }
+.now-frame .is-mirrored { transform: scaleX(-1); }
+.now-frame-note { position: absolute; inset: 0 16px 80px; display: grid; place-items: center; margin: 0; text-align: center; font-size: 13px; line-height: 1.6; color: #6a5590; }
+.now-retake { position: absolute; top: 10px; left: 10px; width: 27px; height: 27px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
+.now-retake img { display: block; }
+.now-controls { position: absolute; left: 10px; right: 10px; bottom: 13px; display: flex; align-items: center; justify-content: space-between; height: 50px; }
+.now-library { display: block; width: 38px; height: 38px; border-radius: 6px; cursor: pointer; }
+.now-library img { display: block; width: 38px; height: 38px; }
+.now-shutter { width: 50px; height: 50px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
+.now-shutter img { display: block; width: 50px; height: 50px; }
+.now-shutter:active { transform: scale(.93); }
+.now-flip { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 22px; background: #ffffffd9; box-shadow: none; }
+.now-flip img { display: block; width: 24px; height: 24px; }
+.now-flip:disabled { opacity: .5; }
+/* Without a second camera the switch is not shown, but keeps its place so the shutter stays centered. */
+.now-controls .now-flip[hidden] { display: grid !important; visibility: hidden; }
+.now-field { display: flex; flex-direction: column; gap: 12px; margin: 0; font-size: 15px; font-weight: 700; line-height: 24px; }
+.now-field input { box-sizing: border-box; width: 100%; height: 52px; margin: 0; padding: 14px; border: 1px solid #73599933; border-radius: 12px; background: #ffffffbf; color: #3b2560; font: 400 15px/normal var(--font-ui); }
+.now-field input::placeholder { color: #b3abbd; opacity: 1; } /* a light gray example, not text you wrote */
+.now-share { min-height: 56px; padding: 16px; border: 0; border-radius: 1000px; background: #ffdbf0d9; color: #3b2560; box-shadow: none; font: 700 16px/24px var(--font-ui); }
+.now-share:disabled:not(.is-busy) { opacity: .55; }
+.now-status { margin: -8px 0 0; font-size: 12px; color: #6a5590; }
+.now-status:empty { display: none; }
+.now-shutter:disabled { opacity: .6; }
+/* After sending (Figma 207:958): the word as text, then the gal's line, then けーじばん. */
+.now-caption { margin: 0; font-size: 15px; color: #6a5590; overflow-wrap: anywhere; }
+.now-praise[hidden], .now-caption[hidden], .now-field[hidden], .now-share[hidden], .now-board[hidden] { display: none; }
+.now-board { min-height: 56px; padding: 16px; border: 0; border-radius: 1000px; background: #ffdbf0d9; color: #3b2560; box-shadow: none; font: 700 16px/24px var(--font-ui); }
+/* そ〜しんできたよん pops in once it is sent. */
+.now-dialog.is-sent .now-lead, .now-dialog.is-sent .now-praise { animation: now-pop .45s cubic-bezier(.2, 1.6, .4, 1) both; }
+.now-dialog.is-sent .now-praise { animation-delay: .12s; }
+@keyframes now-pop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .now-dialog.is-sent * { animation: none !important; } }

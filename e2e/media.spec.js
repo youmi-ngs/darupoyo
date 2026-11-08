@@ -20,29 +20,29 @@ test('packaged Google models load and process blank inputs without false complet
 });
 test('camera capture, photo-only fallback, save and stream release',async({page,context})=>{
   await context.grantPermissions(['camera']);
-  await page.goto('/');await setWelcomeName(page, 'photo');await setHouseName(page, 'camera flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:/^たべる/}).click();await expect(page.locator('video')).toBeVisible();
+  await page.goto('/');await setWelcomeName(page, 'photo');await setHouseName(page, 'camera flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('.scene-dot').nth(2).click();await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:/^たべる/}).click();await expect(page.locator('.capture video')).toBeVisible();
   await page.getByRole('button',{name:'この写真を撮る'}).waitFor({state:'visible'});
   await page.evaluate(()=>{window.testStream=document.querySelector('video').srcObject;});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
   expect(await page.locator('.capture canvas').evaluate(c => c.width / c.height)).toBeCloseTo(5 / 6);
   // 撮影直後に確認でき、撮り直してもカメラは動いたまま（#12 #13）
-  await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('video')).toBeHidden();
+  await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('.capture video')).toBeHidden();
   await page.getByRole('button',{name:'もう1回撮る'}).click();
-  await expect(page.locator('video')).toBeVisible();await expect(page.locator('.capture canvas')).toBeHidden();
+  await expect(page.locator('.capture video')).toBeVisible();await expect(page.locator('.capture canvas')).toBeHidden();
+  await expect(page.getByRole('button',{name:'いただきますをする'})).toBeDisabled(); // nothing to keep yet
   await page.getByRole('button',{name:'この写真を撮る'}).click();
-  await page.getByRole('button',{name:'この写真を使う'}).click();
-  await page.getByRole('button',{name:'写真だけで進む'}).or(page.locator('#post')).first().waitFor({state:'visible'});
-  if(await page.getByRole('button',{name:'写真だけで進む'}).count()) await page.getByRole('button',{name:'写真だけで進む'}).click();
-  await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();await expect(page.getByText('記録できた！')).toBeVisible();
+  await page.getByRole('button',{name:'いただきますをする'}).click();
+  await page.getByRole('button',{name:'写真だけで進む'}).click();
+  await page.getByRole('button',{name:'みんなに見せる'}).click();await expect(page.getByText('記録できたよん。今日もえらい！')).toBeVisible();
   expect(await page.evaluate(()=>window.testStream.getTracks().every(t=>t.readyState==='ended'))).toBe(true);
-  await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();await expect(page.locator('#board-view')).toBeVisible();await expect(page.locator('.pin-grid .pin-post')).toHaveCount(1);await page.locator('.board-back').click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();await expect(page.locator('.mr-frame img')).toHaveCount(1);
+  await page.getByRole('button',{name:'け〜じばんをちぇけらする'}).click();await page.locator('.board-back').click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();await expect(page.locator('.mr-frame img')).toHaveCount(1);
 });
 test('preset pose shows live guidance and rejects a frame without a person',async({page,context})=>{
   test.setTimeout(90000);
   await context.grantPermissions(['camera']);
-  await page.goto('/');await setWelcomeName(page, 'pose');await setHouseName(page, 'pose flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('[data-chore="trash"]').click(); await page.getByRole('button',{name:/^ゴミ捨てる/}).click();await page.getByRole('button',{name:/サンタのポーズ/}).click();
+  await page.goto('/');await setWelcomeName(page, 'pose');await setHouseName(page, 'pose flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('.scene-dot').nth(0).click();await page.locator('[data-chore="trash"]').click();await page.getByRole('button',{name:/^ゴミ捨てる/}).click();await page.getByRole('button',{name:/サンタのポーズ/}).click();
   await expect(page.locator('.capture video')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
   await expect(page.locator('.capture-status')).toHaveText('全身が入るように、少し離れてね',{timeout:30000});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
@@ -53,21 +53,21 @@ test('preset pose shows live guidance and rejects a frame without a person',asyn
 });
 test('いただきます is recorded with the meal and plays back from the album (#9 #33)',async({page,context})=>{
   await context.grantPermissions(['camera','microphone']);
-  await page.goto('/');await setWelcomeName(page, 'itadaki');await setHouseName(page, 'voice');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:/^たべる/}).click();
-  await page.getByRole('button',{name:'この写真を撮る'}).click();await page.getByRole('button',{name:'この写真を使う'}).click();
+  await page.goto('/');await setWelcomeName(page, 'itadaki');await setHouseName(page, 'voice');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.locator('.scene-dot').nth(2).click();await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:/^たべる/}).click();
+  await page.getByRole('button',{name:'この写真を撮る'}).click();await page.getByRole('button',{name:'いただきますをする'}).click();
   // The fake mic hums nonstop: drive the loudness the page measures (a 0.6s voice, then quiet).
   await page.evaluate(() => { window.testLevel = 0; AnalyserNode.prototype.getFloatTimeDomainData = function(a) { a.fill(0); for (let i = 0; i < a.length; i += 2) a[i] = window.testLevel * Math.SQRT2; }; });
   await page.getByRole('button',{name:'マイクをオンにする'}).click();
   await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'listening');
   await page.evaluate(() => new Promise(r => setTimeout(() => { window.testLevel = 0.2; setTimeout(() => { window.testLevel = 0; r(); }, 600); }, 400)));
   await expect(page.locator('.result-main')).toHaveText('「いただきます」聞こえた！');
-  await expect(page.locator('.result-card .voice-play')).toBeVisible();
+  await expect(page.locator('.result-panel .voice-play')).toBeVisible();
   const saved=page.waitForResponse(r=>r.url().includes('/completions'));
-  await page.getByRole('button',{name:'部屋に飾る',exact:true}).click();
+  await page.getByRole('button',{name:'みんなに見せる'}).click();
   const post=(await (await saved).json()).post;
   expect(post.method).toBe('photo_voice');expect(post.voice_media_id).toBeTruthy();
-  await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();await expect(page.locator('#board-view')).toBeVisible();await expect(page.locator('.pin-grid .pin-post')).toHaveCount(1);await page.locator('.board-back').click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();
+  await page.getByRole('button',{name:'け〜じばんをちぇけらする'}).click();await page.locator('.board-back').click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();
   await expect(page.locator('.mr-frame .voice-badge')).toHaveCount(1);
   await page.locator('.mr-frame').first().click();
   const voice=page.waitForResponse(r=>r.url().includes('/media/'+post.voice_media_id));

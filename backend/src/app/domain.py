@@ -237,6 +237,7 @@ class Domain:
                 "hits": body.hits,
                 "total_beats": body.total_beats,
                 "gal": body.gal,
+                "caption": body.caption.strip(),
                 "similarity": body.similarity,
                 "pose_template_post_id": template["post_id"] if template else None,
                 "is_first_pose": first,

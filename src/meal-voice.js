@@ -12,7 +12,7 @@ export function recordMealVoice(box, phrase, signal, verify) {
     <button type="button" class="btn btn-sub meal-voice-next"></button>
     <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>マイクをオンにしている間だけ、最大10秒録音します。言い終わると、「いただきます」と言えているかを Google の Gemini が自動で確認します。確認できた声は、ハウスの住人が再生できます。</p></details>`;
   panel.querySelector('h3').textContent = phrase + 'を残そう';
-  box.insertBefore(panel, box.querySelector('canvas'));
+  box.insertBefore(panel, box.querySelector(':scope > .capture-frame, :scope > canvas')); // above the photo
   const status = panel.querySelector('[role=status]'), toggle = panel.querySelector('.meal-voice-toggle'), next = panel.querySelector('.meal-voice-next');
   next.textContent = '写真だけで進む';
   const show = (state, text) => { panel.dataset.state = state; status.textContent = text; };

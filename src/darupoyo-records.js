@@ -1,4 +1,5 @@
 import { setBusy } from './busy.js';
+import { whileSending } from './sending.js';
 import { api, client, refresh } from './api.js';
 import { blobOf, photoCrop } from './camera.js';
 import { takePhoto } from './photo-camera.js';
@@ -122,8 +123,10 @@ export function setupDarupoyoRecords() {
       submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim()};
       busy=true; [file,camera,library,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent=''; setBusy(save,true,'共有しています…');
       try {
-        if(photo && !submission.media_id) submission.media_id=(await scopedApi(house,'/media?kind=darupoyo',photo)).id;
-        const {record}=await scopedApi(house,'/darupoyo',submission);
+        const {record}=await whileSending(dialog, async()=>{ // そ〜しんちゅ〜
+          if(photo && !submission.media_id) submission.media_id=(await scopedApi(house,'/media?kind=darupoyo',photo)).id;
+          return scopedApi(house,'/darupoyo',submission);
+        });
         if(version!==composer) return;
         discardPreview(); dialog.classList.add('is-success'); dialog.innerHTML='<div class="record-celebration" aria-hidden="true"><span class="record-confetti"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><img class="refined-success-art" src="/refined/3759b.svg" alt=""></div><h2>だるぽよ、<br>記録かんりょ〜</h2><p>きょうのあんたも、超かわいいよん♡</p><button type="button" class="refined-button">けーじばんを見る</button>';
         dialog.querySelector('button').onclick=()=>dialog.close();

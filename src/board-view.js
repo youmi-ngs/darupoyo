@@ -49,7 +49,7 @@ export function setupBoardView(ctx) {
   // One list for both boards, newest first.
   function cards() {
     return [
-      ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.praise?.text || '', post: p })),
+      ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.caption || p.praise?.text || '', post: p })),
       ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || '今のじぶん📷', caption: m.caption, praise: m.praise })),
       ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ' })),
     ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
@@ -89,19 +89,37 @@ export function setupBoardView(ctx) {
       ctx.openPost(list.map(c => c.post), list.findIndex(c => c.id === card.id));
       return;
     }
+    // みんなの今 and だるぽよ cards open here; swipe (or ←→) moves through them in board order.
+    const list = cards().filter(c => c.type !== 'post'), start = Math.max(0, list.findIndex(c => c.id === card.id));
     viewer.replaceChildren();
     const close = document.createElement('button'); close.type = 'button'; close.className = 'sheet-close pm-close'; close.setAttribute('aria-label', '閉じる'); close.textContent = '×'; close.onclick = () => viewer.close();
+    const count = document.createElement('span'); count.className = 'pm-count pin-viewer-count'; count.hidden = list.length < 2;
+    const track = document.createElement('div'); track.className = 'pin-viewer-track';
+    track.tabIndex = 0; track.setAttribute('role', 'region'); track.setAttribute('aria-label', 'けーじばんの写真・左右にスワイプで移動');
+    list.forEach(item => track.append(slide(item)));
+    viewer.append(close, count, track);
+    const at = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+    const mark = () => { const k = at(); count.textContent = (k + 1) + ' / ' + list.length; track.children[k]?.querySelector('.pin-photo')?.load?.(); };
+    track.onscroll = () => { clearTimeout(track._t); track._t = setTimeout(mark, 40); };
+    track.onkeydown = e => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault(); track.scrollTo({ left: (at() + (e.key === 'ArrowRight' ? 1 : -1)) * track.clientWidth, behavior: 'smooth' });
+    };
+    viewer.showModal();
+    requestAnimationFrame(() => { track.style.scrollBehavior = 'auto'; track.scrollLeft = start * track.clientWidth; track.style.scrollBehavior = ''; mark(); });
+  }
+  function slide(card) {
+    const box = document.createElement('div'); box.className = 'pin-viewer-slide';
     const title = document.createElement('h2'); title.className = 'pm-title'; title.textContent = ctx.nameOf(card.who) + (card.type === 'moment' ? 'の今' : 'の' + (LABELS[card.chore] || '') + '、だるぽよ');
     const time = document.createElement('p'); time.className = 'pm-meta';
     time.textContent = new Intl.DateTimeFormat('ja-JP', { timeZone: dashboard?.timezone || 'Asia/Tokyo', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(card.at));
     const text = document.createElement('p'); text.className = 'pin-viewer-text'; text.textContent = card.text;
-    const pic = picture(card); pic.load?.();
-    viewer.append(close, pic, title, time, text);
+    box.append(picture(card), title, time, text);
     if (card.type === 'moment') { // the caption, then the gal's line (#158)
       text.textContent = card.caption || ''; text.hidden = !card.caption;
-      const praise = momentPraise(card.praise); if (praise) viewer.append(praise);
+      const praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
     }
-    viewer.showModal();
+    return box;
   }
   function render() {
     const list = cards();
