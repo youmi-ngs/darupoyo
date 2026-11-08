@@ -4,7 +4,7 @@
 .meal-voice{margin:16px 0;text-align:center;padding:20px 12px 12px;border-radius:24px;background:#fff5fb}
 .meal-voice-toggle{position:relative;display:grid;place-items:center;width:96px;height:96px;margin:4px auto 20px;border:2.5px solid #3b2560;border-radius:50%;background:var(--glossy,#ffb3de);color:#3b2560;box-shadow:4px 4px 0 #3b2560;cursor:pointer;transition:background .2s,transform .2s}
 .meal-voice-toggle:active{transform:scale(.95)}
-.meal-voice-toggle:focus-visible,.meal-voice-next:focus-visible{outline:3px solid #a32862;outline-offset:6px}
+.keyboard-nav .meal-voice-toggle:focus-visible,.keyboard-nav .meal-voice-next:focus-visible{outline:3px solid #a32862;outline-offset:6px}
 .meal-voice-toggle svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
 .meal-voice-toggle .voice-check,.voice-stop{display:none}
 .meal-voice-status{min-height:65px}

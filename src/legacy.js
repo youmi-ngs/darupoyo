@@ -1,3 +1,4 @@
+import './input-mode.js';
 import { setBusy } from './busy.js';
 import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';

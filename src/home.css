@@ -11,7 +11,7 @@
 .scene-dot { pointer-events: auto; width: 28px; height: 28px; padding: 0; border: 0; background: none; display: grid; place-items: center; cursor: pointer; }
 .scene-dot::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: rgba(59, 37, 96, .35); border: 1.5px solid var(--paper); transition: transform .2s, background .2s; }
 .scene-dot[aria-current]::before { background: var(--ink); transform: scale(1.4); }
-.scene-dot:focus-visible { outline: 2px solid var(--ink); border-radius: 50%; }
+.keyboard-nav .scene-dot:focus-visible { outline: 2px solid var(--ink); border-radius: 50%; }
 
 /* ---------- 外 ---------- */
 .scene[data-scene="outside"] { --sv-wall: var(--outdoor-sky, linear-gradient(#A8D8F5, #EDF8FF)); --sv-floor: linear-gradient(180deg, #E5E1EC, #D7D2E0); }

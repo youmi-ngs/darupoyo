@@ -25,7 +25,7 @@
 .completion-sticker::after { content: '♡'; margin-left: 2px; }
 .furniture-toy { pointer-events: auto !important; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .furniture-toy:focus { outline: none; }
-.furniture-toy:focus-visible:not(.is-pointer-focus) { outline: 3px solid #a32862; outline-offset: 4px; }
+.keyboard-nav .furniture-toy:focus-visible:not(.is-pointer-focus) { outline: 3px solid #a32862; outline-offset: 4px; }
 .furniture-prize { position: absolute; z-index: 6; left: calc(50% - 38px); bottom: 5%; width: 76px; min-height: 66px; padding: 4px; border: 2px solid var(--ink); border-radius: 18px; background: #fff3fa; color: var(--ink); box-shadow: 0 3px 8px #3b256030; animation: furniture-prize-drop .6s ease-out; }
 .furniture-prize svg { display: block; width: 58px; margin: auto; }
 .furniture-prize span { font-size: 11px; font-weight: 900; }
@@ -36,5 +36,5 @@
 /* Leave room for the lower row of overlapping stickers. */
 .fridge .whiteboard:has(.completion-sticker) { height: 192px; }
 .darupoyo-dialog label:has(input[type=file]) { padding: 12px; border: 2px dashed #b68bb4; border-radius: 14px; text-align: center; background: white; cursor: pointer; }
-.darupoyo-dialog label:has(input[type=file]):focus-within { outline: 3px solid #7fb8e8; outline-offset: 3px; }
+.keyboard-nav .darupoyo-dialog label:has(input[type=file]):focus-within { outline: 3px solid #7fb8e8; outline-offset: 3px; }
 .darupoyo-dialog input[type=file] { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }

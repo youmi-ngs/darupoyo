@@ -77,3 +77,21 @@ test('tapping the house invite code copies the code itself', async ({ page }) =>
   await expect(page.locator('#invite-status')).toContainText('招待コードをコピーしたよ');
   expect(await page.evaluate(() => window.copied)).toBe(await code.textContent());
 });
+
+test('buttons show no ring after a tap or when a dialog focuses them, but keep it for Tab', async ({ page }) => {
+  await enter(page);
+  const ring = loc => page.locator(loc).evaluate(el => getComputedStyle(el).outlineStyle);
+  // a dialog that focuses its close button when it opens
+  await page.locator('.scene-dot').nth(2).click(); await page.locator('[data-chore="meal"]').click();
+  const auto = page.locator('#sheet button:focus');
+  await expect(auto).toHaveCount(1);
+  expect(await auto.evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
+  await page.locator('#sheet-close').click();
+  // a tapped button
+  await page.locator('#open-menu').click(); expect(await ring('#open-menu')).toBe('none');
+  await page.keyboard.press('Escape');
+  // keyboard users still see where they are
+  await page.keyboard.press('Tab');
+  const focused = page.locator(':focus');
+  expect(await focused.evaluate(el => getComputedStyle(el).outlineStyle)).toBe('solid');
+});
