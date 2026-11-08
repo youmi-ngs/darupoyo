@@ -1,3 +1,4 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 
@@ -10,15 +11,19 @@ test('installable app files and the push worker are served (#58)', async ({ requ
   }
 });
 
-test('without Firebase login the notification card stays hidden and settings fit (#58)', async ({ page }) => {
+test('without Firebase login the notification toggle stays visible, off and disabled', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill('p'); await page.getByLabel('新しいハウスの名前').fill('push');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'p'); await setHouseName(page, 'push');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await expect(page.locator('#settings')).toBeVisible();
-  await expect(page.locator('#push-card')).toBeHidden();
+  await expect(page.locator('#push-card')).toBeVisible();
+  await expect(page.locator('#push-toggle')).toBeDisabled();
+  await expect(page.locator('#push-toggle')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#push-toggle img')).toHaveAttribute('src', '/settings/6b989.svg');
+  await expect(page.locator('#push-note')).toHaveText('この環境では通知を利用できません');
   expect(await page.locator('#settings .drawer-inner').evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
 });
 
@@ -49,9 +54,9 @@ test('notification registration succeeds, and a failed save can be retried', asy
     return route.fulfill({ status: saveFails ? 503 : 200, json: { enabled: !saveFails } });
   });
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill('push-retry');
-  await page.getByLabel('新しいハウスの名前').fill('notifications');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'push-retry');
+  await setHouseName(page, 'notifications');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
     const { client } = await import('/src/api.js');

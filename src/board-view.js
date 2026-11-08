@@ -129,14 +129,34 @@ export function setupBoardView(ctx) {
     for (let k = list.length; k < 6 && mini; k++) { const empty = document.createElement('span'); empty.className = 'pin-card is-empty'; mini.append(empty); }
   }
 
+  let exitAnimation = null, closeVersion = 0;
   view.querySelector('.board-back').addEventListener('click', () => close());
   function open() {
+    closeVersion++; exitAnimation?.cancel(); exitAnimation = null;
+    view.inert = false; document.getElementById('house-view').inert = false;
     document.body.classList.add('no-scroll');
     ['house-view', 'room-view'].forEach(id => { document.getElementById(id).hidden = true; });
     view.hidden = false; view.scrollTop = 0; view.querySelector('.board-back').focus();
     void loadExtra();
   }
-  function close() { view.hidden = true; ctx.onClose?.(); }
+  async function close() {
+    if (view.hidden || exitAnimation) return;
+    const version = ++closeVersion, house = document.getElementById('house-view');
+    view.inert = house.inert = true; ctx.onClosing?.();
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const style = getComputedStyle(view);
+      exitAnimation = view.animate([
+        {opacity:style.opacity,transform:style.transform,offset:0,easing:'ease-out'},
+        {opacity:1,transform:'translateY(3px) rotate(.6deg)',offset:.25,easing:'ease-in'},
+        {opacity:0,transform:'translateY(-52px) rotate(-1deg)',offset:1}
+      ], {duration:240,fill:'forwards'});
+      await exitAnimation.finished.catch(() => {});
+    }
+    if (version !== closeVersion) return;
+    view.hidden = true; exitAnimation?.cancel(); exitAnimation = null;
+    view.inert = house.inert = false; ctx.onClose?.();
+    document.getElementById('open-board').focus({preventScroll:true});
+  }
   window.addEventListener('darupoyo:recorded', () => void loadExtra());
   window.addEventListener('darupoyo:moment', () => void loadExtra());
   return {

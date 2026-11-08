@@ -1,11 +1,12 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 import { playRhythm, stillCamera, unlockStart } from './rhythm-helper.js';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); await stillCamera(context); });
 
 async function openLaundry(page, name) {
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill(name); await page.getByLabel('新しいハウスの名前').fill('laundry');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, name); await setHouseName(page, 'laundry');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(4).click();
   await page.locator('[data-chore="laundry"]').click();
@@ -13,14 +14,14 @@ async function openLaundry(page, name) {
 
 test('laundry is one camera rhythm; no tap or mic mode (#35)', async ({ page }) => {
   await openLaundry(page, 'one');
-  await expect(page.locator('.choice button:not(.darupoyo-choice)')).toHaveCount(1);
-  await expect(page.locator('.choice button:not(.darupoyo-choice)')).toContainText('バサバサでリズム');
+  await expect(page.locator('.refined-actions button:not(.darupoyo-choice)')).toHaveCount(1);
+  await expect(page.locator('.refined-actions button:not(.darupoyo-choice)')).toContainText('干す');
 });
 
 test('start waits for the upper body, then counts down 3-2-1 before the notes move (#106 #107)', async ({ page, context }) => {
   await context.grantPermissions(['camera']);
   await openLaundry(page, 'wait');
-  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await page.getByRole('button', { name: /^干す/ }).click();
   const start = page.getByRole('button', { name: 'リズムをはじめる' });
   await expect(start).toBeDisabled({ timeout: 20000 });
   await unlockStart(page);
@@ -51,7 +52,7 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
   const modelRequests = [];
   page.on('request', request => { if (request.url().includes('/models/')) modelRequests.push(request.url()); });
   await openLaundry(page, 'six');
-  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await page.getByRole('button', { name: /^干す/ }).click();
   await expect(page.locator('.rhythm-camera video')).toBeVisible();
   await expect(page.locator('.rhythm-note')).toHaveCount(8);
   const tracks = await page.evaluate(() => { window.testVideo = document.querySelector('.rhythm-camera video').srcObject; return window.testVideo.getAudioTracks().length; });
@@ -81,7 +82,7 @@ test('6 of 8 hits clears, sparkles on each hit, and releases the camera', async 
 
 test('fewer than 6 hits shows a gal cheer and a retry, and records nothing (#34)', async ({ page }) => {
   await openLaundry(page, 'miss');
-  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await page.getByRole('button', { name: /^干す/ }).click();
   await playRhythm(page, 4);
   await expect(page.getByRole('heading', { name: 'おしい〜！' })).toBeVisible();
   await expect(page.locator('.sheet-text')).toHaveText('4 / 8 ヒット（6回でクリア）');

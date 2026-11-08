@@ -48,7 +48,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   const sheet = $('sheet'), sheetBody = $('sheet-body');
   const darupoyoRecords = setupDarupoyoRecords();
   const furniturePlay = setupFurniturePlay();
-  const cleared = () => new Set(state.posts.map((p) => p.who));
+  const litResidents = () => new Set(Object.entries(dashboard?.lights || {}).filter(([, on]) => on).map(([who]) => who));
   const isFirstToday = (id) => !(state.doneToday[id] || []).length;
   const kindText = { pose: 'のポーズ写真（切り抜き）', photo: 'の写真', sound: 'の検出記録', rhythm: 'のリズム記録' };
 
@@ -125,8 +125,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     requestAnimationFrame(mark);
   }
   // Calendar button (#91): jump to a day's page.
-  const calButton = document.createElement('button'); calButton.type = 'button'; calButton.className = 'btn log-cal'; calButton.id = 'log-calendar'; calButton.textContent = '📅 カレンダー';
-  $('log-total').after(calButton);
+  const calButton = document.createElement('button'); calButton.type = 'button'; calButton.className = 'btn log-cal'; calButton.id = 'log-calendar'; calButton.setAttribute('aria-label', 'カレンダーを開く'); calButton.title = 'カレンダー'; calButton.innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="4"/><path d="M7 3v4m10-4v4M3 10h18m-13 4h1m6 0h1m-8 3h1m6 0h1"/></svg>';
+  $('log-close').before(calButton);
   calButton.addEventListener('click', () => {
     const list = $('log-list'), page = Math.round(list.scrollLeft / list.clientWidth);
     openCalendar({ today: dayIso(dayOffset), selected: logDays[page] ? dayIso(logDays[page].off) : dayIso(dayOffset),
@@ -188,15 +188,19 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   };
   const postLine = (p) => p.galLine || GALS[galOf(p)].lines[lineKey(p.task, p.kind, null, p.pose)];
   const galIcon = (g, who = ME) => dressedGalIcon(g, themeOf(who));
-  function renderGalPicker() {
+  function renderGalPicker(chosenId) {
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
-    const faces = { heisei: 'c98ab', reiwa: '24a0f', kuro: 'ddaad', hime: '71e8d' };
+    const faces = { heisei: 'e1819', reiwa: 'a8e4c', kuro: '36c33', hime: 'b1680' };
     const mini = { heisei: 'd83de', kuro: '36255', hime: '2be8e', reiwa: '4fc4e' };
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
       if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + ['heisei', 'kuro', 'hime', 'reiwa'].map(g => '<i class="mini-' + g + '"><img src="/settings/' + mini[g] + '.svg" alt=""></i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
-      else { b.dataset.gal = id; b.innerHTML = '<span class="gal-heading"><span class="settings-gal-face" style="background:' + GALS[id].bg + '"><img src="/settings/' + faces[id] + '.svg" alt=""></span><b>' + GALS[id].name + '</b></span><small></small><em></em>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + ({ heisei:'あげぽよ〜↑↑', reiwa:'え、天才すぎん？', kuro:'やるじゃん！最強！', hime:'えらすぎるキュン♡' })[id] + '」'; }
-      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} setAppIcon(id); renderGalPicker(); [...box.children].find(button => button.getAttribute('aria-pressed') === 'true')?.focus(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
+      else { b.dataset.gal = id; b.innerHTML = '<span class="settings-gal-face" style="background:' + GALS[id].bg + '"><img src="/refined/' + faces[id] + '.svg" alt=""></span><span class="gal-copy"><span class="gal-heading"><b>' + GALS[id].name + '</b><small></small></span><em></em></span>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + ({ heisei:'あげぽよ〜↑↑', reiwa:'え、天才すぎん？', kuro:'やるじゃん！最強！', hime:'えらすぎるキュン♡' })[id] + '」'; }
+      if (galPref === id) {
+        const badge = document.createElement('span'); badge.className = 'gal-selected-badge'; badge.textContent = '✓ 選択中'; badge.setAttribute('aria-hidden','true'); b.append(badge);
+      }
+      if (chosenId === id) b.classList.add('just-selected');
+      b.addEventListener('click', () => { galPref = id; try { localStorage.setItem('cyl-gal', id); } catch (e) {} setAppIcon(id); renderGalPicker(id); $('gal-selection-status').textContent = (GALS[id]?.name || 'ノリで') + 'にしたよ♡'; [...box.children].find(button => button.getAttribute('aria-pressed') === 'true')?.focus(); syncPushGal(id); void houseApi('/profile', { gal: id }, 'PUT').then(refresh).catch(e => toast(e.message)); if (GALS[id]) galVoice(id, GALS[id].title); });
       return b;
     };
     box.append(mk('random'));
@@ -210,7 +214,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   const PER_PAGE = 3;
   const roomOrder = () => [ME, ...RESIDENTS.map(r => r.who).filter(w => w !== ME)].filter(w => RESIDENTS.some(r => r.who === w));
   function renderRooms() {
-    const lit = cleared(), order = roomOrder(), plan = $('plan');
+    const lit = litResidents(), order = roomOrder(), plan = $('plan');
     plan.querySelectorAll('.scene.rooms-page').forEach(n => n.remove());
     for (let page = 0; page * PER_PAGE < Math.max(order.length, 1); page++) {
       const scene = document.createElement('div'); scene.className = 'scene rooms-page'; scene.dataset.scene = 'rooms'; scene.dataset.page = page;
@@ -221,7 +225,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
         const b = document.createElement('button'); b.type = 'button'; b.dataset.who = who;
         b.className = 'door' + (on ? ' is-lit' : '') + (state.newRoom === who ? ' is-new' : '') + (who === ME ? ' is-me' : '');
         b.style.setProperty('--tint', THEMES[themeOf(who)].accent);
-        b.setAttribute('aria-label', nameOf(who) + (who === ME ? '（自分）' : '') + 'の部屋：' + (mine.length ? '今日' + mine.length + '個クリア' : 'まだ') + '。タップで中に入る');
+        b.setAttribute('aria-label', nameOf(who) + (who === ME ? '（自分）' : '') + 'の部屋：' + (mine.length ? '今日' + mine.length + '個クリア' : on ? 'だるぽよ共有済み' : 'まだ') + '。タップで中に入る');
         b.innerHTML = '<span class="door-window" aria-hidden="true"></span><span class="door-hanger" aria-hidden="true"></span><span class="door-plate"></span><span class="door-knob" aria-hidden="true"></span>';
         b.querySelector('.door-plate').textContent = nameOf(who);
         b.addEventListener('click', () => showRoom(who));
@@ -303,7 +307,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   function showRoom(who, refresh) {
     currentRoom = who;
     const mine = state.posts.filter((p) => p.who === who);
-    const lit = mine.length > 0;
+    const lit = litResidents().has(who);
     const theme = THEMES[roomTheme(who)];
     const col = roomTheme(who), hex = theme.accent;
     const S2 = 'stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
@@ -331,8 +335,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     if (who !== ME) closePaint();
     renderPaint();
     box.querySelector('.mr-plate b').textContent = (nameOf(who) + (who === ME ? '（自分）' : '')) + 'の部屋';
-    box.querySelector('.mr-plate span').textContent = lit ? '電気ついてる・今日' + mine.length + '個クリア' : 'まだ真っ暗';
-    box.querySelector('.mr-dark p').textContent = who === ME ? 'まだ真っ暗…家事を1つでもやると電気がつくよ' : nameOf(who) + 'はまだ寝てるっぽい…';
+    box.querySelector('.mr-plate span').textContent = lit ? (mine.length ? '電気ついてる・今日' + mine.length + '個クリア' : '電気ついてる・だるぽよ共有済み') : 'まだ真っ暗';
+    box.querySelector('.mr-dark p').textContent = who === ME ? 'まだ真っ暗…家事を1つやるか、だるぽよを共有すると電気がつくよ' : nameOf(who) + 'はまだ寝てるっぽい…';
     box.querySelector('.mr-album').addEventListener('click', () => openLog(who));
     if (window.__tapMark) window.__tapMark(box.querySelector('.mr-album'));
     const fr = box.querySelector('.mr-frames');
@@ -348,12 +352,36 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       window.scrollTo(0, 0); $('room-back').focus();
     }
   }
-  $('room-back').addEventListener('click', () => { closePaint(); window.__toHall = true; showHouse(); });
+  let closingRoom = false;
+  $('room-back').addEventListener('click', async () => {
+    if (closingRoom) return;
+    closingRoom = true; closePaint();
+    const room = $('room-view'), house = $('house-view');
+    window.__toHall = true; house.hidden = false; window.__goScene?.();
+    room.inert = house.inert = true;
+    let exit;
+    try {
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        exit = room.animate([
+          {opacity:1,transform:getComputedStyle(room).transform,offset:0,easing:'ease-out'},
+          {opacity:1,transform:'translateY(-2px) scale(1.01)',offset:.22,easing:'cubic-bezier(.4,0,.8,.5)'},
+          {opacity:0,transform:'translate(-6%, 8%) scale(.82) rotate(-.5deg)',offset:1}
+        ], {duration:300,fill:'forwards'});
+        await exit.finished.catch(() => {});
+      }
+      showHouse();
+    } finally {
+      exit?.cancel(); room.inert = house.inert = false; closingRoom = false;
+      [...house.querySelectorAll('.door')].find(door => door.dataset.who === currentRoom)?.focus({preventScroll:true});
+    }
+  });
   // けーじばん: opens from the board in the entrance, ← goes back there.
   const boardView = setupBoardView({ nameOf, iconOf, themeOf, galOf: memberGal, toast,
     openPost: (posts, index) => openPhotos(posts.map(p => ({ p, day: p.day === dashboard.state.day ? '今日' : dayLabel(offOf(p.day)) })), index),
+    onClosing: () => { window.__toScene = sceneIndexOf('entry'); $('house-view').hidden = false; window.__goScene?.(); },
     onClose: () => { window.__toScene = sceneIndexOf('entry'); showHouse(); } });
   $('open-board').addEventListener('click', () => boardView.open());
+  window.addEventListener('darupoyo:open-board', () => boardView.open());
 
   function openRoom(who) {
     const mine = state.posts.filter((p) => p.who === who);
@@ -390,28 +418,48 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     if (t.photo) list.push({ kind: 'photo', mode: 'photo', title: t.photo.title, hint: t.photo.hint, look: t.photo.look, praise: t.photo.praise });
     return list;
   }
-  function openSheet(id) {
-    const t = TASKS[id], list = choicesFor(id);
-    const lead = id === 'laundry' ? '自分をカメラに映して、流れてくる音符に合わせて洗濯物をバサッ！タイミングが合うと体からキラキラが出るよ。'
-      : t.presets ? (isFirstToday(id) ? '今日の' + t.label + 'は一番乗り！決まったポーズか、オリジナルのポーズを撮ってね。' : 'ポーズを1つ選んで撮ってね。人だけ切り抜くから、部屋は写らないよ。')
-      : t.sound ? '音だけ聞くから、カメラはいらないよ。' : 'ごはんだけ写せばOK。';
-    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><div class="choice"' + (list.length === 1 ? ' style="grid-template-columns:1fr"' : '') + '></div><p class="demo-note">カメラ・マイクは選んだ操作でのみ使います。保存前に確認できます。</p>';
-    sheetBody.querySelector('.sheet-title').textContent = t.label + '、いく？';
-    sheetBody.querySelector('.sheet-text').textContent = lead;
-    const choice = sheetBody.querySelector('.choice');
-    list.forEach((c) => {
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-sub';
-      if (c.fig !== undefined) b.innerHTML = '<span class="choice-fig">' + figSvg(c.fig) + '</span>';
-      b.append(document.createTextNode(c.title));
-      const s = document.createElement('small'); s.textContent = c.hint; b.append(s);
-      b.addEventListener('click', () => judge(id, c));
-      choice.append(b);
-    });
-    darupoyoRecords.addChoice(choice, toApi(id), () => sheet.close());
-    if (!sheet.open) sheet.showModal();
-    choice.querySelector('button').focus();
+  const refinedChores = {
+    dryer: ['髪乾かさな〜い？', '乾かす', '美髪を手にいれる', '音だけだからビジュ気にしないでいいよ〜'],
+    laundry: ['服干す〜？', '干す', 'バサバサする', 'リズムのって〜！'],
+    meal: ['ごはんたべよ〜！', 'たべる', '食べる子は育つ！', 'HP復活させてこ〜！'],
+    trash: ['ゴミ捨て、いく？', 'ゴミ捨てる', '脱汚部屋界隈', 'キラっキラになっちゃうんじゃね？'],
+  };
+  function refinedSheet(title, pose = false) {
+    sheet.classList.add('refined-modal'); sheet.classList.toggle('pose-picker', pose);
+    $('sheet-close').innerHTML = '<img src="/refined/edfe8.svg" alt="">';
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2>';
+    sheetBody.querySelector('h2').textContent = title;
   }
-  let captureController;
+  function openPoseChoices(id) {
+    refinedSheet('どのポーズにする？', true);
+    const lead = document.createElement('p'); lead.className = 'refined-description';
+    lead.textContent = isFirstToday(id) ? '今日の一番乗り、きた〜！\nみんなのお手本ポーズを決めよ♡' : 'お手本のポーズをまねしてみよ♡';
+    const choices = document.createElement('div'); choices.className = 'refined-poses';
+    const list = choicesFor(id).sort((a,b) => Number(b.mode.startsWith('original')) - Number(a.mode.startsWith('original')));
+    list.forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'refined-pose refined-button secondary';
+      const original = c.mode.startsWith('original'); b.classList.toggle('original',original);
+      const art = document.createElement('span'); art.className = 'pose-art ' + (original ? 'original' : c.preset);
+      const img = document.createElement('img'); img.alt=''; img.src='/refined/'+(original ? '56a3b' : c.preset==='santa' ? 'f8319':'e59f8')+'.svg'; art.append(img);
+      const text = document.createElement('span'), title=document.createElement('b'), hint=document.createElement('small');
+      title.textContent=c.title; hint.textContent=original ? (c.mode==='original-new'?'好きなポーズで、自由にキメよ':c.hint) : c.preset==='santa'?'ゴミ袋を肩にかつぐ\nプレゼント気分♡':'ゴミ袋をかついで\nこっそり、しのび足';
+      text.append(title,hint); b.append(art,text); b.onclick=()=>judge(id,c); choices.append(b);
+    });
+    sheetBody.append(lead,choices); $('sheet-close').focus();
+  }
+  function openSheet(id) {
+    const [title, label, hint, note] = refinedChores[id];
+    refinedSheet(title);
+    const choice = document.createElement('div'); choice.className='refined-actions';
+    const primary=document.createElement('button'); primary.type='button'; primary.className='refined-button';
+    const name=document.createElement('b'); name.textContent=label; const sub=document.createElement('small'); sub.textContent=hint; primary.append(name,sub);
+    primary.onclick=()=> id==='trash' ? openPoseChoices(id) : judge(id,choicesFor(id)[0]);
+    choice.append(primary); darupoyoRecords.addChoice(choice,toApi(id),()=>sheet.close());
+    const p=document.createElement('p'); p.className='refined-description';p.textContent=note;
+    sheetBody.append(choice,p); if(!sheet.open) sheet.showModal(); $('sheet-close').focus();
+  }
+  sheet.addEventListener('close',()=>sheet.classList.remove('refined-modal','pose-picker'));
+  let captureController, recordedChore = false;
   // When the camera or mic cannot be used, ask for access in plain words.
   function deviceMessage(e, id) {
     const device = id === 'dryer' ? 'マイク' : 'カメラ';
@@ -422,6 +470,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     return e.message;
   }
   async function judge(id, c) {
+    sheet.classList.remove('refined-modal', 'pose-picker');
     captureController?.abort(); captureController = new AbortController();
     const signal = captureController.signal;
     try {
@@ -453,11 +502,13 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
         const word = sheetBody.querySelector('.post-caption input');
         if (!word.disabled) { body.caption = word.value.trim(); word.disabled = true; }
         try {
-          const result = await whileSending(sheetBody, () => sendRecord(body, blob, kind, voice)); // そ〜しんちゅ〜
-          sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
+          const result = await whileSending(sheetBody, () => sendRecord(body, blob, kind, voice));
+          recordedChore = true;
+          sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">けーじばんを見る</button>';
+
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
           sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
-          $('finish').onclick = () => { sheet.close(); showHouse(); toast('部屋に飾った。電気ついたね'); };
+          $('finish').onclick = () => { sheet.close(); toast('部屋に飾った。電気ついたね'); };
         } catch (e) { toast(e.message); setBusy(button, false); button.disabled = false; if ($('redo')) $('redo').disabled = false; }
         finally { $('sheet-close').disabled = false; }
       };
@@ -547,7 +598,10 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     $('retry').focus();
   }
   sheet.addEventListener('cancel', e => { if ($('sheet-close').disabled) e.preventDefault(); });
-  sheet.addEventListener('close', () => captureController?.abort());
+  sheet.addEventListener('close', () => {
+    captureController?.abort();
+    if (recordedChore) { recordedChore=false; boardView.open(); }
+  });
   $('sheet-close').addEventListener('click', () => sheet.close());
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').disabled) sheet.close(); });
 
@@ -633,12 +687,12 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     $('settings').addEventListener('close', () => toggle(false));
   }
   setupNameEditor(accountForm, $('account-edit'), document.querySelector('.account-row'), 'display_name', () => nameOf(ME), '/profile', 'display_name');
-  setupNameEditor(houseForm, $('house-edit'), document.querySelector('.house-name-row'), 'house_name', () => dashboard.house.name, '', 'name');
+  setupNameEditor(houseForm, $('house-edit'), $('house-summary'), 'house_name', () => dashboard.house.name, '', 'name');
   const logoutButton = $('settings-logout'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => disablePush().finally(() => logout().catch(e=>toast(e.message)));
 
-  const deleteDialog = document.createElement('dialog'); deleteDialog.className = 'delete-dialog';
+  const deleteDialog = document.createElement('dialog'); deleteDialog.className = 'delete-dialog refined-modal confirmation-dialog';
   deleteDialog.setAttribute('aria-label', 'アカウント削除の確認');
-  deleteDialog.innerHTML = '<h2>アカウントを削除しますか？</h2><p>本人の写真・音声・投稿・リアクション・通知登録を削除し、すべてのハウスから退去します。他の住人の記録は残ります。最後の住人の場合はハウスも削除します。</p><p>この操作は元に戻せません。本人確認のため、Googleへの再ログインが必要です。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="btn btn-sub" data-cancel>やめる</button><button type="button" class="btn btn-main" data-confirm disabled>アカウントとデータを削除</button>';
+  deleteDialog.innerHTML = '<h2>アカウントを削除しますか？</h2><p>本人の写真・音声・投稿・リアクション・通知登録を削除し、すべてのハウスから退去します。他の住人の記録は残ります。最後の住人の場合はハウスも削除します。</p><p>この操作は元に戻せません。本人確認のため、Googleへの再ログインが必要です。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="refined-button secondary" data-cancel>やめる</button><button type="button" class="refined-button" data-confirm disabled>アカウントとデータを削除</button>';
   document.body.append(deleteDialog);
   const confirmDelete = deleteDialog.querySelector('[data-confirm]'), cancelDelete = deleteDialog.querySelector('[data-cancel]'), acknowledged = deleteDialog.querySelector('input');
   let deleting = false;
@@ -713,11 +767,11 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   const settings = $('settings');
   $('open-settings').addEventListener('click', () => { renderSocial(); renderGalPicker(); renderPush(); renderSound(); settings.showModal(); $('settings-title').focus(); });
   // ---------- phone notifications (#58) ----------
-  const PUSH_NOTES = { install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
+  const PUSH_NOTES = { unsupported: 'この環境では通知を利用できません', install: 'iPhone はホーム画面に追加すると通知をうけとれるよ（共有 → ホーム画面に追加）', blocked: 'スマホの設定で、だるぽよの通知を許可してね' };
   async function renderPush() {
     const state = await pushState().catch(() => 'unsupported');
     const card = $('push-card'), button = $('push-toggle'), note = $('push-note');
-    card.hidden = state === 'unsupported';
+    card.hidden = false;
     const on = state === 'ready' && pushOn();
     button.disabled = state !== 'ready'; button.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; button.setAttribute('aria-pressed', String(on));
     note.hidden = !PUSH_NOTES[state]; note.textContent = PUSH_NOTES[state] || '';

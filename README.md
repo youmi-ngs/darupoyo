@@ -44,6 +44,13 @@ GCP設定なしで試せる開発用ログイン・メモリ保存・定型ほ�
 **ローカルの記録はBackend再起動で消える。** 本番ではFirebase認証とFirestore/Storageを使う。
 共有更新はローカル2.5秒間隔、本番Firestore通知。
 
+### ローカルでも Google ログイン・ログアウトを確認する
+
+既存の `dev:all` を停止して `npm run dev:google` を起動し、http://localhost:5173 を開く。
+Googleログイン後に名前入力へ進み、ログアウト後はGoogleログイン画面へ戻る。
+下記と同じ gcloud / ADC の認証設定が必要。`localhost` はFirebaseの承認済みドメインに登録済みであること。
+このコマンドはFirebase設定を変更せず、ハウスや記録はローカルのメモリに保存する。
+
 ## チームで Google ログインを試す（Cloud Run の課金設定不要）
 
 Firebase に既存の `darupoyo-8ed91` を追加し、Web アプリ `darupoyo-web` を登録、

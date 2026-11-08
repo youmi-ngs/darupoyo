@@ -1,4 +1,4 @@
-/* Settings frames: Figma 設定 / mypage 26:1907 and howtoplay 60:148. */
+/* Settings frames: Figma 中のUI / refined / menu: mypage 153:866 and howtoplay 153:930. */
 .settings-page { --settings-gradient: linear-gradient(180deg,#c9b6ff 0%,#ffb8dc 18.957%,#faedf7 40%,#ede6f8 100%); }
 dialog.settings-page { background: #ede6f8; }
 .settings-page .drawer-inner { gap:16px; padding:62px 16px 24px; max-width:480px; min-height:100%; background:var(--settings-gradient); }
@@ -59,6 +59,9 @@ dialog.settings-page { background: #ede6f8; }
 /* Top-layer, light-dismiss navigation keeps the house visible. */
 .quick-menu { position:fixed; inset:auto; margin:0; padding:0; border:0; background:transparent; color:var(--ink); overflow:visible; }
 .quick-menu:popover-open { display:flex; flex-direction:column; gap:10px; }
+.quick-menu.menu-exit { display:flex; flex-direction:column; gap:10px; z-index:10000; pointer-events:none; }
+.quick-menu.menu-exit button { animation:none; }
+.quick-menu.menu-exit::backdrop { background:transparent; }
 .quick-menu::backdrop { background:#3b256012; }
 .quick-menu button { display:flex; flex-direction:row-reverse; align-items:center; gap:10px; border:0; padding:0; background:none; transform-origin:top right; animation:menu-pop .4s cubic-bezier(.2,1.6,.4,1) both; }
 .quick-menu button:nth-child(2) { animation-delay:55ms; }
@@ -100,7 +103,7 @@ dialog.settings-page { background: #ede6f8; }
 #house-switch-status { margin:0; font-size:12px; color:var(--ink-soft); }
 .house-add { min-height:48px; font-size:13px; }
 @media(max-width:360px) { .settings-page .set-card { padding-inline:14px; } .gal-heading { gap:4px; } .settings-page .gal-card { padding:10px 8px; } .settings-page .gal-card:first-child { gap:6px; padding-inline:8px; } .howto-card h3 { font-size:19px; } .howto-card > p { font-size:12px; } .settings-sources { padding-inline:12px; } }
-@media(prefers-reduced-motion:reduce) { .quick-menu button,.settings-page[open] { animation:none!important; } .ham span,.howto-card { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .quick-menu button,.settings-page[open] { animation:none!important; } .ham span,.howto-card,.quick-menu { transition:none; } }
 
 .settings-page .house-card > .drawer-h { line-height:17px; }
 .settings-page .account-icon { padding:0; overflow:visible; }
@@ -117,3 +120,11 @@ dialog.settings-page { background: #ede6f8; }
 
 .house-name-row[hidden] { display:none; }
 .account-management button:disabled { opacity:.5; }
+
+/* A transformed dialog changes the containing block of its fixed close button. */
+dialog.settings-page[open] { animation:settings-appear .22s ease-out; }
+@keyframes settings-appear { from { opacity:0; } to { opacity:1; } }
+
+.settings-page.is-closing { pointer-events:none; }
+.settings-page.is-closing::backdrop { animation:settings-backdrop-away .22s ease-in both; }
+@keyframes settings-backdrop-away { to { background:transparent; } }

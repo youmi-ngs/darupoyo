@@ -1,10 +1,11 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import {test,expect} from '@playwright/test';
 async function enter(page) {
   await page.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
-  await page.goto('/');await page.getByLabel('あなたの名前').fill('統合');await page.getByLabel('新しいハウスの名前').fill('みんなのおうち');
-  await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/');await setWelcomeName(page, '統合');await setHouseName(page, 'みんなのおうち');
+  await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
 }
-test('menu keeps exactly three actions and the invite link opens the join flow',async({page,browser})=>{
+test('menu keeps exactly three actions and the copied invite code joins the house',async({page,browser})=>{
   await enter(page);
   await page.getByRole('button',{name:'メニューを開く'}).click();
   await expect(page.locator('#utility-menu [data-menu-action]')).toHaveText(['マイページ','遊び方','ハウス切り替え']);
@@ -13,12 +14,14 @@ test('menu keeps exactly three actions and the invite link opens the join flow',
   await expect(page.locator('#howto-page')).toBeVisible();await page.locator('#howto-close').click();
   await page.getByRole('button',{name:'メニューを開く'}).click();await page.locator('#open-settings').click();
   await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: t => { window.copied = t; return Promise.resolve(); } } }));
-  await page.getByRole('button',{name:'招待リンクをコピー'}).click(); await expect(page.locator('#invite-status')).toContainText('招待リンクをコピーしたよ');
-  const link=await page.evaluate(() => window.copied);
-  expect(new URLSearchParams(new URL(link).hash.slice(1)).get('invite')).toBe(await page.locator('#settings-invite').textContent());
-  const context=await browser.newContext();const friend=await context.newPage();await friend.goto(link);
-  await expect(friend.getByRole('button',{name:'招待に参加する'})).toBeVisible();
-  await friend.getByLabel('あなたの名前').fill('招待されたマブ');await friend.getByRole('button',{name:'招待に参加する'}).click();
+  await page.getByRole('button',{name:'招待コードをコピー'}).click(); await expect(page.locator('#invite-status')).toContainText('招待コードをコピーしたよ');
+  const code=await page.evaluate(() => window.copied);
+  expect(code).toBe(await page.locator('#settings-invite').textContent());
+  const context=await browser.newContext();const friend=await context.newPage();await friend.goto(page.url());
+  await setWelcomeName(friend, '招待されたマブ');
+  await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click();
+  await friend.getByLabel('招待コード').fill(code);
+  await friend.getByRole('button',{name:'招待に参加する'}).click();
   await expect(friend.getByRole('button',{name:'おじゃまします！'})).toBeVisible();await context.close();
 });
 test('desktop keeps the menu inside the phone-width house',async({page})=>{

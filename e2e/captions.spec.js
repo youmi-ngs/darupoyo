@@ -1,8 +1,9 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page) {
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill('もち'); await page.getByLabel('新しいハウスの名前').fill('ひとこと');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'ひとこと');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 const png = page => page.evaluate(async () => { const c = document.createElement('canvas'); c.width = 600; c.height = 400; c.getContext('2d').fillRect(0, 0, 600, 400); return Array.from(new Uint8Array(await (await new Promise(r => c.toBlob(r, 'image/png'))).arrayBuffer())); });
 
@@ -10,7 +11,7 @@ test('a chore record can carry a word, shown in the photo viewer and on けー�
   await context.grantPermissions(['camera']);
   await enter(page);
   await page.locator('.scene-dot').nth(2).click();
-  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: 'ごはんを撮る' }).click();
+  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^たべる/ }).click();
   await page.locator('.capture-library input').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: Buffer.from(await png(page)) });
   // the word is written with the photo (Figma 写真のタスク 01)
   const word = page.locator('#sheet').getByLabel('ひとこと（30文字まで）');
@@ -68,7 +69,7 @@ test('every post shows そ〜しんちゅ〜 while it is sent: ごはん and だ
   // ごはん: over the 記録する？ panel
   const meal = await hold('**/api/houses/*/completions');
   await page.locator('.scene-dot').nth(2).click();
-  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: 'ごはんを撮る' }).click();
+  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^たべる/ }).click();
   await page.locator('.capture-library input').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: Buffer.from(await png(page)) });
   await page.getByRole('button', { name: 'いただきますをする' }).click();
   await page.getByRole('button', { name: '写真だけで進む' }).click();
@@ -81,9 +82,9 @@ test('every post shows そ〜しんちゅ〜 while it is sent: ごはん and だ
   // だるぽよ: the dialog itself is covered while it is sent
   const daru = await hold('**/api/houses/*/darupoyo');
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^だるぽよ/ }).click();
-  await page.getByRole('button', { name: 'このだるぽよを共有' }).click();
+  await page.getByRole('button', { name: 'きょーゆー' }).click();
   await expect(page.locator('.darupoyo-dialog .sending-veil')).toContainText('そ〜しんちゅ〜');
   await expect.poll(() => !!daru.release).toBe(true); daru.release();
-  await expect(page.getByText('だるぽよ、残せたよ♡')).toBeVisible();
+  await expect(page.getByRole('heading', {name:/だるぽよ、\s*記録かんりょ〜/})).toBeVisible();
   await expect(page.locator('.sending-veil')).toHaveCount(0);
 });

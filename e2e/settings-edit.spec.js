@@ -1,12 +1,13 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 
 test('each section keeps its own draft and a failed save can be retried', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill('もち');
-  await page.getByLabel('新しいハウスの名前').fill('温玉');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'もち');
+  await setHouseName(page, '温玉');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#account-edit').click(); await page.locator('#house-edit').click();
   const account = page.locator('#account-form'), house = page.locator('#house-form');

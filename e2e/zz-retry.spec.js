@@ -1,3 +1,4 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 import { playRhythm, stillCamera, unlockStart, COUNTDOWN_MS } from './rhythm-helper.js';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); await stillCamera(context); });
@@ -5,11 +6,11 @@ test('retry', async ({ page, context }) => {
   const logs = []; page.on('console', m => logs.push(m.type() + ' ' + m.text())); page.on('pageerror', e => logs.push('ERR ' + e.message));
   await context.grantPermissions(['camera']);
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill('r'); await page.getByLabel('新しいハウスの名前').fill('r');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'r'); await setHouseName(page, 'r');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(4).click(); await page.locator('[data-chore="laundry"]').click();
-  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await page.getByRole('button', { name: /^干す/ }).click();
   await playRhythm(page, 1);
   await expect(page.getByText('おしい〜！')).toBeVisible();
   await page.getByRole('button', { name: 'もう一回' }).click();

@@ -1,0 +1,249 @@
+/* Figma: refined / はじめて, refined / 画面・ダイアログ, refined / menu. */
+:root { --refined-bg:linear-gradient(180deg,#c9b6ff 0%,#ffb8dc 19%,#faedf7 40%,#ede6f8 100%); --refined-card:linear-gradient(110deg,#fff5fcfa,#f2edfff7); --refined-shadow:0 2px 5px #3b256014; }
+.refined-button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; width:100%; padding:12px 18px; border:1px solid #6a559024; border-radius:1000px; background:#ffdbf0d9; box-shadow:var(--refined-shadow); color:var(--ink); font:700 16px/24px var(--font-ui); cursor:pointer; }
+.refined-button.secondary { background:#fdfbfe; }
+.refined-button small { font:400 12px/18px var(--font-ui); white-space:pre-line; }
+.refined-button:disabled { cursor:wait; opacity:.6; }
+.refined-button[aria-busy=true]::after { content:''; width:12px; height:12px; border:2px solid #6a559044; border-top-color:var(--ink); border-radius:50%; animation:spin 1s linear infinite; }
+.refined-close { flex:none; display:grid; place-items:center; width:44px; height:44px; padding:0; background:#ffffff8f; border:1px solid #6a55902e; border-radius:12px; }
+.refined-close img { display:block; }
+.refined-header { display:flex; gap:8px; align-items:center; width:100%; }
+.refined-header h2 { flex:1; min-width:0; margin:0; font:700 22px/36px var(--font-ui); }
+.refined-description { margin:0; font:400 14px/23px var(--font-ui); color:#6a5590; white-space:pre-line; }
+/* The design's gradient is a screen backdrop, not a screenshot or flattened UI. */
+dialog.refined-modal::backdrop { background:var(--refined-bg); }
+dialog.refined-modal { width:358px; max-width:calc(100% - 32px); max-height:calc(100dvh - 32px); margin:auto; padding:28px; border:1px solid #ffffffbf; border-radius:28px; background:var(--refined-card); color:var(--ink); box-shadow:0 12px 32px -8px #2b1a451f; overflow-y:auto; }
+dialog.sheet.refined-modal { padding:24px 28px; border-bottom:1px solid #ffffffbf; animation:none; }
+dialog.sheet.refined-modal.pose-picker { padding:28px; }
+.sheet.refined-modal .sheet-bar { display:contents; }
+.sheet.refined-modal .sheet-bar > span { display:none; }
+.sheet.refined-modal #sheet-close { position:absolute; top:24px; right:28px; display:grid; place-items:center; width:44px; height:44px; border:1px solid #6a55902e; border-radius:12px; background:#ffffff8f; padding:0; box-shadow:none; }
+.sheet.refined-modal.pose-picker #sheet-close { top:28px; }
+.sheet.refined-modal #sheet-body { display:flex; flex-direction:column; gap:20px; padding:0; }
+.sheet.refined-modal .sheet-title { margin:0; padding:4px 52px 4px 0; min-height:44px; font:700 22px/36px var(--font-ui); letter-spacing:0; }
+.refined-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.refined-actions .refined-button { min-height:84px; padding:16px 12px; border-radius:24px; }
+.refined-actions .darupoyo-choice { margin:0; }
+.refined-poses { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.refined-poses .refined-pose { border-radius:24px; min-height:164px; padding:16px 12px; gap:12px; }
+.refined-pose > span:last-child { display:flex; flex-direction:column; gap:4px; width:100%; }
+.refined-poses .refined-pose.original { grid-column:1/-1; flex-direction:row; min-height:84px; background:#ffdbf0d9; padding:16px 20px; text-align:left; }
+.refined-pose.original > span:last-child { width:auto; }
+.refined-pose.original small { color:#6a5590; }
+.pose-art { position:relative; display:block; width:44px; height:52px; flex:none; }
+.pose-art img { position:absolute; max-width:none; }
+.pose-art.original { width:32px; height:32px; }
+.pose-art.original img { top:2.1px; left:2.1px; }
+.pose-art.santa img { top:8.67px; left:12.43px; }
+.pose-art.thief img { top:15.89px; left:12.79px; }
+/* Welcome screens fill the application surface; the cards stay centered. */
+dialog.refined-welcome { position:fixed; inset:0; margin:0 auto; width:100%; max-width:480px; height:100dvh; max-height:100dvh; padding:0; border:0; border-radius:0; background:var(--refined-bg); box-shadow:none; color:var(--ink); }
+dialog.refined-welcome::backdrop { background:#9d8abb; }
+.welcome-surface { min-height:100%; display:flex; align-items:center; justify-content:center; padding:16px; }
+.welcome-card { display:flex; flex-direction:column; gap:16px; width:358px; max-width:100%; padding:28px; border:1px solid #ffffffbf; border-radius:28px; background:var(--refined-card); box-shadow:0 12px 32px #2b1a451f; }
+.welcome-card h2 { margin:0; font:700 22px/36px var(--font-ui); }
+.welcome-card form { margin:0; width:100%; }
+.refined-welcome input { margin:0; width:100%; height:56px; padding:14px 24px; border:1px solid #73599933; border-radius:1000px; background:#ffffffbf; color:var(--ink); font:400 15px/24px var(--font-ui); }
+.refined-welcome input::placeholder { color:#6a5590; opacity:1; }
+.refined-welcome [role=status] { margin:0; font-size:13px; color:#8b3b69; }
+.refined-welcome .welcome-back { align-self:center; width:auto; min-width:74px; background:#ffffff8f; font-size:12px; }
+.refined-welcome [hidden] { display:none!important; }
+.refined-welcome[data-screen=loading] .welcome-card,.refined-welcome[data-screen=login] .welcome-card { padding:0; border:0; background:none; box-shadow:none; align-items:center; gap:30px; }
+.refined-welcome[data-screen=loading] .welcome-logo { position:absolute; top:calc(50% - 51px); left:50%; transform:translateX(-50%); }
+.refined-welcome[data-screen=login] .welcome-logo { animation:welcome-logo-rise .7s cubic-bezier(.22,.68,.2,1) both; position:absolute; top:calc(50% - 160px); left:50%; transform:translateX(-50%); }
+.google-sign-in { display:flex; justify-content:center; align-items:center; gap:10px; width:296px; max-width:100%; height:56px; padding:10px 12px; border:1px solid #747775; border-radius:28px; background:white; color:#1f1f1f; font:500 14px/20px Roboto,Arial,sans-serif; }
+.google-sign-in img { flex:none; }
+/* The composer keeps upload, retry and preview behavior while matching the new card. */
+dialog.darupoyo-dialog.refined-modal[open] { display:flex; flex-direction:column; gap:20px; }
+.darupoyo-dialog.refined-modal p { margin:0; }
+.darupoyo-dialog.refined-modal [role=status]:empty { display:none; }
+.composer-field { display:flex; flex-direction:column; gap:12px; }
+.darupoyo-dialog.refined-modal label { margin:0; font:700 14px/23px var(--font-ui); }
+.composer-input { display:flex; flex-direction:column; gap:16px; padding:16px; border:1px solid #6a559024; border-radius:20px; background:#ffffffcc; }
+.darupoyo-dialog.refined-modal textarea { display:block; width:100%; height:88px; min-height:88px; padding:0; margin:0; border:0; border-radius:0; background:none; resize:vertical; color:var(--ink); font:400 15px/24px var(--font-ui); }
+.composer-toolbar { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#6a5590; font-size:11px; line-height:18px; }
+.composer-photos { display:flex; gap:8px; padding:0 8px; }
+.composer-photos button { display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid #6a55902e; border-radius:12px; background:#f2ebfa; }
+.darupoyo-dialog.refined-modal.is-success { align-items:center; padding:32px 28px 28px; border:2px solid var(--ink); box-shadow:0 16px 40px -6px #3b256038; text-align:center; }
+.darupoyo-dialog.refined-modal.is-success h2 { margin:0; font:700 24px/34px var(--font-ui); }
+.darupoyo-dialog.refined-modal.is-success p { color:#6a5590; font:400 13px/22px var(--font-ui); }
+.refined-success-art { flex:none; }
+/* Refined menu uses full-width gal rows instead of a two-column grid. */
+.settings-page .gal-picker { display:flex; flex-direction:column; gap:12px; }
+.settings-page .gal-card:not(:first-child) { flex-direction:row; gap:12px; align-items:center; width:100%; min-height:68px; padding:9px 16px; box-shadow:var(--refined-shadow); }
+.settings-page .gal-card .gal-copy { min-width:0; display:flex; flex-direction:column; gap:4px; }
+.settings-page .gal-card .gal-heading { min-height:0; gap:8px; }
+.settings-page .gal-card .gal-heading small { font-size:11px; line-height:16px; }
+.settings-page .settings-gal-face { position:relative; width:48px; height:48px; border-width:1.6px; border-radius:24px; box-shadow:.8px 2.4px 6.4px #6e50a038; }
+.settings-gal-face img { position:absolute; top:11.16px; left:6.1px; transform:none; }
+[data-gal=reiwa] .settings-gal-face img { left:6.28px; top:11.17px; }
+[data-gal=kuro] .settings-gal-face img { left:4.6px; top:10.4px; }
+[data-gal=hime] .settings-gal-face img { left:1.2px; top:2.5px; }
+@media(max-width:359px) { dialog.refined-modal,.welcome-card { padding:20px; } .sheet.refined-modal .sheet-title { font-size:19px; } .refined-pose b { font-size:13px; } .settings-page .gal-card .gal-heading { flex-wrap:wrap; gap:0 8px; } }
+@media(prefers-reduced-motion:reduce) { .refined-button[aria-busy=true]::after { animation:none; } }
+
+.settings-page .gal-card:not(:first-child) { border-radius:1000px; }
+.settings-page .account-edit { min-height:30px; padding:8px 12px; }
+.invite-row .pink-pill { min-height:22px; }
+.account-management { padding-block:24px; }
+#settings-logout { order:-1; margin-bottom:20px; }
+
+.welcome-card form,.welcome-card > .refined-button:not(.welcome-back) { width:296px; max-width:100%; }
+@media(max-width:359px) { dialog.sheet.refined-modal,dialog.sheet.refined-modal.pose-picker { padding:20px; } .sheet.refined-modal #sheet-close,.sheet.refined-modal.pose-picker #sheet-close { top:20px; right:20px; } }
+
+.photo-camera[open] { display:flex; flex-direction:column; gap:16px; }
+.photo-camera video { display:block; width:100%; aspect-ratio:5/6; max-height:45dvh; object-fit:cover; border-radius:20px; background:#21152f; }
+.photo-camera [role=status] { margin:0; font-size:13px; color:var(--ink-soft); }
+
+/* Caption and attachment are a single post, with removal on the photo itself. */
+.composer-attachment { position:relative; align-self:flex-start; width:180px; max-width:100%; }
+.composer-attachment .darupoyo-preview { display:block; width:100%; height:auto; max-height:none; border-radius:14px; }
+.composer-remove { position:absolute; top:6px; right:6px; display:grid; place-items:center; width:44px; height:44px; padding:0; border:1px solid #6a55902e; border-radius:50%; background:#fffffff2; box-shadow:0 2px 8px #3b256026; }
+.composer-remove:disabled { opacity:.5; }
+.composer-input:has(.composer-attachment:not([hidden])) textarea { height:64px; min-height:64px; }
+/* One short burst when a record is saved, never an endless loop. */
+.record-celebration { position:relative; width:144px; height:104px; flex:none; }
+.record-celebration .refined-success-art { display:block; animation:record-pop .65s cubic-bezier(.2,.8,.3,1.2) both; }
+.record-confetti { position:absolute; inset:0; pointer-events:none; }
+.record-confetti i { position:absolute; top:52px; left:68px; width:8px; height:12px; border-radius:3px; background:#ff91c3; opacity:0; animation:record-confetti 1.25s ease-out both; }
+.record-confetti i:nth-child(3n+2) { background:#b8a0ef; border-radius:50%; height:8px; }
+.record-confetti i:nth-child(3n) { background:#f2cf69; }
+.record-confetti i:nth-child(1) { --x:-110px; --y:-25px; --turn:-130deg; }
+.record-confetti i:nth-child(2) { --x:-86px; --y:-62px; --turn:170deg; animation-delay:.08s; }
+.record-confetti i:nth-child(3) { --x:-52px; --y:-75px; --turn:-210deg; }
+.record-confetti i:nth-child(4) { --x:-20px; --y:-88px; --turn:140deg; animation-delay:.12s; }
+.record-confetti i:nth-child(5) { --x:30px; --y:-85px; --turn:-160deg; }
+.record-confetti i:nth-child(6) { --x:64px; --y:-65px; --turn:230deg; animation-delay:.08s; }
+.record-confetti i:nth-child(7) { --x:100px; --y:-38px; --turn:-190deg; }
+.record-confetti i:nth-child(8) { --x:112px; --y:5px; --turn:130deg; animation-delay:.12s; }
+.record-confetti i:nth-child(9) { --x:90px; --y:42px; --turn:210deg; }
+.record-confetti i:nth-child(10) { --x:-95px; --y:30px; --turn:-240deg; animation-delay:.08s; }
+.record-confetti i:nth-child(11) { --x:-65px; --y:58px; --turn:180deg; }
+.record-confetti i:nth-child(12) { --x:60px; --y:62px; --turn:-120deg; animation-delay:.12s; }
+@keyframes record-pop { 0% { opacity:0; transform:scale(.65) rotate(-10deg); } 65% { opacity:1; transform:scale(1.12) rotate(4deg); } 100% { opacity:1; transform:scale(1) rotate(0); } }
+@keyframes record-confetti { 0% { opacity:0; transform:translate(0,0) scale(.3); } 15% { opacity:1; } 65% { opacity:1; transform:translate(var(--x),var(--y)) rotate(var(--turn)); } 100% { opacity:0; transform:translate(var(--x),calc(var(--y) + 24px)) rotate(var(--turn)) scale(.6); } }
+@media(prefers-reduced-motion:reduce) { .record-celebration .refined-success-art { animation:none; } .record-confetti { display:none; } }
+
+.welcome-card.house-created { align-items:center; gap:16px; text-align:center; overflow:hidden; }
+.house-created .house-created-art { width:166px; height:166px; }
+.house-created .record-confetti i { left:79px; top:79px; }
+.house-created .created-house-name { margin:0; max-width:100%; padding:8px 16px; border-radius:16px; background:#ffdbf080; color:var(--ink); font-size:16px; font-weight:700; overflow-wrap:anywhere; }
+.house-created .refined-description { font-size:13px; }
+
+.refined-welcome[data-screen=login] .google-sign-in { animation:welcome-signin-reveal .45s .25s ease-out both; }
+@keyframes welcome-logo-rise { from { top:calc(50% - 51px); } to { top:calc(50% - 160px); } }
+@keyframes welcome-signin-reveal { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@media(prefers-reduced-motion:reduce) { .refined-welcome[data-screen=login] .welcome-logo,.refined-welcome[data-screen=login] .google-sign-in { animation:none; } }
+
+#install-card[hidden] { display:none; }
+.install-card-copy { margin:0; color:var(--ink-soft); font-size:13px; }
+#install-app { min-height:44px; font-size:13px; }
+.install-guide[open] { display:flex; flex-direction:column; gap:16px; }
+.install-guide .refined-header h2 { font-size:20px; }
+.install-guide [hidden] { display:none!important; }
+.install-guide .install-device { border:1px solid #6a559024; border-radius:16px; background:#ffffff99; padding:12px 16px; font-size:13px; line-height:1.8; }
+.install-guide .install-device h3 { margin:0; font:700 13px/24px var(--font-ui); }
+.install-guide ol { margin:12px 0 0; padding-left:20px; }
+.install-guide li + li { margin-top:8px; }
+.install-guide .install-device p { margin:12px 0 0; }
+.install-guide .install-hint,.install-guide [role=status] { margin:0; font-size:12px; line-height:1.8; color:var(--ink-soft); }
+
+/* Each onboarding step glides in; going back reverses the direction. */
+.refined-welcome[data-screen=card] .welcome-card,
+.refined-welcome[data-screen=created] .welcome-card {
+  --welcome-offset:24px;
+  animation:welcome-step-in .36s cubic-bezier(.22,.68,.2,1) both;
+}
+.refined-welcome .welcome-card[data-direction=back] { --welcome-offset:-24px; }
+.welcome-card h2:focus { outline:none; }
+@keyframes welcome-step-in {
+  from { opacity:0; transform:translateX(var(--welcome-offset)); }
+  to { opacity:1; transform:translateX(0); }
+}
+@media(prefers-reduced-motion:reduce) {
+  .refined-welcome[data-screen=card] .welcome-card,
+  .refined-welcome[data-screen=created] .welcome-card { animation:none; }
+}
+
+#install-card #install-app { position:absolute; top:394px; left:24px; width:calc(100% - 48px); min-height:48px; }
+.howto-pagination button[hidden] { display:none; }
+.howto-install-art { position:static!important; }
+
+.refined-welcome.welcome-leaving .welcome-surface { animation:welcome-surface-away .46s cubic-bezier(.22,.68,.2,1) both; }
+.refined-welcome.welcome-leaving::backdrop { animation:welcome-backdrop-away .46s ease-out both; }
+@keyframes welcome-surface-away { to { opacity:0; transform:translateY(-12px); } }
+@keyframes welcome-backdrop-away { to { background:transparent; } }
+@media(prefers-reduced-motion:reduce) {
+  .refined-welcome.welcome-leaving .welcome-surface,.refined-welcome.welcome-leaving::backdrop { animation:none; }
+}
+
+
+/* Chore invitations arrive gently above the room. */
+dialog.sheet.refined-modal[open] { animation:chore-dialog-in .28s cubic-bezier(.22,.68,.2,1) both; }
+dialog.sheet.refined-modal[open]::backdrop { animation:chore-backdrop-in .22s ease-out both; }
+@keyframes chore-dialog-in { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+@keyframes chore-backdrop-in { from { opacity:0; } to { opacity:1; } }
+@media(prefers-reduced-motion:reduce) {
+  dialog.sheet.refined-modal[open],dialog.sheet.refined-modal[open]::backdrop { animation:none; }
+}
+
+/* The chosen gal has a persistent check and a one-shot response to selection. */
+.settings-page .gal-card.is-on { outline:3px solid #8750b6; outline-offset:-1px; box-shadow:0 4px 14px #8750b62b,inset 0 0 0 2px #ffffffd9; }
+.settings-page .gal-card > .gal-selected-badge { position:absolute; top:-9px; right:14px; padding:2px 8px; border:2px solid #fff6fc; border-radius:999px; background:#8750b6; color:white; font:700 10px/16px var(--font-ui); white-space:nowrap; box-shadow:0 2px 5px #3b25601a; }
+.settings-page .gal-card.just-selected { animation:gal-choice-pop .38s ease-out; }
+.settings-page .gal-card.just-selected .settings-gal-face,
+.settings-page .gal-card.just-selected .gal-random { animation:gal-choice-wave .48s ease-out; }
+@keyframes gal-choice-pop { 0% { transform:scale(.97); } 55% { transform:scale(1.025); } 100% { transform:scale(1); } }
+@keyframes gal-choice-wave { 0% { transform:rotate(0); } 35% { transform:rotate(-9deg); } 70% { transform:rotate(6deg); } 100% { transform:rotate(0); } }
+@media(prefers-reduced-motion:reduce) {
+  .settings-page .gal-card.just-selected,.settings-page .gal-card.just-selected .settings-gal-face,.settings-page .gal-card.just-selected .gal-random { animation:none; }
+}
+
+/* Animate the thumb independently instead of swapping a flattened switch image. */
+.sound-switch { position:relative; }
+.sound-switch img { opacity:0; }
+.sound-switch::before { content:''; position:absolute; left:0; top:6.5px; width:51px; height:31px; border-radius:999px; background:#e3e0e6; transition:background-color .22s ease; }
+.sound-switch::after { content:''; position:absolute; left:2px; top:8.5px; width:27px; height:27px; border-radius:50%; background:#fff; box-shadow:0 2px 3px #0003; transform:translateX(0); transition:transform .24s cubic-bezier(.22,.68,.2,1); }
+.sound-switch[aria-pressed=true]::before { background:#ff8fc2; }
+.sound-switch[aria-pressed=true]::after { transform:translateX(20px); }
+.sound-switch[aria-busy=true] { cursor:wait; }
+@media(prefers-reduced-motion:reduce) { .sound-switch::before,.sound-switch::after { transition:none; } }
+
+/* Destructive confirmations share the refined modal style while keeping their warning and acknowledgement. */
+dialog.confirmation-dialog[open] { display:flex; flex-direction:column; gap:16px; animation:chore-dialog-in .28s ease-out; }
+.confirmation-dialog h2 { margin:0; font:700 20px/30px var(--font-ui); overflow-wrap:anywhere; }
+.confirmation-dialog p { margin:0; color:#6a5590; font:400 13px/22px var(--font-ui); }
+.confirmation-dialog p[role=status]:empty { display:none; }
+dialog.confirmation-dialog label { display:flex; align-items:center; gap:10px; margin:0; padding:12px; border:1px solid #6a559024; border-radius:16px; background:#ffffff99; font:700 12px/20px var(--font-ui); cursor:pointer; }
+.confirmation-dialog input[type=checkbox] { flex:none; width:18px; height:18px; margin:0; accent-color:#8750b6; }
+dialog.confirmation-dialog [data-confirm] { background:#ffe0eb; color:#963a66; border-color:#b9628529; }
+.confirmation-dialog .refined-button { min-height:48px; font-size:14px; }
+.confirmation-dialog [data-confirm]:disabled { cursor:not-allowed; opacity:.45; }
+@media(prefers-reduced-motion:reduce) { dialog.confirmation-dialog[open] { animation:none; } }
+
+.install-guide .install-device { padding:12px; }
+.install-guide .install-browser-note { margin:10px 0; font-size:11px; color:#6a5590; }
+.install-guide .install-steps { display:flex; gap:8px; padding:0; margin:12px 0 0; list-style:none; }
+.install-guide .install-steps li { position:relative; flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; gap:8px; margin:0; padding:12px 4px; border:1px solid #6a55901a; border-radius:14px; background:#fff; text-align:center; }
+.install-step-number { display:grid; place-items:center; width:18px; height:18px; border-radius:50%; background:#ede2ff; color:#6a4590; font:700 10px/1 var(--font-ui); }
+.install-step-icon { color:#79579e; display:flex; align-items:center; justify-content:center; height:36px; }
+.install-steps b { font:700 11px/17px var(--font-ui); overflow-wrap:anywhere; }
+.install-guide .install-tip { margin:10px 0 0; font-size:10px; line-height:17px; color:#6a5590; }
+
+/* Keep the how-to card visible behind the install instructions. */
+dialog.install-guide::backdrop { background:#3b256052; backdrop-filter:blur(2px); }
+dialog.install-guide { max-height:min(78dvh, 720px); box-shadow:0 20px 64px #2b1a4538; }
+dialog.install-guide[open] { animation:chore-dialog-in .24s ease-out; }
+@media(prefers-reduced-motion:reduce) { dialog.install-guide[open] { animation:none; } }
+
+.install-guide .refined-header { position:sticky; top:0; z-index:1; flex-shrink:0; background:var(--refined-card); border-radius:12px; }
+
+.install-device-picker { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.install-device-button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:110px; padding:12px 3px; border:1.5px solid #6a559030; border-radius:18px; background:#fff; color:#6a5590; cursor:pointer; box-shadow:0 2px 5px #3b25600d; transition:background-color .18s,border-color .18s; }
+.install-device-button b { font:700 11px/16px var(--font-ui); white-space:nowrap; }
+.install-device-button small { font:400 9px/14px var(--font-ui); white-space:nowrap; }
+.install-device-button[aria-pressed=true] { border-color:#8750b6; background:#f0e4ff; box-shadow:inset 0 0 0 1px #8750b6; color:#4d2b78; }
+.install-device-button:focus-visible { outline:2px solid #8750b6; outline-offset:3px; }
+.install-guide .install-device:not([hidden]) { animation:install-panel-in .18s ease-out; }
+@keyframes install-panel-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+@media(prefers-reduced-motion:reduce) { .install-device-button { transition:none; } .install-guide .install-device:not([hidden]) { animation:none; } }

@@ -1,8 +1,9 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page, house = 'たいきょ') {
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill('もち'); await page.getByLabel('新しいハウスの名前').fill(house);
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, house);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 // bob joins through the API; returns his token so the test can look from his side.
 const addBob = page => page.evaluate(async () => {
@@ -26,8 +27,8 @@ test('with others in the house you can move out, and the house stays for them', 
   await dialog.getByLabel('削除する内容を確認しました').check();
   await dialog.getByRole('button', { name: '退去する' }).click();
   // back to the start, with no house of your own any more
-  await expect(page.locator('.onboarding h2')).toHaveText('だるぽよへようこそ');
-  await expect(page.getByRole('button', { name: /に入る$/ })).toHaveCount(0);
+  await expect(page.locator('.onboarding h2')).toHaveText('やっほ〜');
+  await expect(page.getByRole('button', { name: 'たいきょに入る', exact: true })).toHaveCount(0);
   const left = await page.evaluate(async ([bob, house]) => (await (await fetch(`/api/houses/${house}/dashboard`, { headers: { Authorization: bob } })).json()).house.member_ids.length, [bob, house]);
   expect(left).toBe(1);
 });
@@ -45,6 +46,6 @@ test('the last resident deletes the house; there is nothing to move out of', asy
   await openSettings(page); await page.getByRole('button', { name: 'ハウスを削除' }).click();
   await dialog.getByLabel('削除する内容を確認しました').check();
   await dialog.getByRole('button', { name: 'ハウスを削除' }).click();
-  await expect(page.locator('.onboarding h2')).toHaveText('だるぽよへようこそ');
+  await expect(page.locator('.onboarding h2')).toHaveText('やっほ〜');
   expect(await page.evaluate(async () => { const { api } = await import('/src/api.js'); return (await api('/houses')).items.length; })).toBe(0);
 });
