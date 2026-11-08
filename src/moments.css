@@ -27,7 +27,7 @@ dialog.now-dialog::backdrop { background: #3b256059; }
 .now-controls .now-flip[hidden] { display: grid !important; visibility: hidden; }
 .now-field { display: flex; flex-direction: column; gap: 12px; margin: 0; font-size: 15px; font-weight: 700; line-height: 24px; }
 .now-field input { box-sizing: border-box; width: 100%; height: 52px; margin: 0; padding: 14px; border: 1px solid #73599933; border-radius: 12px; background: #ffffffbf; color: #3b2560; font: 400 15px/normal var(--font-ui); }
-.now-field input::placeholder { color: #6a5590; }
+.now-field input::placeholder { color: #b3abbd; opacity: 1; } /* a light gray example, not text you wrote */
 .now-share { min-height: 56px; padding: 16px; border: 0; border-radius: 1000px; background: #ffdbf0d9; color: #3b2560; box-shadow: none; font: 700 16px/24px var(--font-ui); }
 .now-share:disabled:not(.is-busy) { opacity: .55; }
 .now-status { margin: -8px 0 0; font-size: 12px; color: #6a5590; }
