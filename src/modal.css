@@ -63,3 +63,10 @@ dialog.sheet .done-verdict .bubble { flex: 1; margin: 0; padding: 12px 16px; bor
 /* One rhythm: every part of the card is 16px apart (Figma gap 16), with no extra margins. */
 dialog.sheet .sheet-body > *, dialog.sheet .capture > * { margin-block: 0; }
 dialog.sheet .result-panel { margin-bottom: 0; }
+/* Every camera card before posting is the same: 358 wide, 28 padding (300 inside), and the
+   photo frame fills those 300 (302×380 in Figma, which was placed by hand). On a short screen the
+   frame shrinks the same way everywhere, so the shutter and the send button stay in reach. */
+dialog.sheet, dialog.now-dialog, dialog.darupoyo-dialog { width: min(358px, calc(100% - 32px)); max-width: calc(100% - 32px); box-sizing: border-box; }
+dialog.sheet .capture .capture-frame, dialog.now-dialog .now-frame {
+  align-self: center; width: min(100%, max(200px, calc((92dvh - 390px) * 302 / 380))); height: auto; min-height: 0; aspect-ratio: 302 / 380; margin: 0 auto;
+}
