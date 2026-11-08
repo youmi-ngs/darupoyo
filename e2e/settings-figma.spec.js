@@ -1,0 +1,48 @@
+import { test, expect } from '@playwright/test';
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
+async function enter(page) {
+  await page.goto('/'); await page.getByLabel('あなたの名前').fill('なまえ'); await page.getByLabel('新しいハウスの名前').fill('おんたまハウス');
+  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+}
+
+test('マイページ follows the Figma mypage frame (#152)', async ({ page }) => {
+  await enter(page);
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  const settings = page.locator('#settings');
+  // cards in the Figma order, plus the history-sharing switch kept after 効果音
+  await expect(settings.locator('.set-card:visible .drawer-h').first()).toHaveText('アカウント');
+  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '効果音', 'ほかのハウスの記録を見せる']);
+  // the invite code shows in the house card; no extra 招待リンク button or photo card
+  await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
+  await expect(settings.getByRole('button', { name: '招待リンク', exact: true })).toHaveCount(0);
+  await expect(settings.getByText('プロフィール写真', { exact: true })).toHaveCount(0);
+  await expect(settings.getByText('準備中です')).toHaveCount(0);
+  await expect(page.locator('#settings-members span')).toHaveText(['なまえ']);
+  await expect(page.locator('.account-management button')).toHaveText(['アカウントを削除', 'ハウスを削除', 'ログアウト']);
+  // the history switch looks like the 効果音 switch and still works
+  const share = page.locator('#share-history');
+  await expect(share).toHaveClass(/sound-switch/); await expect(share).toHaveAttribute('aria-pressed', 'false');
+  await share.click(); await expect(share).toHaveAttribute('aria-pressed', 'true');
+  // the required weather credits stay
+  await expect(page.locator('.data-credits')).toContainText('気象データ提供：株式会社ウェザーニューズ');
+});
+
+test('page titles get focus without a blue ring (#153)', async ({ page }) => {
+  await enter(page);
+  await page.keyboard.press('Tab'); // keyboard mode makes :focus-visible apply
+  for (const [open, title] of [['#open-settings', '#settings-title'], ['#open-howto', '#howto-title'], ['#menu-house', '#house-switch-title']]) {
+    await page.locator('#open-menu').click(); await page.locator(open).click();
+    await expect(page.locator(title)).toBeFocused();
+    expect(await page.locator(title).evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
+    await page.keyboard.press('Escape');
+  }
+});
+
+test('あそびかた has no はじめる button on any page (#154)', async ({ page }) => {
+  await enter(page);
+  await page.locator('#open-menu').click(); await page.locator('#open-howto').click();
+  await page.locator('.howto-card.is-active').getByRole('button', { name: '4ページ目へ' }).click();
+  await expect(page.locator('.howto-card').last()).toHaveClass(/is-active/);
+  await expect(page.locator('#howto-page').getByRole('button', { name: 'はじめる' })).toHaveCount(0);
+  await page.locator('#howto-close').click(); await expect(page.locator('#howto-page')).toBeHidden();
+});

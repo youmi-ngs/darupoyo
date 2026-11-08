@@ -196,7 +196,7 @@
       <h3 class="drawer-h">ハウス</h3>
       <div><div class="house-name-row"><b id="settings-house-name"></b><button class="account-edit" id="house-edit" type="button" aria-label="ハウス名を編集">編集</button></div><p id="settings-members"></p></div>
       <div class="invite-row"><span id="settings-invite">友だちを招待しよう</span><button class="pink-pill" type="button" id="copy-invite">招待リンクをコピー</button></div>
-      <p id="invite-status" role="status" hidden></p><button type="button" id="next-day" class="settings-link">招待リンク</button>
+      <p id="invite-status" role="status" hidden></p>
     </section>
     <section class="set-card" id="gal-toggle">
       <h3 class="drawer-h">ほめてくれるギャル</h3>
@@ -209,9 +209,8 @@
     <section class="set-card push-card" id="sound-card">
       <div class="push-row"><h3 class="drawer-h" id="sound-title">効果音</h3><button class="sound-switch" type="button" id="sound-toggle" aria-labelledby="sound-title" aria-pressed="true"><img src="/settings/c8fcf.svg" alt=""></button></div>
     </section>
-    <div class="account-management"><button type="button" id="delete-account">アカウントを削除</button><button type="button" disabled title="ハウス削除は準備中です">ハウスを削除</button><small>ハウスの削除機能は準備中です</small></div>
+    <div class="account-management"><button type="button" id="delete-account">アカウントを削除</button><button type="button" disabled title="ハウス削除は準備中です">ハウスを削除</button><button type="button" id="settings-logout">ログアウト</button></div>
     <footer class="settings-sources data-credits"><b>データ提供元</b><dl><div><dt>Google Weather API</dt><dd>Source: Includes weather data from Google.</dd></div><div><dt>Weathernews Inc.</dt><dd><a href="https://jp.weathernews.com/" target="_blank" rel="noopener noreferrer">気象データ提供：株式会社ウェザーニューズ</a></dd></div></dl></footer>
-    <div class="settings-extras"><button type="button" id="settings-logout">ログアウト</button></div>
   </div>
 </dialog>
 <dialog class="drawer settings-page" id="howto-page" aria-labelledby="howto-title">
@@ -220,7 +219,6 @@
     <h2 class="settings-title" id="howto-title" tabindex="-1">あそびかた</h2>
     <div class="howto-track" id="howto-track" tabindex="0" role="region" aria-label="遊び方・左右にスワイプして全4ページ"></div>
     <p class="sr-only" id="howto-status" aria-live="polite"></p>
-    <button class="pink-pill howto-finish" type="button" id="howto-start" hidden>はじめる</button>
   </div>
 </dialog>
 <dialog class="drawer settings-page" id="house-switcher" aria-labelledby="house-switch-title">

@@ -5,7 +5,8 @@ test('how-to opens automatically only on the first entry (#14)', async ({ browse
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('#howto-page')).toBeVisible();
   await page.locator('.howto-card.is-active').getByRole('button', { name: '4ページ目へ' }).click();
-  await page.getByRole('button', { name: 'はじめる', exact: true }).click();
+  await expect(page.locator('#howto-page').getByRole('button', { name: 'はじめる' })).toHaveCount(0); // #154
+  await page.locator('#howto-close').click();
   await expect(page.locator('#howto-page')).toBeHidden();
   await page.locator('#open-menu').click(); await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible(); await page.locator('#howto-close').click();
   await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
@@ -21,7 +22,7 @@ test('how-to has four swipe cards on a small phone', async ({ browser }) => {
   await expect(page.locator('.howto-illustration')).toHaveCount(4);
   expect(await page.locator('#howto-page').evaluate(el => el.scrollWidth <= el.clientWidth + 1)).toBe(true);
   await page.locator('.howto-card.is-active').getByRole('button', { name: '4ページ目へ' }).click();
-  await page.locator('#howto-start').scrollIntoViewIfNeeded();
-  await expect(page.getByRole('button', { name: 'はじめる', exact: true })).toBeInViewport();
+  await expect(page.locator('.howto-card').last()).toHaveClass(/is-active/);
+  await expect(page.locator('#howto-close')).toBeInViewport();
   await context.close();
 });

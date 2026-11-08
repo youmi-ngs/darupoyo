@@ -500,22 +500,6 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   $('sheet-close').addEventListener('click', () => sheet.close());
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').disabled) sheet.close(); });
 
-  $('next-day').textContent = '招待リンク';
-  $('next-day').addEventListener('click', async () => {
-    try {
-      const code = await inviteCode(); $('settings').close();
-      const link = new URL('/', location.origin); link.hash = new URLSearchParams({ invite: code }).toString();
-      sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">招待リンク（7日間有効）</h2><p class="sheet-text">一緒に住むマブに送ってね💖6人までいける～✌</p><label>招待リンク<input class="invite-link" aria-label="招待リンク" readonly></label><button class="btn invite-link-copy" type="button">リンクをコピー</button><label>招待コード<input class="invite-code" aria-label="招待コード" readonly></label><button class="btn invite-copy" type="button">コードをコピー</button>';
-      const input = sheetBody.querySelector('.invite-code'); input.value = code; input.onclick = () => input.select();
-      const linkInput = sheetBody.querySelector('.invite-link'); linkInput.value = link.href; linkInput.onclick = () => linkInput.select();
-      const copy = async field => { try { await navigator.clipboard.writeText(field.value); toast('コピーしたよ'); } catch { field.select(); toast('長押しでコピーしてね'); } };
-      sheetBody.querySelector('.invite-copy').onclick = () => copy(input);
-      sheetBody.querySelector('.invite-link-copy').onclick = () => copy(linkInput);
-      sheet.showModal();
-    }
-    catch (e) { toast(e.message); }
-  });
-
   let toastTimer = null;
   function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.hidden = true; }, 2400); }
 
@@ -699,7 +683,6 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { $('howto-page').showModal(); $('howto-title').focus(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
-  $('howto-start').addEventListener('click', () => $('howto-page').close());
   // 初めて家に入ったときだけ、あそびかたを自動で開く
   window.addEventListener('darupoyo:entered', () => {
     const KEY = 'darupoyo-howto-seen';

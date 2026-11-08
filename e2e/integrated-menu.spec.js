@@ -11,9 +11,11 @@ test('menu keeps exactly three actions and the invite link opens the join flow',
   await page.getByRole('button',{name:'マイページ',exact:true}).click();await expect(page.locator('#utility-menu')).not.toBeVisible();await expect(page.locator('#settings')).toBeVisible();
   await page.locator('#settings-close').click();await page.getByRole('button',{name:'メニューを開く'}).click();await page.getByRole('button',{name:'遊び方',exact:true}).click();
   await expect(page.locator('#howto-page')).toBeVisible();await page.locator('#howto-close').click();
-  await page.getByRole('button',{name:'メニューを開く'}).click();await page.locator('#open-settings').click(); await page.getByRole('button',{name:'招待リンク',exact:true}).click();
-  const link=await page.getByRole('textbox',{name:'招待リンク',exact:true}).inputValue();
-  expect(new URLSearchParams(new URL(link).hash.slice(1)).get('invite')).toBe(await page.getByRole('textbox',{name:'招待コード',exact:true}).inputValue());
+  await page.getByRole('button',{name:'メニューを開く'}).click();await page.locator('#open-settings').click();
+  await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: t => { window.copied = t; return Promise.resolve(); } } }));
+  await page.getByRole('button',{name:'招待リンクをコピー'}).click(); await expect(page.locator('#invite-status')).toContainText('コピーしたよ');
+  const link=await page.evaluate(() => window.copied);
+  expect(new URLSearchParams(new URL(link).hash.slice(1)).get('invite')).toBe(await page.locator('#settings-invite').textContent());
   const context=await browser.newContext();const friend=await context.newPage();await friend.goto(link);
   await expect(friend.getByRole('button',{name:'招待に参加する'})).toBeVisible();
   await friend.getByLabel('あなたの名前').fill('招待されたマブ');await friend.getByRole('button',{name:'招待に参加する'}).click();

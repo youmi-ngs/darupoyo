@@ -5,8 +5,9 @@ test('joining by invite shows who you will live with, creating a house does not 
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('まりん'); await page.getByLabel('新しいハウスの名前').fill('温玉'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.move-in')).toHaveCount(0);
-   await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.getByRole('button', {name:'招待リンク', exact:true}).click();
-  const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
+   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
+  const code = await page.locator('#settings-invite').textContent();
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } }); const friend = await context.newPage();
   await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await friend.goto('/'); await friend.getByRole('button', { name: '招待コードで入る' }).click(); await friend.getByLabel('招待コード').fill(code); await friend.getByLabel('あなたの名前').fill('ともだち'); await friend.getByRole('button', { name: '招待に参加する' }).click();
