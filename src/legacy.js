@@ -481,7 +481,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     };
     if (id === 'trash') { void send(sheetBody.querySelector('.capture-use')); return; }
     const heard = fields.method === 'photo_voice';
-    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><section class="result-panel" aria-label="結果"><h3 class="result-main"></h3><p class="result-sub"></p><button class="btn btn-main" id="post">みんなに見せる</button></section><p class="sheet-text">できたことをお部屋に残そう。</p>';
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><section class="result-panel" aria-label="結果"><h3 class="result-main"></h3><p class="result-sub"></p><button class="btn btn-main" id="post">みんなに見せる</button></section>';
     sheetBody.querySelector('.result-main').textContent = heard ? '「いただきます」聞こえた！' : '写真で記録できるよ';
     sheetBody.querySelector('.result-sub').textContent = heard ? '声を確認したよ。写真といっしょに残そ！' : 'ちゃんと食べてえらい。写真だけで残そ！';
     if (voice) { const url = URL.createObjectURL(voice); sheetBody.querySelector('.result-sub').after(voiceButton(() => url)); }

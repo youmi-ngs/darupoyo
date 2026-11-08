@@ -58,3 +58,8 @@ dialog.sheet .done-caption { margin: 0; font-size: 15px; color: #6a5590; overflo
 dialog.sheet .done-caption[hidden] { display: none; }
 dialog.sheet .done-verdict { display: flex; align-items: flex-end; gap: 10px; }
 dialog.sheet .done-verdict .bubble { flex: 1; margin: 0; padding: 12px 16px; border: 2px solid #3b2560; border-radius: 20px 20px 20px 6px; background: white; font-size: 15px; font-weight: 700; line-height: 24px; color: #3b2560; }
+/* Icons on the photo are pictures of buttons, not photos: no gray card behind them. */
+.capture .capture-controls img, .capture .capture-retake img, .capture .capture-timer-icon { max-height: none; border-radius: 0; background: none; object-fit: fill; }
+/* One rhythm: every part of the card is 16px apart (Figma gap 16), with no extra margins. */
+dialog.sheet .sheet-body > *, dialog.sheet .capture > * { margin-block: 0; }
+dialog.sheet .result-panel { margin-bottom: 0; }
