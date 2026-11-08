@@ -1,9 +1,11 @@
 // うちらのなう (Figma 207:914): the みんなの今 button opens a camera card. Take a selfie (or pick
-// one), add a word, and みせちゃう shares it with the house; it then shows on けーじばん.
+// one), add a word, and みせちゃう shares it with the house. The card then shows what was sent
+// and the gal's word on it (Figma 207:958), with a way to けーじばん.
 import { setBusy } from './busy.js';
 import { client, houseApi } from './api.js';
 import { blobOf, openCamera } from './camera.js';
 import { sfx } from './sfx.js';
+import { momentPraise } from './moment-praise.js';
 
 const WIDTH = 600, HEIGHT = 755; // the 302×380 frame of the design
 
@@ -26,13 +28,24 @@ export function setupMoments() {
       </div>
     </div>
     <label class="now-field"><span>ひとこと（30文字まで）</span><input maxlength="30" placeholder="おは！きょうもがんばろ〜" autocomplete="off"></label>
+    <p class="now-caption" hidden></p>
+    <div class="now-praise" hidden></div>
     <button type="button" class="now-share" disabled>みせちゃう</button>
+    <button type="button" class="now-board" hidden>け〜じばんをちぇけらする</button>
     <p class="now-status" role="status" aria-live="polite"></p>`;
   document.body.append(dialog);
   const $ = selector => dialog.querySelector(selector);
   const video = $('video'), canvas = $('canvas'), note = $('.now-frame-note'), retake = $('.now-retake');
   const controls = $('.now-controls'), shutter = $('.now-shutter'), flip = $('.now-flip'), library = $('.now-library input');
   const caption = $('.now-field input'), share = $('.now-share'), status = $('.now-status');
+  const lead = $('.now-lead'), field = $('.now-field'), sentCaption = $('.now-caption'), praiseBox = $('.now-praise'), toBoard = $('.now-board');
+  // Before sending: camera, word and みせちゃう. After: the photo, the word, the gal's line and けーじばん.
+  const setSent = sent => {
+    lead.textContent = sent ? 'そ〜しんできたよん' : '今のうちら撮ろ〜';
+    field.hidden = share.hidden = sent; toBoard.hidden = !sent;
+    if (sent) retake.hidden = true;
+    if (!sent) { sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); }
+  };
   const ctx = canvas.getContext('2d');
   let stream = null, controller = null, taken = false, mediaId = null, requestId = null, busy = false, house = null;
 
@@ -71,7 +84,7 @@ export function setupMoments() {
   async function open() {
     document.querySelector('#menu')?.close();
     controller?.abort(); controller = new AbortController();
-    house = client.house; requestId = crypto.randomUUID(); caption.value = ''; status.textContent = '';
+    house = client.house; requestId = crypto.randomUUID(); caption.value = ''; status.textContent = ''; setSent(false);
     setBusy(share, false); share.disabled = true; caption.disabled = retake.disabled = false; busy = false;
     dialog.showModal();
     await startCamera('user');
@@ -80,6 +93,7 @@ export function setupMoments() {
   }
   dialog.addEventListener('close', () => { controller?.abort(); stopCamera(); });
   $('.now-close').onclick = () => dialog.close();
+  toBoard.onclick = () => { dialog.close(); document.getElementById('open-board')?.click(); };
 
   shutter.onclick = () => {
     if (!stream || !video.videoWidth) return;
@@ -107,11 +121,12 @@ export function setupMoments() {
     busy = true; setBusy(share, true, 'みせてるよ…'); caption.disabled = retake.disabled = true; status.textContent = '';
     try {
       mediaId ||= (await houseApi('/media?kind=selfie', await blobOf(canvas, 'image/jpeg'))).id;
-      await houseApi('/moments', { request_id: requestId, media_id: mediaId, caption: caption.value.trim() });
+      const moment = await houseApi('/moments', { request_id: requestId, media_id: mediaId, caption: caption.value.trim() });
       window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
-      dialog.close();
-      const toast = document.getElementById('toast');
-      if (toast) { toast.textContent = 'みんなに見せたよ♡ けーじばんに貼ったよ'; toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 2400); }
+      stopCamera(); setSent(true);
+      sentCaption.textContent = moment.caption || ''; sentCaption.hidden = !moment.caption;
+      const praise = momentPraise(moment.praise); praiseBox.hidden = !praise; if (praise) praiseBox.append(praise);
+      toBoard.focus();
     } catch (e) {
       status.textContent = e.message;
       setBusy(share, false); share.disabled = false; caption.disabled = retake.disabled = false;

@@ -17,10 +17,25 @@ test('the みんなの今 button opens うちらのなう: take, retake, add a w
   await expect(word).toHaveAttribute('maxlength', '30');
   await word.fill('おはよう');
   await now.getByRole('button', { name: 'みせちゃう' }).click();
-  await expect(now).toBeHidden();
-  await expect(page.locator('#toast')).toContainText('みんなに見せたよ');
+  // sent (Figma 207:958): the photo, the word and the gal's line, then on to けーじばん
+  await expect(now.getByText('そ〜しんできたよん')).toBeVisible();
+  await expect(now.locator('canvas')).toBeVisible();
+  await expect(now.locator('.now-caption')).toHaveText('おはよう');
+  await expect(now.locator('.now-praise .moment-praise b')).toHaveText(/ギャル$/);
+  await expect(now.locator('.now-praise .moment-praise > span:last-child')).not.toHaveText('');
+  await expect(now.getByRole('button', { name: 'みせちゃう' })).toBeHidden();
+  await expect(now.getByLabel('ひとこと（30文字まで）')).toBeHidden();
+  await expect(now.getByRole('button', { name: '撮り直す' })).toBeHidden();
   await expect(page.locator('.door.is-lit')).toHaveCount(0); // not a chore
-  // it is on けーじばん, with the gal's word (#158)
+  await now.getByRole('button', { name: 'け〜じばんをちぇけらする' }).click();
+  await expect(now).toBeHidden();
+  await expect(page.locator('#board-view')).toBeVisible();
+  // the next time the card opens it is ready to take a new one
+  await page.locator('.board-back').click(); await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
+  await expect(now.getByText('今のうちら撮ろ〜')).toBeVisible();
+  await expect(now.getByRole('button', { name: 'みせちゃう' })).toBeDisabled();
+  await expect(now.locator('.now-praise')).toBeHidden();
+  await now.getByRole('button', { name: '閉じる' }).click();
   await page.locator('.scene-dot').nth(1).click(); await page.locator('#open-board').click();
   await page.locator('.pin-grid .pin-moment').click();
   await expect(page.locator('.pin-viewer .pin-viewer-text')).toHaveText('おはよう');
@@ -37,7 +52,7 @@ test('without a camera, a photo from the library can be shown', async ({ page, c
   const png = await page.evaluate(async () => { const c = document.createElement('canvas'); c.width = 300; c.height = 200; c.getContext('2d').fillRect(0, 0, 300, 200); return Array.from(new Uint8Array(await (await new Promise(r => c.toBlob(r, 'image/png'))).arrayBuffer())); });
   await now.locator('.now-library input').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: Buffer.from(png) });
   await now.getByRole('button', { name: 'みせちゃう' }).click();
-  await expect(now).toBeHidden();
+  await expect(now.getByText('そ〜しんできたよん')).toBeVisible();
   expect(await page.evaluate(async () => { const { houseApi } = await import('/src/api.js'); return (await houseApi('/moments')).items.length; })).toBe(1);
 });
 
@@ -82,7 +97,7 @@ async function openSelfie(page) {
 const show = async page => {
   await page.getByRole('button', { name: '撮る' }).click();
   await page.getByRole('button', { name: 'みせちゃう' }).click();
-  await expect(page.locator('.now-dialog')).toBeHidden();
+  await expect(page.getByText('そ〜しんできたよん')).toBeVisible();
 };
 const leftColor = page => page.evaluate(async () => {
   const { houseApi } = await import('/src/api.js'); const [m] = (await houseApi('/moments')).items;
@@ -96,7 +111,7 @@ test('a front-camera selfie is saved as it looked in the preview, not flipped (#
   await expect(page.locator('.now-dialog video')).toHaveClass(/is-mirrored/); // preview shows blue on the left
   await page.getByRole('button', { name: '撮る' }).click();
   await expect(page.locator('.now-dialog canvas')).not.toHaveClass(/is-mirrored/); // the pixels themselves are mirrored
-  await page.getByRole('button', { name: 'みせちゃう' }).click(); await expect(page.locator('.now-dialog')).toBeHidden();
+  await page.getByRole('button', { name: 'みせちゃう' }).click(); await expect(page.getByText('そ〜しんできたよん')).toBeVisible();
   expect(await leftColor(page)).toBe('blue');
 });
 
