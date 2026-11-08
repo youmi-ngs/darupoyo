@@ -13,9 +13,15 @@ export function setupInstallGuide() {
   const addressBar = icon('<rect x="2" y="7" width="28" height="18" rx="4"/><rect x="6" y="12" width="20" height="8" rx="4"/><path d="M10 16h8"/>');
   const phone = icon('<rect x="8" y="2" width="16" height="28" rx="4"/><path d="M13 6h6m-5 20h4"/>');
   const computer = icon('<rect x="2" y="4" width="28" height="19" rx="3"/><path d="M16 23v5m-6 0h12"/>');
+  const bell = icon('<path d="M8 22V14a8 8 0 0 1 16 0v8l2 3H6zM13 28h6"/>');
+  const tap = icon('<rect x="6" y="6" width="20" height="20" rx="6"/><path d="M13 16l2 2 4-4"/>');
+  const screen = icon('<rect x="8" y="2" width="16" height="28" rx="4"/><path d="M12 10h8m-8 5h8m-8 5h5"/>');
+  // What adding it gives you: on iPhone, notifications only come to the home-screen app.
+  const perks = [[bell,'通知がとどく','みんなの記録やコメントが、すぐわかる'],[tap,'ワンタップで開ける','ホーム画面からすぐ、おうちへ'],[screen,'画面ひろびろ','アプリみたいに全画面で使える']];
   const devices = [['ios',phone,'iPhone・iPad','Safari'],['android',phone,'Android','Chrome'],['desktop',computer,'パソコン','Chrome・Edge']];
   const steps = items => `<ol class="install-steps">${items.map(([art, label],i) => `<li><span class="install-step-number">${i+1}</span><span class="install-step-icon">${art}</span><b>${label}</b></li>`).join('')}</ol>`;
   dialog.innerHTML = `<header class="refined-header"><h2 id="install-guide-title">ホーム画面に追加</h2><button class="refined-close" type="button" aria-label="閉じる"><img src="/refined/edfe8.svg" alt=""></button></header>
+    <section class="install-perks" aria-labelledby="install-perks-title"><h3 id="install-perks-title">追加するといいこと♡</h3><ul>${perks.map(([art, title, text]) => `<li><span class="install-perk-icon">${art}</span><span><b>${title}</b><small>${text}</small></span></li>`).join('')}</ul><p class="install-perk-note">iPhoneは、追加しないと通知がとどかないよ</p></section>
     <p class="refined-description">使っている端末を選んでね</p>
     <div class="install-device-picker" role="group" aria-label="端末を選ぶ">${devices.map(([id, art, name, browser]) => `<button type="button" class="install-device-button" data-choose="${id}" aria-pressed="false" aria-controls="install-device-${id}">${art}<b>${name}</b><small>${browser}</small></button>`).join('')}</div>
     <section class="install-device" data-device="ios" id="install-device-ios" hidden><h3>iPhone・iPad（Safari）</h3><p class="install-browser-note">Safariで開いて、この順にタップ</p>${steps([[share,'共有ボタン'],[add,'ホーム画面に追加']])}<p class="install-tip">「Webアプリとして開く」があればオンにしてね。</p></section>
