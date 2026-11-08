@@ -14,29 +14,36 @@ async function verifyItadakimasu(blob) {
 }
 export { poseSimilarity, countdown };
 
-function choose(root, options, signal) {
-  return new Promise((resolve, reject) => {
-    const buttons = options.map(({ label, value, sub }) => {
-      const button = document.createElement('button'); button.type = 'button'; button.className = 'btn ' + (sub ? 'btn-sub' : 'btn-main'); button.textContent = label;
-      button.onclick = () => { buttons.forEach(b => b.remove()); signal.removeEventListener('abort', abort); resolve(value); };
-      root.append(button); return button;
-    });
-    const abort = () => { buttons.forEach(b => b.remove()); reject(new DOMException('中止しました', 'AbortError')); };
-    signal.addEventListener('abort', abort, { once: true });
-  });
-}
 // #117: take the photo now, or choose one from the photo library. Resolves 'camera' or a File.
-function shootOrPick(root, signal, canShoot) {
+// The controls sit on the photo frame like うちらのなう: library, shutter, camera switch.
+function shootOrPick(frame, signal, canShoot, flip) {
   return new Promise((resolve, reject) => {
-    const row = document.createElement('div'); row.className = 'capture-actions';
+    const row = document.createElement('div'); row.className = 'capture-controls';
     const done = value => { row.remove(); signal.removeEventListener('abort', abort); resolve(value); };
     const abort = () => { row.remove(); reject(new DOMException('中止しました', 'AbortError')); };
     signal.addEventListener('abort', abort, { once: true });
-    if (canShoot) { const shoot = document.createElement('button'); shoot.type = 'button'; shoot.className = 'btn btn-main'; shoot.textContent = 'この写真を撮る'; shoot.onclick = () => done('camera'); row.append(shoot); }
-    const pick = document.createElement('label'); pick.className = 'btn ' + (canShoot ? 'btn-sub' : 'btn-main') + ' capture-library'; pick.textContent = 'ライブラリからえらぶ';
+    const pick = document.createElement('label'); pick.className = 'capture-library'; pick.setAttribute('aria-label', 'ライブラリからえらぶ');
+    pick.innerHTML = '<img src="/moments/library.svg" alt="">';
     const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.hidden = true;
     input.onchange = () => { if (input.files[0]) done(input.files[0]); };
-    pick.append(input); row.append(pick); root.append(row);
+    pick.append(input); row.append(pick);
+    const shoot = document.createElement('button'); shoot.type = 'button'; shoot.className = 'capture-shutter'; shoot.setAttribute('aria-label', 'この写真を撮る');
+    shoot.innerHTML = '<img src="/moments/shutter.svg" alt="">'; shoot.hidden = !canShoot; shoot.onclick = () => done('camera');
+    row.append(shoot, flip || Object.assign(document.createElement('span'), { className: 'capture-flip is-empty' }));
+    frame.append(row);
+  });
+}
+// After a shot: the × on the photo takes it again; the button below keeps it (when there is one).
+function review(frame, root, signal, use, again) {
+  return new Promise((resolve, reject) => {
+    const retake = document.createElement('button'); retake.type = 'button'; retake.className = 'capture-retake'; retake.setAttribute('aria-label', again);
+    retake.innerHTML = '<img src="/moments/retake.svg" alt="">';
+    const keep = use && Object.assign(document.createElement('button'), { type: 'button', className: 'btn btn-main capture-use', textContent: use });
+    const done = value => { retake.remove(); keep?.remove(); signal.removeEventListener('abort', abort); resolve(value); };
+    const abort = () => { retake.remove(); keep?.remove(); reject(new DOMException('中止しました', 'AbortError')); };
+    signal.addEventListener('abort', abort, { once: true });
+    retake.onclick = () => done(false); if (keep) { keep.onclick = () => done(true); root.append(keep); }
+    frame.append(retake);
   });
 }
 // Draws a chosen library photo (EXIF rotation applied by the browser). Photos are cut to the 5:6 frame.
@@ -107,7 +114,7 @@ export async function capture(root, chore, choice, reference, signal) {
     if (chore === 'laundry') return await laundryRhythm(box, status, choice, signal, resources);
     if (chore === 'dryer') return await dryerSound(box, status, signal, resources);
     const isPhoto = chore === 'meal' || chore === 'selfie';
-    const live = document.createElement('div'); live.className = 'capture-live' + (isPhoto ? ' is-photo-frame' : '');
+    const live = document.createElement('div'); live.className = 'capture-live capture-frame' + (isPhoto ? ' is-photo-frame' : ' is-body-frame');
     const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true;
     const count = document.createElement('span'); count.className = 'capture-count'; count.setAttribute('aria-hidden', 'true'); count.hidden = true;
     live.append(video, count); box.append(live);
@@ -125,9 +132,10 @@ export async function capture(root, chore, choice, reference, signal) {
     // Without a camera (no permission, none on the device) the photo library still works (#117).
     let stream = null;
     try { stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal); }
-    catch (e) { if (e.name === 'AbortError' || signal.aborted) throw e; live.hidden = true; }
+    catch (e) { if (e.name === 'AbortError' || signal.aborted) throw e; video.hidden = true; }
     let landmarker, segmenter, segmenterReady, stopPreview = () => {};
-    const canvas = document.createElement('canvas'); canvas.hidden = true; canvas.classList.toggle('is-photo-frame', isPhoto); box.append(canvas);
+    const canvas = document.createElement('canvas'); canvas.hidden = true; live.append(canvas);
+    const note = document.createElement('p'); note.className = 'capture-note'; note.hidden = !!stream; note.textContent = 'カメラを使えないので、左下からライブラリの写真をえらんでね'; live.append(note);
     // Mirror the preview. Pose scoring keeps raw pixels/landmarks; a selfie is saved as the
     // person saw it in the preview (#161), so it does not come out flipped.
     let mirrored = false;
@@ -137,17 +145,34 @@ export async function capture(root, chore, choice, reference, signal) {
       video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
     };
     setMirror();
+    // Like うちらのなう, a device with two cameras can switch between them.
+    let flip = null;
+    if (stream) {
+      const cameras = (await navigator.mediaDevices.enumerateDevices?.().catch(() => []) || []).filter(d => d.kind === 'videoinput');
+      if (cameras.length > 1) {
+        flip = document.createElement('button'); flip.type = 'button'; flip.className = 'capture-flip';
+        const name = () => stream?.getVideoTracks()[0]?.getSettings().facingMode === 'environment' ? '内カメラに切り替える' : '外カメラに切り替える';
+        flip.innerHTML = '<img src="/moments/flip.svg" alt="">'; flip.setAttribute('aria-label', name());
+        flip.onclick = async () => {
+          const next = stream?.getVideoTracks()[0]?.getSettings().facingMode === 'environment' ? 'user' : 'environment';
+          flip.disabled = true;
+          try { stream?.getTracks().forEach(t => t.stop()); stream = await openCamera(video, next, resources, signal); }
+          catch (e) { if (e.name === 'AbortError' || signal.aborted) return; status.textContent = 'カメラを切り替えられませんでした'; try { stream = await openCamera(video, 'user', resources, signal); } catch {} }
+          finally { setMirror(); flip.setAttribute('aria-label', name()); flip.disabled = false; }
+        };
+      }
+    }
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const takePhoto = async () => {
-      live.hidden = !stream; canvas.hidden = true;
+      video.hidden = !stream; canvas.hidden = true; note.hidden = !!stream;
       status.textContent = stream ? liveText : 'カメラを使えないので、ライブラリから写真をえらんでね';
       if (landmarker && stream) stopPreview = livePreview(video, landmarker, choice, reference, status, resources);
       const picker = (chore === 'meal' || chore === 'selfie' || !stream) ? null : timerPicker(box);
-      let how = await shootOrPick(box, signal, !!stream); check(signal);
+      let how = await shootOrPick(live, signal, !!stream, flip); check(signal);
       // A photo that cannot be opened: say why and let them choose again.
       while (how !== 'camera') {
         try { status.textContent = '写真を読み込んでいます…'; await drawPicked(how, canvas, ctx, isPhoto); check(signal); break; }
-        catch (e) { if (e.name === 'AbortError') throw e; status.textContent = e.message; how = await shootOrPick(box, signal, !!stream); check(signal); }
+        catch (e) { if (e.name === 'AbortError') throw e; status.textContent = e.message; how = await shootOrPick(live, signal, !!stream, flip); check(signal); }
       }
       stopPreview();
       const seconds = picker ? picker.seconds() : 0; picker?.remove();
@@ -166,14 +191,15 @@ export async function capture(root, chore, choice, reference, signal) {
         canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
         sfx.shutter();
       } else canvas.classList.remove('is-mirrored'); // a library photo is shown as it is
-      live.hidden = true; canvas.hidden = false;
+      video.hidden = true; note.hidden = true; canvas.hidden = false;
     };
-    const stopCamera = () => { stream?.getTracks().forEach(t => t.stop()); live.remove(); };
+    // The photo stays in its frame; only the camera goes.
+    const stopCamera = () => { stream?.getTracks().forEach(t => t.stop()); video.remove(); count.remove(); };
     if (chore === 'meal' || chore === 'selfie') {
       for (;;) {
         await takePhoto();
         status.textContent = '撮れた写真を確認してね。';
-        if (await choose(box, [{ label: 'この写真を使う', value: true }, { label: stream ? 'もう1回撮る' : 'えらび直す', value: false, sub: true }], signal)) break;
+        if (await review(live, box, signal, 'この写真を使う', stream ? 'もう1回撮る' : 'えらび直す')) break;
       }
       stopCamera();
       if (chore === 'selfie') return { blob: await blobOf(canvas, 'image/jpeg'), kind: 'selfie' };
@@ -209,13 +235,13 @@ export async function capture(root, chore, choice, reference, signal) {
         const landmarks = result.landmarks[0];
         if (!hasFullBody(landmarks)) {
           status.textContent = '全身を見つけられませんでした。明るい場所で少し離れて撮ってね';
-          await choose(box, [{ label: 'もう1回撮る', value: false }], signal);
+          await review(live, box, signal, null, 'もう1回撮る');
           continue;
         }
         const score = choice.preset ? presetScore(choice.preset, landmarks) : null;
         if (score !== null && score < PRESET_PASS) {
           status.textContent = choice.title + 'に見えなかったかも（' + score + '%）。もう一度撮ってね';
-          await choose(box, [{ label: 'もう1回撮る', value: false }], signal);
+          await review(live, box, signal, null, 'もう1回撮る');
           continue;
         }
         if (!segmenter) { segmenter = await segmenterReady; check(signal); }
@@ -223,11 +249,11 @@ export async function capture(root, chore, choice, reference, signal) {
         timing('pose-and-cutout', processAt);
         if (kept < .02) {
           status.textContent = '人をうまく切り抜けませんでした。明るい場所で撮ってね';
-          await choose(box, [{ label: 'もう1回撮る', value: false }], signal);
+          await review(live, box, signal, null, 'もう1回撮る');
           continue;
         }
         status.textContent = '切り抜きを確認してください。背景が残る場合は撮り直してください。';
-        if (!await choose(box, [{ label: 'この切り抜きを使う', value: true }, { label: 'もう1回撮る', value: false, sub: true }], signal)) continue;
+        if (!await review(live, box, signal, 'この切り抜きを使う', 'もう1回撮る')) continue;
         check(signal); stopCamera();
         const encodeAt = performance.now(), blob = await blobOf(canvas); timing('cutout-encode', encodeAt);
         const evidence = { method: 'pose', blob, kind: 'cutout', landmarks: landmarks.map(({ x,y,z,visibility }) => ({ x,y,z,visibility })), pose_name: choice.title, result: { score } };
