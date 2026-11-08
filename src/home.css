@@ -185,3 +185,9 @@ body[data-weather] .weather-credit { display: block; }
 .moment-praise-face svg { width: 30px; height: 30px; }
 .moment-praise b { font-size: 11px; color: #6a5590; }
 .moment-praise > span:last-child { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+/* Swipe between みんなの今 / だるぽよ cards in the けーじばん viewer. */
+dialog.pin-viewer { overflow-x: hidden; }
+.pin-viewer-track { display: flex; margin: 0 -16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.pin-viewer-track::-webkit-scrollbar { display: none; }
+.pin-viewer-slide { flex: 0 0 100%; min-width: 0; box-sizing: border-box; padding: 0 16px; scroll-snap-align: start; }
+.pin-viewer-count { position: absolute; left: 16px; top: 16px; }
