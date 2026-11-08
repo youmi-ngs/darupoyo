@@ -117,7 +117,7 @@ export function setupBoardView(ctx) {
     box.append(picture(card), title, time, text);
     if (card.type === 'moment') { // the caption, then the gal's line (#158)
       text.textContent = card.caption || ''; text.hidden = !card.caption;
-      const praise = momentPraise(card.praise); if (praise) box.append(praise);
+      const praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
     }
     return box;
   }

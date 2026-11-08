@@ -51,7 +51,7 @@ test('うちらのなう shows そ〜しんちゅ〜 while sending, then そ〜�
   const now = page.getByRole('dialog', { name: 'うちらのなう' });
   await now.getByRole('button', { name: '撮る' }).click();
   await now.getByRole('button', { name: 'みせちゃう' }).click();
-  const sending = now.locator('.now-sending');
+  const sending = now.locator('.sending-veil');
   await expect(sending).toBeVisible();
   await expect(sending).toContainText('そ〜しんちゅ〜');
   await expect(now.getByRole('button', { name: '撮り直す' })).toBeHidden(); // no retake while sending
@@ -59,4 +59,31 @@ test('うちらのなう shows そ〜しんちゅ〜 while sending, then そ〜�
   release();
   await expect(now.getByText('そ〜しんできたよん')).toBeVisible();
   await expect(sending).toBeHidden();
+});
+
+test('every post shows そ〜しんちゅ〜 while it is sent: ごはん and だるぽよ too', async ({ page, context }) => {
+  await context.grantPermissions(['camera']);
+  await enter(page);
+  const hold = async pattern => { const gate = {}; await page.route(pattern, async route => { if (route.request().method() !== 'POST') return route.continue(); await new Promise(r => { gate.release = r; }); await route.continue(); }); return gate; };
+  // ごはん: over the 記録する？ panel
+  const meal = await hold('**/api/houses/*/completions');
+  await page.locator('.scene-dot').nth(2).click();
+  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: 'ごはんを撮る' }).click();
+  await page.locator('.capture-library input').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: Buffer.from(await png(page)) });
+  await page.getByRole('button', { name: 'いただきますをする' }).click();
+  await page.getByRole('button', { name: '写真だけで進む' }).click();
+  await page.getByRole('button', { name: 'みんなに見せる' }).click();
+  await expect(page.locator('.result-panel .sending-veil')).toContainText('そ〜しんちゅ〜');
+  await expect.poll(() => !!meal.release).toBe(true); meal.release();
+  await expect(page.getByText('記録できたよん。今日もえらい！')).toBeVisible();
+  await expect(page.locator('.sending-veil')).toHaveCount(0);
+  await page.locator('#sheet-close').click();
+  // だるぽよ: the dialog itself is covered while it is sent
+  const daru = await hold('**/api/houses/*/darupoyo');
+  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^だるぽよ/ }).click();
+  await page.getByRole('button', { name: 'このだるぽよを共有' }).click();
+  await expect(page.locator('.darupoyo-dialog .sending-veil')).toContainText('そ〜しんちゅ〜');
+  await expect.poll(() => !!daru.release).toBe(true); daru.release();
+  await expect(page.getByText('だるぽよ、残せたよ♡')).toBeVisible();
+  await expect(page.locator('.sending-veil')).toHaveCount(0);
 });

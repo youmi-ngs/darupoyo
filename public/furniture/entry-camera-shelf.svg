@@ -6,9 +6,6 @@
 <circle cx="93" cy="80" r="1.6" fill="#3B2560" stroke="none"/>
 <rect vector-effect="non-scaling-stroke" x="6" y="58" width="108" height="9" rx="3" fill="#F6D2AE"/>
 <path vector-effect="non-scaling-stroke" d="M12 61h40" stroke="#FFF3E4" stroke-width="2" fill="none"/>
-<!-- the strap hangs over the front of the shelf -->
-<path vector-effect="non-scaling-stroke" d="M32 40q-8 30 6 34q14 3 18-8" stroke="#FFB3DE" stroke-width="3.5" fill="none"/>
-<path vector-effect="non-scaling-stroke" d="M88 40q8 30-6 34q-14 3-18-8" stroke="#FFB3DE" stroke-width="3.5" fill="none"/>
 <!-- the camera -->
 <path vector-effect="non-scaling-stroke" d="M45 22l4-8h22l4 8z" fill="#5A4884"/>
 <rect vector-effect="non-scaling-stroke" x="28" y="21" width="64" height="37" rx="7" fill="#5A4884"/>

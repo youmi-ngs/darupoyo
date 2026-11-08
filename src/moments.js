@@ -6,6 +6,7 @@ import { client, houseApi } from './api.js';
 import { blobOf, openCamera } from './camera.js';
 import { sfx } from './sfx.js';
 import { momentPraise } from './moment-praise.js';
+import { whileSending } from './sending.js';
 
 const WIDTH = 600, HEIGHT = 755; // the 302×380 frame of the design
 
@@ -20,7 +21,6 @@ export function setupMoments() {
       <video muted playsinline autoplay hidden></video>
       <canvas hidden aria-label="撮った写真"></canvas>
       <p class="now-frame-note" hidden></p>
-      <div class="now-sending" hidden><b>そ〜しんちゅ〜</b><span class="now-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="now-bar" aria-hidden="true"><i></i></span></div>
       <button type="button" class="now-retake" aria-label="撮り直す" hidden><img src="/moments/retake.svg" alt=""></button>
       <div class="now-controls">
         <label class="now-library" aria-label="ライブラリからえらぶ"><img src="/moments/library.svg" alt=""><input type="file" accept="image/*" hidden></label>
@@ -39,14 +39,13 @@ export function setupMoments() {
   const video = $('video'), canvas = $('canvas'), note = $('.now-frame-note'), retake = $('.now-retake');
   const controls = $('.now-controls'), shutter = $('.now-shutter'), flip = $('.now-flip'), library = $('.now-library input');
   const caption = $('.now-field input'), share = $('.now-share'), status = $('.now-status');
-  const sending = $('.now-sending');
   const lead = $('.now-lead'), field = $('.now-field'), sentCaption = $('.now-caption'), praiseBox = $('.now-praise'), toBoard = $('.now-board');
   // Before sending: camera, word and みせちゃう. After: the photo, the word, the gal's line and けーじばん.
   const setSent = sent => {
     lead.textContent = sent ? 'そ〜しんできたよん' : '今のうちら撮ろ〜';
     field.hidden = share.hidden = sent; toBoard.hidden = !sent;
     if (sent) retake.hidden = true;
-    if (!sent) { sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); sending.hidden = true; dialog.classList.remove('is-sent'); }
+    if (!sent) { sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); dialog.classList.remove('is-sent'); }
   };
   const ctx = canvas.getContext('2d');
   let stream = null, controller = null, taken = false, mediaId = null, requestId = null, busy = false, house = null;
@@ -121,23 +120,20 @@ export function setupMoments() {
   share.onclick = async () => {
     if (!taken || busy || client.house !== house) return;
     busy = true; setBusy(share, true, 'そ〜しんちゅ〜'); caption.disabled = retake.disabled = true; status.textContent = '';
-    // そ〜しんちゅ〜 over the photo, long enough to be seen even when sending is quick.
-    sending.hidden = false; retake.hidden = true;
-    const seen = new Promise(resolve => setTimeout(resolve, 900));
+    retake.hidden = true;
     try {
-      const send = async () => {
+      const moment = await whileSending($('.now-frame'), async () => { // そ〜しんちゅ〜 over the photo
         mediaId ||= (await houseApi('/media?kind=selfie', await blobOf(canvas, 'image/jpeg'))).id;
         return houseApi('/moments', { request_id: requestId, media_id: mediaId, caption: caption.value.trim() });
-      };
-      const [moment] = await Promise.all([send(), seen]);
+      });
       window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
-      sending.hidden = true; stopCamera(); setSent(true);
+      stopCamera(); setSent(true);
       dialog.classList.remove('is-sent'); void dialog.offsetWidth; dialog.classList.add('is-sent'); // a little pop
       sentCaption.textContent = moment.caption || ''; sentCaption.hidden = !moment.caption;
-      const praise = momentPraise(moment.praise); praiseBox.hidden = !praise; if (praise) praiseBox.append(praise);
+      const praise = momentPraise(moment.praise, document.body.dataset.myTheme); praiseBox.hidden = !praise; if (praise) praiseBox.append(praise);
       toBoard.focus();
     } catch (e) {
-      sending.hidden = true; retake.hidden = false;
+      retake.hidden = false;
       status.textContent = e.message;
       setBusy(share, false); share.disabled = false; caption.disabled = retake.disabled = false;
     } finally { busy = false; }

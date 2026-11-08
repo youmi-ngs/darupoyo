@@ -178,12 +178,6 @@ body[data-weather] .weather-credit { display: block; }
 .sv-hit .meal-seats .resident-prop svg { width: 26px; height: 26px; }
 /* Above the laundry pole, clear of the menu even on short phones. */
 .sv-balcony .sv-sun { right: 18%; width: clamp(64px, 20vw, 78px); }
-/* #158: the gal's line under a 「みんなの今」 selfie */
-.moment-praise { display: grid; grid-template-columns: 32px 1fr; column-gap: 8px; align-items: center; margin: 10px 0 0; padding: 8px 10px; border: 1.5px solid #775b9d33; border-radius: 16px; background: #fff7fc; color: var(--ink); text-align: left; }
-.moment-praise-face { grid-row: span 2; display: grid; place-items: center; width: 32px; height: 32px; border: 1.5px solid var(--ink); border-radius: 50%; overflow: hidden; }
-.moment-praise-face svg { width: 30px; height: 30px; }
-.moment-praise b { font-size: 11px; color: #6a5590; }
-.moment-praise > span:last-child { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 /* Swipe between みんなの今 / だるぽよ cards in the けーじばん viewer. */
 dialog.pin-viewer { overflow-x: hidden; }
 .pin-viewer-track { display: flex; margin: 0 -16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }

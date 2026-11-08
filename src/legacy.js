@@ -1,5 +1,6 @@
 import './input-mode.js';
 import { setBusy } from './busy.js';
+import { whileSending } from './sending.js';
 import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
@@ -265,7 +266,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   }
 
   function renderAll() {
-    document.body.style.setProperty('--my-outfit', outfitOf(themeOf(ME)));
+    document.body.style.setProperty('--my-outfit', outfitOf(themeOf(ME))); document.body.dataset.myTheme = themeOf(ME);
     renderRooms(); renderNotes(); renderPose();
     boardView.update(dashboard, [...state.posts, ...state.history.flatMap(d => d.posts)]);
     if (!$('room-view').hidden) showRoom(currentRoom, true);
@@ -443,11 +444,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
         const word = sheetBody.querySelector('.post-caption input');
         if (!word.disabled) { body.caption = word.value.trim(); word.disabled = true; }
         try {
-          if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
-          // A confirmed recording must not disappear silently on upload failure.
-          if (voice && !body.voice_media_id) body.voice_media_id = (await houseApi('/media?kind=voice', voice)).id;
-          const result = await houseApi('/completions', body);
-          void refresh().catch(e => toast(e.message)); // #98: show the result now; the house catches up
+          const result = await whileSending(sheetBody, () => sendRecord(body, blob, kind, voice)); // そ〜しんちゅ〜
           sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">お部屋へ</button>';
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
           sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
@@ -475,7 +472,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   function photoTaskResult(id, c, gal, body, blob, kind, voice, fields) {
     const send = async button => {
       setBusy(button, true, id === 'trash' ? '届けてるよ…' : 'みせてるよ…'); $('sheet-close').disabled = true;
-      try { const result = await sendRecord(body, blob, kind, voice); photoTaskDone(id, c, gal, result.post, blob); }
+      const host = sheetBody.querySelector('.capture-frame') || sheetBody.querySelector('.result-panel') || sheetBody;
+      try { const result = await whileSending(host, () => sendRecord(body, blob, kind, voice)); photoTaskDone(id, c, gal, result.post, blob); }
       catch (e) { toast(e.message); setBusy(button, false); button.disabled = false; }
       finally { $('sheet-close').disabled = false; }
     };

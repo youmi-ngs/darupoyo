@@ -22,7 +22,7 @@ test('the みんなの今 button opens うちらのなう: take, retake, add a w
   await expect(now.locator('canvas')).toBeVisible();
   await expect(now.locator('.now-caption')).toHaveText('おはよう');
   await expect(now.locator('.now-praise .moment-praise b')).toHaveText(/ギャル$/);
-  await expect(now.locator('.now-praise .moment-praise > span:last-child')).not.toHaveText('');
+  await expect(now.locator('.now-praise .moment-praise .gal-text')).not.toHaveText('');
   await expect(now.getByRole('button', { name: 'みせちゃう' })).toBeHidden();
   await expect(now.getByLabel('ひとこと（30文字まで）')).toBeHidden();
   await expect(now.getByRole('button', { name: '撮り直す' })).toBeHidden();
@@ -71,7 +71,10 @@ test('the gal line shows on the けーじばん card of a selfie too (#158)', as
   const viewer = page.locator('.pin-viewer');
   await expect(viewer.locator('.pin-viewer-text')).toHaveText('カフェきた');
   await expect(viewer.locator('.moment-praise b')).toHaveText('姫ギャル');
-  await expect(viewer.locator('.moment-praise > span:last-child')).not.toHaveText('');
+  await expect(viewer.locator('.moment-praise .gal-text')).not.toHaveText('');
+  // Figma 261:793: her face and a speech bubble
+  await expect(viewer.locator('.moment-praise .gal-face')).toHaveCount(1);
+  await expect(viewer.locator('.moment-praise .bubble')).toBeVisible();
 });
 
 // #161: a fake camera whose left half is red and right half blue, that reports the facing it was asked for.

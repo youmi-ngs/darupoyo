@@ -1,13 +1,16 @@
-// #158: the gal's line on a 「みんなの今」 selfie, with the gal's face and name.
+// The gal's line on a 「うちらのなう」 selfie (Figma 261:793): her face in the poster's color and
+// a speech bubble, like the line after a chore. Her name is there for screen readers.
 import { GALS } from './data.js';
+import { galIcon } from './gal-figure.js';
 
-export function momentPraise(praise) {
+export function momentPraise(praise, theme = 'pink') {
   if (!praise?.text) return null;
-  const gal = GALS[praise.gal] || GALS.reiwa;
-  const line = document.createElement('p'); line.className = 'moment-praise';
-  const face = document.createElement('span'); face.className = 'moment-praise-face'; face.innerHTML = gal.svg; face.style.background = gal.bg;
-  const who = document.createElement('b'); who.textContent = gal.name;
-  const text = document.createElement('span'); text.textContent = praise.text;
-  line.append(face, who, text);
+  const id = GALS[praise.gal] ? praise.gal : 'reiwa';
+  const line = document.createElement('div'); line.className = 'moment-praise verdict';
+  line.innerHTML = galIcon(id, theme);
+  const who = document.createElement('b'); who.className = 'sr-only'; who.textContent = GALS[id].name;
+  const bubble = document.createElement('p'); bubble.className = 'bubble';
+  const text = document.createElement('span'); text.className = 'gal-text'; text.textContent = praise.text;
+  bubble.append(who, text); line.append(bubble);
   return line;
 }

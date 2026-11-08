@@ -1,4 +1,5 @@
 import { setBusy } from './busy.js';
+import { whileSending } from './sending.js';
 import { api, client, refresh } from './api.js';
 import { blobOf, photoCrop } from './camera.js';
 import './daily-tasks.css';
@@ -104,8 +105,10 @@ export function setupDarupoyoRecords() {
       submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim()};
       busy=true; [file,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent=''; setBusy(save,true,'共有しています…');
       try {
-        if(photo && !submission.media_id) submission.media_id=(await scopedApi(house,'/media?kind=darupoyo',photo)).id;
-        const {record}=await scopedApi(house,'/darupoyo',submission);
+        const {record}=await whileSending(dialog, async()=>{ // そ〜しんちゅ〜
+          if(photo && !submission.media_id) submission.media_id=(await scopedApi(house,'/media?kind=darupoyo',photo)).id;
+          return scopedApi(house,'/darupoyo',submission);
+        });
         if(version!==composer) return;
         discardPreview(); dialog.innerHTML='<h2>だるぽよ、残せたよ♡</h2><p>今日のじぶんも、ちゃんとかわいい。ゆるくいこ〜。</p><button type="button" class="btn btn-main">お部屋へ</button>';
         dialog.querySelector('button').onclick=()=>dialog.close();
