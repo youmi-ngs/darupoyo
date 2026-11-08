@@ -189,3 +189,6 @@ dialog.pin-viewer { overflow-x: hidden; }
 .sv-hit.now-table svg { animation: wiggle 2.8s ease-in-out infinite, halo-blue 2.4s ease-in-out infinite !important; }
 .sv-hit.now-table .area-task { font-size: 13px; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .sv-hit.now-table svg { animation: none !important; } }
+/* The enlarged view of a record without a photo shows the gal doing it, like the small card. */
+.pm-photo .shot.pin-photo.is-drawing { position: relative; border: 0; }
+.pm-photo .shot.pin-photo.is-drawing .resident-character { transform: scale(1.6); }

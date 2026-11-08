@@ -170,3 +170,14 @@ test('outside house is complete artwork clipped at the edge; balcony moon stays 
   const moon=await page.locator('.sv-balcony .sv-sun').boundingBox(), pole=await page.locator('.balcony-pole').boundingBox();
   expect(moon.y+moon.height).toBeLessThan(pole.y+16);
 });
+
+test('a record without a photo shows the gal doing it in the enlarged けーじばん view too, not sound bars', async ({ page }) => {
+  await enter(page);
+  await page.evaluate(async () => { const { houseApi, refresh } = await import('/src/api.js'); await houseApi('/completions', { request_id: crypto.randomUUID(), chore: 'dryer', method: 'sound', duration_seconds: 11 }); await refresh(); });
+  await page.locator('#open-board').click();
+  await expect(page.locator('.pin-grid .pin-post .pin-photo.is-drawing .resident-character')).toHaveCount(1);
+  await page.locator('.pin-grid .pin-post').click();
+  const photo = page.locator('#photo-modal .pm-photo');
+  await expect(photo.locator('.resident-character')).toBeVisible();
+  await expect(photo.locator('.wave')).toHaveCount(0);
+});
