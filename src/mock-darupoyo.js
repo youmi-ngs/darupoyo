@@ -26,10 +26,3 @@ export function mockDarupoyo({ db, houseId, uid, rest, method, body, searchParam
   state.darupoyo_updated_at = record.created_at; db.days[houseId+'/'+day] = state;
   save(db); return json({record,created:true},201);
 }
-export function deleteMockDarupoyo(db, uid, removedHouses) {
-  for (const collection of ['darupoyo_records','darupoyo_requests']) {
-    for (const [key, value] of Object.entries(db[collection] || {})) {
-      if (value.user_id === uid || removedHouses.has(value.house_id)) delete db[collection][key];
-    }
-  }
-}
