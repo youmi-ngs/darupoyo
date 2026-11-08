@@ -40,6 +40,8 @@ body {
 * { box-sizing: border-box; }
 button { font: inherit; color: inherit; cursor: pointer; }
 :focus-visible { outline: 3px solid #7FB8E8; outline-offset: 3px; }
+/* A dialog box gets focus when it opens (nothing inside to focus yet); it is not a control, so no ring around the whole box. */
+dialog:focus-visible { outline: none; }
 
 .stage {
   max-width: 430px; margin: 0 auto; min-height: 100%;
