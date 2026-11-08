@@ -53,6 +53,7 @@ test('opening the app again shows a short loading screen, not the welcome (#133)
   await expect(screen.locator('.onboarding-loading')).toHaveText('よみこみ中…');
   await expect(screen).not.toContainText('ようこそ');
   await expect(screen.getByLabel('あなたの名前')).toHaveCount(0);
+  expect(await screen.evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none'); // no blue ring around the box
   release();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 });

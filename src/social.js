@@ -66,29 +66,24 @@ async function squareJpeg(file, size = 320) {
 export function setupSocialSettings(getMe, toast) {
   const anchor = document.getElementById('sound-card'); if (!anchor) return () => {};
   const card = document.createElement('section'); card.className = 'set-card social-card'; card.id = 'social-card';
-  card.innerHTML = '<h3 class="drawer-h">プロフィール写真</h3>'
-    + '<div class="avatar-row"><span class="avatar-preview" aria-hidden="true"></span><label class="btn avatar-pick">写真をえらぶ<input type="file" accept="image/*" hidden></label><button class="btn avatar-clear" type="button">はずす</button></div>'
-    + '<p class="push-note">タイムラインとみんなの部屋の名前の横に出るよ</p>'
-    + '<div class="push-row"><h3 class="drawer-h" id="share-history-title">ほかのハウスの記録を見せる</h3><button class="push-toggle" type="button" id="share-history" aria-labelledby="share-history-title" aria-pressed="false">オフ</button></div>'
-    + '<p class="push-note">オンにすると、あなたが別のハウスで残した写真・記録を、このハウスの住人もアルバムで見られるよ。コメントやリアクションは見せないよ。あなた自身はいつでも見られる。</p>';
+  // Figma mypage has no photo card: the account icon opens this file input.
+  card.innerHTML = '<input type="file" accept="image/*" hidden aria-label="プロフィール写真">'
+    + '<div class="push-row"><h3 class="drawer-h" id="share-history-title">ほかのハウスの記録を見せる</h3><button class="sound-switch" type="button" id="share-history" aria-labelledby="share-history-title" aria-pressed="false"><img src="/settings/6b989.svg" alt=""></button></div>'
+    + '<p class="push-note">オンにすると、別のハウスで残した写真・記録を、このハウスの住人もアルバムで見られるよ（コメントとリアクションは見せないよ）。</p>';
   anchor.after(card);
-  const preview = card.querySelector('.avatar-preview'), file = card.querySelector('input[type=file]'), clear = card.querySelector('.avatar-clear'), share = card.querySelector('#share-history');
+  const file = card.querySelector('input[type=file]'), share = card.querySelector('#share-history');
   const render = () => {
-    const me = getMe(); preview.replaceChildren();
-    if (me?.avatar) { const img = document.createElement('img'); img.src = me.avatar; img.alt = ''; preview.append(img); }
-    else preview.textContent = (me?.display_name || '').slice(0, 1);
-    clear.hidden = !me?.avatar_media_id;
-    const on = !!me?.share_history; share.textContent = on ? 'オン' : 'オフ'; share.setAttribute('aria-pressed', String(on));
+    const on = !!getMe()?.share_history;
+    share.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; share.setAttribute('aria-pressed', String(on));
   };
   file.onchange = async () => {
     const chosen = file.files[0]; file.value = ''; if (!chosen) return;
-    const pick = card.querySelector('.avatar-pick'); pick.classList.add('is-busy'); pick.setAttribute('aria-busy', 'true'); // #144 (keeps the file input inside)
+    const pick = document.getElementById('profile-photo'); pick.setAttribute('aria-busy', 'true'); // #144
     try {
       const { id } = await houseApi('/media?kind=avatar', await squareJpeg(chosen));
       await houseApi('/avatar', { media_id: id }, 'PUT'); await refresh(); toast('プロフィール写真を変えたよ');
-    } catch (e) { toast(e.message); } finally { pick.classList.remove('is-busy'); pick.removeAttribute('aria-busy'); }
+    } catch (e) { toast(e.message); } finally { pick.removeAttribute('aria-busy'); }
   };
-  clear.onclick = async () => { clear.disabled = true; try { await houseApi('/avatar', undefined, 'DELETE'); await refresh(); } catch (e) { toast(e.message); } finally { clear.disabled = false; } };
   share.onclick = async () => {
     share.disabled = true;
     try { await houseApi('/history-sharing', { enabled: !getMe()?.share_history }, 'PUT'); await refresh(); toast(getMe()?.share_history ? 'このハウスの住人にも見せるよ' : '自分だけに戻したよ'); }

@@ -65,15 +65,12 @@ test('profile photo is the magnet and the room icon, and the gal shows when ther
   });
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#social-card input[type=file]').setInputFiles({ name: 'me.png', mimeType: 'image/png', buffer: Buffer.from(png) });
-  await expect(page.locator('#social-card .avatar-preview img')).toBeVisible();
+  await expect(page.locator('#profile-avatar')).toHaveClass(/has-avatar/);
   await page.locator('#settings-close').click();
   await expect(page.locator('#entry-board-grid .pin-magnet img')).toHaveCount(1);
   await page.locator('.scene-dot').nth(5).click();
   await expect(page.locator('#hall-icons .hall-icon img')).toHaveCount(1);
-  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
-  await page.locator('#social-card .avatar-clear').click();
-  await expect(page.locator('#social-card .avatar-preview img')).toHaveCount(0);
-  await page.locator('#settings-close').click();
+  await page.evaluate(async () => { const { houseApi, refresh } = await import('/src/api.js'); await houseApi('/avatar', undefined, 'DELETE'); await refresh(); });
   await expect(page.locator('#hall-icons .hall-icon .gal-face')).toHaveCount(1);
 });
 

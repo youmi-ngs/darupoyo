@@ -29,18 +29,28 @@ export function setupSettingsUI() {
     $(id).addEventListener('close', () => { if (!document.querySelector('dialog[open]')) trigger.focus(); });
   }
 
-  $('copy-invite').onclick = async () => {
-    const button = $('copy-invite'), status = $('invite-status');
-    button.disabled = true; status.hidden = false; status.textContent = '招待リンクを準備中…';
+  // Figma mypage: the invite code sits in the house card, next to the copy button.
+  let invite = { house: null, code: null };
+  const loadInvite = async () => {
+    if (invite.house === client.house && invite.code) return invite.code;
+    const house = client.house, code = await inviteCode();
+    if (house === client.house) { invite = { house, code }; $('settings-invite').textContent = code; $('settings-invite').setAttribute('aria-label', `招待コード ${code} をコピー`); }
+    return code;
+  };
+  new MutationObserver(() => { if ($('settings').open) loadInvite().catch(() => {}); }).observe($('settings'), { attributes: true, attributeFilter: ['open'] });
+  // Both the code and the pill copy: the code alone, or a link that fills it in.
+  const copyInvite = (button, what, value) => async () => {
+    const status = $('invite-status');
+    button.disabled = true; status.hidden = false; status.textContent = what + 'を準備中…';
     try {
-      const code = await inviteCode();
-      $('settings-invite').textContent = code;
-      const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({ invite: code }).toString();
-      try { await navigator.clipboard.writeText(url.href); status.textContent = 'コピーしたよ！ 招待は7日間有効だよ。'; }
-      catch { status.textContent = 'このリンクをコピーして送ってね（7日間有効）'; const input = document.createElement('input'); input.readOnly = true; input.value = url.href; input.setAttribute('aria-label', '招待リンク'); status.append(input); input.select(); }
+      const text = value(await loadInvite());
+      try { await navigator.clipboard.writeText(text); status.textContent = what + 'をコピーしたよ！ 招待は7日間有効だよ。'; }
+      catch { status.textContent = 'この' + what + 'をコピーして送ってね（7日間有効）'; const input = document.createElement('input'); input.readOnly = true; input.value = text; input.setAttribute('aria-label', what); status.append(input); input.select(); }
     } catch (e) { status.textContent = e.message; }
     finally { button.disabled = false; }
   };
+  $('copy-invite').onclick = copyInvite($('copy-invite'), '招待リンク', code => { const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({ invite: code }).toString(); return url.href; });
+  $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
 
   const track = $('howto-track');
   steps.forEach((step, i) => {
@@ -62,7 +72,6 @@ export function setupSettingsUI() {
     active = cards.reduce((best, card, i) => Math.abs(card.offsetLeft + card.offsetWidth / 2 - center) < Math.abs(cards[best].offsetLeft + cards[best].offsetWidth / 2 - center) ? i : best, 0);
     cards.forEach((card, i) => { card.classList.toggle('is-active', i === active); card.querySelectorAll('button').forEach(b => { b.tabIndex = i === active ? 0 : -1; }); });
     $('howto-status').textContent = `${active + 1} / 4：${steps[active].title}`;
-    $('howto-start').hidden = active !== 3;
   };
   track.addEventListener('scroll', mark, { passive: true });
   track.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); move(active + (e.key === 'ArrowRight' ? 1 : -1)); } });
@@ -101,5 +110,6 @@ export function updateSettingsHouse(house, nameOf, me) {
   avatar.src = member?.avatar || asset('2dc1e');
   avatar.classList.toggle('has-avatar', !!member?.avatar);
   $('settings-house-name').textContent = house.name;
-  $('settings-members').textContent = house.member_ids.map(nameOf).join('　');
+  $('settings-members').replaceChildren(...house.member_ids.map(uid => Object.assign(document.createElement('span'), { textContent: nameOf(uid) })));
+  if ($('settings-invite').dataset.house !== house.id) { $('settings-invite').dataset.house = house.id; $('settings-invite').textContent = '友だちを招待しよう'; $('settings-invite').removeAttribute('aria-label'); $('invite-status').hidden = true; }
 }

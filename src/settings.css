@@ -3,7 +3,8 @@
 dialog.settings-page { background: #ede6f8; }
 .settings-page .drawer-inner { gap:16px; padding:62px 16px 24px; max-width:480px; min-height:100%; background:var(--settings-gradient); }
 .settings-page .settings-title { margin:0; padding-bottom:4px; min-height:43px; font-family:var(--font-ui); font-size:24px; font-weight:700; line-height:38.4px; }
-.settings-page .drawer-close { width:44px; height:44px; top:max(10px,env(safe-area-inset-top)); right:max(10px,calc((100vw - 480px)/2 + 10px)); border:0; border-radius:12px; box-shadow:none; background:#ffffff8f; }
+/* The × sits exactly where the hamburger is (.utility-actions). */
+.settings-page .drawer-close { width:44px; height:44px; top:calc(env(safe-area-inset-top, 0px) + 10px); right:calc(var(--app-x, 0px) + 12px); border:0; border-radius:12px; box-shadow:none; background:#ffffff8f; }
 .settings-page .drawer-close img { display:block; }
 .settings-page .set-card { padding:16px 20px; border:1px solid #775b9d33; border-radius:24px; background:#ffffff80; gap:8px; }
 .settings-page .drawer-h { font-family:var(--font-ui); font-size:12px; font-weight:700; line-height:27.2px; }
@@ -15,9 +16,11 @@ dialog.settings-page { background: #ede6f8; }
 .settings-page .account-row small[hidden] { display:none; }
 .house-name-row { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:32px; }
 .house-name-row b { min-width:0; overflow-wrap:anywhere; font-size:16px; }
-#settings-members { margin:0; color:var(--ink-soft); font-size:12px; line-height:20px; overflow-wrap:anywhere; }
-.invite-row { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:16px; color:var(--ink-soft); }
-#settings-invite { font-size:16px; overflow-wrap:anywhere; }
+#settings-members { display:flex; flex-wrap:wrap; gap:0 12px; margin:0; min-height:20px; color:var(--ink-soft); font-size:12px; line-height:19.2px; overflow-wrap:anywhere; }
+.invite-row { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-top:16px; color:var(--ink-soft); }
+#settings-invite { line-height:19.2px; }
+#settings-invite { padding:0; border:0; background:none; color:inherit; font:inherit; font-size:16px; text-align:left; overflow-wrap:anywhere; cursor:pointer; }
+#settings-invite:disabled { opacity:.6; }
 #settings-invite:empty { display:none; }
 .invite-row .pink-pill { padding:4px 16px; min-height:24px; font-weight:400; flex:none; }
 #invite-status { margin:0; font-size:12px; color:var(--ink-soft); }
@@ -53,8 +56,6 @@ dialog.settings-page { background: #ede6f8; }
 .settings-sources dl div { display:grid; grid-template-columns: minmax(110px,142px) 1fr; gap:16px; margin-bottom:8px; }
 .settings-sources dt { font-weight:700; }
 .settings-sources dd { margin:0; }
-.settings-extras { display:flex; gap:16px; padding:16px 20px 0; }
-.settings-extras button { background:none; border:0; color:var(--ink-soft); font-size:12px; text-decoration:underline; text-underline-offset:4px; }
 /* Top-layer, light-dismiss navigation keeps the house visible. */
 .quick-menu { position:fixed; inset:auto; margin:0; padding:0; border:0; background:transparent; color:var(--ink); overflow:visible; }
 .quick-menu:popover-open { display:flex; flex-direction:column; gap:10px; }
@@ -89,8 +90,6 @@ dialog.settings-page { background: #ede6f8; }
 .howto-card > p { position:absolute; top:315px; left:10px; right:10px; margin:0; font-size:15px; line-height:25px; color:var(--ink-soft); }
 .howto-pagination { position:absolute; top:472px; left:50%; transform:translateX(-50%); display:flex; }
 .howto-pagination button { display:grid; place-items:center; width:18px; height:44px; border:0; padding:0; background:transparent; }
-.howto-finish { display:block; margin:4px auto 0; min-height:44px; padding:8px 32px; font-size:14px; }
-.howto-finish[hidden] { display:none; }
 .sr-only { position:absolute; width:1px; height:1px; padding:0; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 .house-intro { margin:0 0 8px; color:var(--ink-soft); }
 #house-list { display:grid; gap:12px; }
@@ -108,6 +107,10 @@ dialog.settings-page { background: #ede6f8; }
 .settings-page .account-icon img { width:auto; height:auto; }
 .settings-page #profile-avatar.has-avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; }
 .settings-page .account-management button:not(:disabled) { cursor:pointer; }
-.settings-link { align-self:flex-start; padding:0; border:0; background:none; color:var(--ink-soft); font-size:11px; text-decoration:underline; text-underline-offset:3px; }
 .settings-page .social-card .btn { min-height:36px; padding:6px 12px; border:1px solid #775b9d33; border-radius:999px; box-shadow:none; font-size:12px; }
 .settings-page .social-card .push-row { flex-wrap:wrap; }
+
+/* #152: data credits stay readable links, in the footer's own color. */
+.settings-sources a { color:inherit; text-underline-offset:3px; }
+.settings-page .account-icon[aria-busy=true] { opacity:.6; }
+.settings-page .social-card .push-note { font-size:11px; line-height:16px; color:#6a5590; }

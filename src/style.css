@@ -39,7 +39,12 @@ body {
 }
 * { box-sizing: border-box; }
 button { font: inherit; color: inherit; cursor: pointer; }
-:focus-visible { outline: 3px solid #7FB8E8; outline-offset: 3px; }
+:focus-visible { outline: none; }
+/* Rings only while moving with the keyboard (src/input-mode.js); never after a tap. */
+.keyboard-nav :focus-visible { outline: 3px solid #7FB8E8; outline-offset: 3px; }
+/* Titles, dialog boxes and the how-to swipe area take focus only so screen readers start
+   there, or because a tap on their text lands on them. They are not controls: no ring even with the keyboard. */
+:root :is([tabindex="-1"], dialog, .howto-track):focus { outline: none; }
 
 .stage {
   max-width: 430px; margin: 0 auto; min-height: 100%;

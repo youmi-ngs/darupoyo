@@ -63,7 +63,8 @@ test('tutorial pages work with dots, keyboard and touch swipes', async ({ page }
   await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   await expect(page.locator('.howto-card.is-active h3')).toHaveText('うちら、意外とやってる♡');
   await page.screenshot({ animations: 'disabled', scale: 'css', path: 'test-results/settings-howto-4.png' });
-  await page.locator('#howto-start').click();
+  await expect(page.locator('#howto-page').getByRole('button', { name: 'はじめる' })).toHaveCount(0); // #154
+  await page.locator('#howto-close').click();
   await expect(page.locator('#howto-page')).not.toBeVisible();
   await page.locator('#open-menu').click();
   await page.screenshot({ animations: 'disabled', scale: 'css', path: 'test-results/settings-menu.png' });

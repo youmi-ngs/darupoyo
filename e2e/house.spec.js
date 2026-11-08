@@ -13,9 +13,10 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await page.getByRole('button', { name: 'ハウスを作る', exact:true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 
-  await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.getByRole('button', {name:'招待リンク', exact:true}).click();
-  const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
-  await page.locator('#sheet-close').click();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
+  const code = await page.locator('#settings-invite').textContent();
+  await page.locator('#settings-close').click();
   const context = await browser.newContext({ viewport: {width:390,height:844} }); const friend = await context.newPage();
   await friend.goto('/'); await friend.getByRole('button', { name: '招待コードで入る' }).click(); await friend.getByLabel('招待コード').fill(code); await friend.getByLabel('あなたの名前').fill('ともだち'); await friend.getByRole('button', {name:'招待に参加する'}).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);

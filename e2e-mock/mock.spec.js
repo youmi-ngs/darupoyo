@@ -14,8 +14,9 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
   await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 
-  await page.locator('#open-menu').click(); await page.locator('#open-settings').click(); await page.getByRole('button', {name:'招待リンク', exact:true}).click();
-  const code = await page.getByRole('textbox', { name: '招待コード', exact: true }).inputValue();
+  await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
+  await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
+  const code = await page.locator('#settings-invite').textContent();
 
   await stillCamera(context);
   const friend = await context.newPage();
