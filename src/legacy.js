@@ -420,6 +420,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       const gal = pickGal();
       const { blob, kind, result, voice, ...fields } = evidence;
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
+      if (id === 'meal' || id === 'trash') { photoTaskResult(id, c, gal, body, blob, kind, voice, fields); return; }
       sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><label class="post-caption"><span>ひとこと（30文字まで・なくてもOK）</span><input maxlength="30" placeholder="きょうもえらかった〜" autocomplete="off"></label><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
       const shown = resultOf(c, fields, result || {});
       sheetBody.querySelector('.result-label').textContent = shown.label;
@@ -459,6 +460,44 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
       if (e.name === 'NoHitError') { showNoHit(id, c, e); return; }
       openSheet(id); toast(deviceMessage(e, id));
     }
+  }
+  // Photo tasks (Figma 写真のタスク): the word was written with the photo. ゴミ出し is sent right
+  // from its card (プレゼントを届ける); ごはん asks once more after いただきます (04). Both end on
+  // a card with the photo, the word and the gal's line, and a way to けーじばん (05 / 11).
+  async function sendRecord(body, blob, kind, voice) {
+    if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
+    // A confirmed recording must not disappear silently on upload failure.
+    if (voice && !body.voice_media_id) body.voice_media_id = (await houseApi('/media?kind=voice', voice)).id;
+    const result = await houseApi('/completions', body);
+    void refresh().catch(e => toast(e.message)); // #98: show the result now; the house catches up
+    return result;
+  }
+  function photoTaskResult(id, c, gal, body, blob, kind, voice, fields) {
+    const send = async button => {
+      setBusy(button, true, id === 'trash' ? '届けてるよ…' : 'みせてるよ…'); $('sheet-close').disabled = true;
+      try { const result = await sendRecord(body, blob, kind, voice); photoTaskDone(id, c, gal, result.post, blob); }
+      catch (e) { toast(e.message); setBusy(button, false); button.disabled = false; }
+      finally { $('sheet-close').disabled = false; }
+    };
+    if (id === 'trash') { void send(sheetBody.querySelector('.capture-use')); return; }
+    const heard = fields.method === 'photo_voice';
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><section class="result-panel" aria-label="結果"><h3 class="result-main"></h3><p class="result-sub"></p><button class="btn btn-main" id="post">みんなに見せる</button></section><p class="sheet-text">できたことをお部屋に残そう。</p>';
+    sheetBody.querySelector('.result-main').textContent = heard ? '「いただきます」聞こえた！' : '写真で記録できるよ';
+    sheetBody.querySelector('.result-sub').textContent = heard ? '声を確認したよ。写真といっしょに残そ！' : 'ちゃんと食べてえらい。写真だけで残そ！';
+    if (voice) { const url = URL.createObjectURL(voice); sheetBody.querySelector('.result-sub').after(voiceButton(() => url)); }
+    $('post').onclick = () => send($('post'));
+  }
+  function photoTaskDone(id, c, gal, post, blob) {
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text">記録できたよん。今日もえらい！</p><img class="done-photo" alt="記録した写真"><p class="done-caption"></p><div class="verdict done-verdict"><p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="to-board">け〜じばんをちぇけらする</button>';
+    $('sheet-title').textContent = id === 'meal' ? 'きょうのごはん' : c.title;
+    const photo = sheetBody.querySelector('.done-photo');
+    if (blob) { const url = URL.createObjectURL(blob); photo.src = url; sheet.addEventListener('close', () => URL.revokeObjectURL(url), { once: true }); } else photo.remove();
+    const word = sheetBody.querySelector('.done-caption'); word.textContent = post.caption || ''; word.hidden = !post.caption;
+    sheetBody.querySelector('.done-verdict').insertAdjacentHTML('afterbegin', galIcon(gal));
+    sheetBody.querySelector('.gal-text').textContent = post.praise.text;
+    sfx.clear(); setTimeout(() => galVoice(gal, post.praise.text), 550);
+    $('to-board').onclick = () => { sheet.close(); showHouse(); $('open-board').click(); };
+    $('to-board').focus();
   }
   // 録音した「いただきます」を再生するボタン（#9）。src() は再生する音の URL を返す。
   const voiceUrls = new Map();

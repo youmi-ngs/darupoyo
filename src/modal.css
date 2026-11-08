@@ -34,3 +34,27 @@ dialog.darupoyo-dialog label:has(input[type=file]) { border: 1px dashed #b68bb4;
 /* だるぽよ's 閉じる becomes the same corner button (its name stays 閉じる for screen readers). */
 dialog.darupoyo-dialog { position: fixed; }
 dialog.darupoyo-dialog .btn[data-close] { position: absolute; top: 28px; right: 28px; width: 44px; min-height: 44px; height: 44px; margin: 0; padding: 0; border: 0; border-radius: 12px; background: #ffffff8f url(/settings/3ad13.svg) center / 16px no-repeat; font-size: 0; color: transparent; }
+/* Photo tasks (Figma 写真のタスク 01 / 04 / 05 / 06 / 11). */
+dialog.sheet .capture { display: flex; flex-direction: column; gap: 16px; }
+dialog.sheet .capture .capture-frame { width: min(100%, 302px, calc((92dvh - 420px) * 302 / 380)); min-width: 200px; aspect-ratio: 302 / 380; margin: 0 auto; }
+dialog.sheet .capture-word { display: flex; flex-direction: column; gap: 12px; margin: 0; font-size: 15px; font-weight: 700; line-height: 24px; color: #3b2560; }
+dialog.sheet .capture-word[hidden] { display: none; }
+dialog.sheet .capture-word input { box-sizing: border-box; width: 100%; height: 52px; margin: 0; padding: 14px; border: 1px solid #73599933; border-radius: 12px; background: #ffffffbf; color: #3b2560; font: 400 15px/normal var(--font-ui); }
+dialog.sheet .capture-word input::placeholder { color: #b3abbd; opacity: 1; }
+dialog.sheet .capture-use { width: 100%; margin: 0; }
+dialog.sheet .capture-timer { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0; }
+dialog.sheet .capture-timer-icon { width: 30px; height: 30px; }
+dialog.sheet .capture-timer button { min-width: 48px; min-height: 0; padding: 8px 10px; border: 2px solid #3b2560; border-radius: 14px; background: white; font: 700 13px/20.8px var(--font-ui); color: #3b2560; box-shadow: none; }
+dialog.sheet .capture-timer button[aria-pressed=true] { background: #ffb3de; }
+/* 記録する？ for ごはん: the result and みんなに見せる in one soft panel. */
+dialog.sheet .result-panel { display: flex; flex-direction: column; align-items: center; margin: 0 0 10px; padding: 20px 12px 12px; border-radius: 24px; background: #fff5fb; text-align: center; }
+dialog.sheet .result-panel h3 { margin: 17.55px 0 0; font-size: 17.55px; font-weight: 700; line-height: 28.08px; color: #3b2560; }
+dialog.sheet .result-panel p { margin: 17.55px 0 0; font-size: 15px; line-height: 24px; color: #3b2560; }
+dialog.sheet .result-panel .voice-play { margin-top: 10px; }
+dialog.sheet .result-panel .btn { width: 100%; margin-top: 15px; background: #ffdff2; }
+/* Done: the photo, the word and the gal's line. */
+dialog.sheet .done-photo { display: block; width: min(100%, 302px); aspect-ratio: 302 / 380; margin: 0 auto; border-radius: 16px; background: #eee; object-fit: cover; }
+dialog.sheet .done-caption { margin: 0; font-size: 15px; color: #6a5590; overflow-wrap: anywhere; }
+dialog.sheet .done-caption[hidden] { display: none; }
+dialog.sheet .done-verdict { display: flex; align-items: flex-end; gap: 10px; }
+dialog.sheet .done-verdict .bubble { flex: 1; margin: 0; padding: 12px 16px; border: 2px solid #3b2560; border-radius: 20px 20px 20px 6px; background: white; font-size: 15px; font-weight: 700; line-height: 24px; color: #3b2560; }

@@ -12,17 +12,24 @@ test('a chore record can carry a word, shown in the photo viewer and on けー�
   await page.locator('.scene-dot').nth(2).click();
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: 'ごはんを撮る' }).click();
   await page.locator('.capture-library input').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: Buffer.from(await png(page)) });
-  await page.getByRole('button', { name: 'この写真を使う' }).click();
-  await page.getByRole('button', { name: '写真だけで進む' }).click();
-  const word = page.getByLabel('ひとこと（30文字まで・なくてもOK）');
+  // the word is written with the photo (Figma 写真のタスク 01)
+  const word = page.locator('#sheet').getByLabel('ひとこと（30文字まで）');
   await expect(word).toHaveAttribute('maxlength', '30');
+  await expect(word).toHaveAttribute('placeholder', '今日のお昼は、おはぎ！');
   await word.fill('お昼のパスタ');
-  await page.getByRole('button', { name: '部屋に飾る', exact: true }).click();
-  await expect(page.getByText('記録できた！')).toBeVisible();
+  await page.getByRole('button', { name: 'いただきますをする' }).click();
+  await page.getByRole('button', { name: '写真だけで進む' }).click();
+  await page.getByRole('button', { name: 'みんなに見せる' }).click();
+  // done (05): the photo, the word and the gal's line
+  await expect(page.getByText('記録できたよん。今日もえらい！')).toBeVisible();
+  await expect(page.locator('#sheet-title')).toHaveText('きょうのごはん');
+  await expect(page.locator('.done-photo')).toBeVisible();
+  await expect(page.locator('.done-caption')).toHaveText('お昼のパスタ');
+  await expect(page.locator('.done-verdict .gal-text')).not.toHaveText('');
   const [post] = await page.evaluate(async () => { const { houseApi } = await import('/src/api.js'); return (await houseApi('/posts')).items; });
   expect(post.caption).toBe('お昼のパスタ');
-  await page.getByRole('button', { name: 'お部屋へ', exact: true }).click();
-  await page.locator('.scene-dot').nth(1).click(); await page.locator('#open-board').click();
+  await page.getByRole('button', { name: 'け〜じばんをちぇけらする' }).click();
+  await expect(page.locator('#board-view')).toBeVisible();
   await expect(page.locator('.pin-grid .pin-post .pin-text')).toHaveText('お昼のパスタ');
   await page.locator('.pin-grid .pin-post').click();
   await expect(page.locator('#photo-modal .pm-caption')).toHaveText('お昼のパスタ');
