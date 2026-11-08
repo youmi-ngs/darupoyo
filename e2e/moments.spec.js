@@ -165,7 +165,7 @@ test('in the けーじばん viewer, みんなの今 posts can be swiped through
   await expect(count).toHaveText('2 / 3');
 });
 
-test('うちらのなう opens from the camera table under けーじばん; the hallway keeps only the residents, centered', async ({ page, context }) => {
+test('うちらのなう opens from the camera on the wall shelf under けーじばん; the hallway keeps only the residents, centered', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('もち'); await page.getByLabel('新しいハウスの名前').fill('げんかん'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   const table = page.locator('[data-scene="entry"] .now-table');

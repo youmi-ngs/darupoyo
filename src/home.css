@@ -190,7 +190,7 @@ dialog.pin-viewer { overflow-x: hidden; }
 .pin-viewer-track::-webkit-scrollbar { display: none; }
 .pin-viewer-slide { flex: 0 0 100%; min-width: 0; box-sizing: border-box; padding: 0 16px; scroll-snap-align: start; }
 .pin-viewer-count { position: absolute; left: 16px; top: 16px; }
-/* うちらのなう on the entrance floor: sways like the chores, but glows blue (it is not a chore). */
+/* うちらのなう on the entrance wall shelf: sways like the chores, but glows blue (it is not a chore). */
 .sv-hit.now-table { z-index: 2; }
 .sv-hit.now-table svg { animation: wiggle 2.8s ease-in-out infinite, halo-blue 2.4s ease-in-out infinite !important; }
 .sv-hit.now-table .area-task { font-size: 13px; white-space: nowrap; }
