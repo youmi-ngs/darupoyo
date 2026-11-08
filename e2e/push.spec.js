@@ -64,6 +64,8 @@ test('notification registration succeeds, and a failed save can be retried', asy
     try { return await pushState(); } catch (e) { return e.stack; }
   })).toBe('ready');
   await expect(page.locator('#push-toggle')).toBeEnabled();
+  await expect(page.locator('#push-toggle')).toHaveClass('sound-switch');
+  await expect(page.locator('#push-toggle img')).toHaveAttribute('src', '/settings/6b989.svg');
   await page.locator('#push-toggle').click();
   await expect(page.locator('#push-note')).toContainText('保存できませんでした');
   await expect(page.locator('#push-toggle')).toHaveAttribute('aria-pressed', 'false');
@@ -72,7 +74,11 @@ test('notification registration succeeds, and a failed save can be retried', asy
   await page.locator('#push-toggle').click();
   await expect(page.locator('#push-toggle')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('#push-note')).toBeHidden();
+  await expect(page.locator('#push-toggle img')).toHaveAttribute('src', '/settings/c8fcf.svg');
   expect(saves).toHaveLength(2);
   expect(saves[1]).toMatchObject({ token: 'test-device-token', enabled: true });
   expect(await page.evaluate(() => localStorage.getItem('darupoyo-push'))).toBe('test-device-token');
+  await page.locator('#push-toggle').click();
+  await expect(page.locator('#push-toggle')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('#push-toggle img')).toHaveAttribute('src', '/settings/6b989.svg');
 });

@@ -9,9 +9,9 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await enter(page);
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   const settings = page.locator('#settings');
-  // cards in the Figma order, plus the history-sharing switch kept after 効果音
+  // Cards stay in Figma order; history sharing has no settings section.
   await expect(settings.locator('.set-card:visible .drawer-h').first()).toHaveText('アカウント');
-  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '効果音', 'ほかのハウスの記録を見せる']);
+  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '効果音']);
   // the invite code shows in the house card; no extra 招待リンク button or photo card
   await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
   await expect(settings.getByRole('button', { name: '招待リンク', exact: true })).toHaveCount(0);
@@ -19,10 +19,8 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await expect(settings.getByText('準備中です')).toHaveCount(0);
   await expect(page.locator('#settings-members span')).toHaveText(['なまえ']);
   await expect(page.locator('.account-management button')).toHaveText(['アカウントを削除', 'ハウスを削除', 'ログアウト']);
-  // the history switch looks like the 効果音 switch and still works
-  const share = page.locator('#share-history');
-  await expect(share).toHaveClass(/sound-switch/); await expect(share).toHaveAttribute('aria-pressed', 'false');
-  await share.click(); await expect(share).toHaveAttribute('aria-pressed', 'true');
+  await expect(settings.locator('#share-history')).toHaveCount(0);
+  await expect(settings.getByText('ほかのハウスの記録を見せる')).toHaveCount(0);
   // the required weather credits stay
   await expect(page.locator('.data-credits')).toContainText('気象データ提供：株式会社ウェザーニューズ');
 });

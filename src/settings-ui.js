@@ -23,7 +23,6 @@ export function setupSettingsUI() {
   window.addEventListener('resize', placeMenu);
   quick.addEventListener('click', e => { if (e.target.closest('[data-menu-action]') && quick.matches(':popover-open')) quick.hidePopover(); }, true);
   $('menu-house').onclick = openHouses;
-  $('house-edit').onclick = () => { if ($('account-form').hidden) $('account-edit').click(); $('account-form').elements.house_name.focus(); };
   $('profile-photo').onclick = () => document.querySelector('#social-card input[type=file]')?.click();
   for (const id of ['settings', 'howto-page', 'house-switcher']) {
     $(id).addEventListener('close', () => { if (!document.querySelector('dialog[open]')) trigger.focus(); });

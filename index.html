@@ -188,13 +188,16 @@
       <div class="account-row"><button type="button" id="profile-photo" class="account-icon" aria-label="プロフィール写真を変更"><img id="profile-avatar" src="/settings/2dc1e.svg" alt=""><span class="camera-badge"><img src="/settings/2f484.svg" alt=""></span></button><div><b>なまえ</b><small hidden></small></div><button class="account-edit" type="button" id="account-edit" aria-label="名前を編集" aria-expanded="false" aria-controls="account-form">編集</button></div>
       <form class="account-form" id="account-form" hidden>
         <label>名前<input name="display_name" maxlength="40" required autocomplete="nickname"></label>
-        <label>家の名前<input name="house_name" maxlength="60" required></label>
         <div class="account-actions"><button class="btn account-cancel" type="button">やめる</button><button class="btn" type="submit">保存</button></div>
       </form>
     </section>
     <section class="set-card house-card">
       <h3 class="drawer-h">ハウス</h3>
-      <div><div class="house-name-row"><b id="settings-house-name"></b><button class="account-edit" id="house-edit" type="button" aria-label="ハウス名を編集">編集</button></div><p id="settings-members"></p></div>
+      <div><div class="house-name-row"><b id="settings-house-name"></b><button class="account-edit" id="house-edit" type="button" aria-label="ハウス名を編集" aria-expanded="false" aria-controls="house-form">編集</button></div><p id="settings-members"></p></div>
+      <form class="account-form" id="house-form" hidden>
+        <label>家の名前<input name="house_name" maxlength="60" required></label>
+        <div class="account-actions"><button class="btn account-cancel" type="button">やめる</button><button class="btn" type="submit">保存</button></div>
+      </form>
       <div class="invite-row"><button type="button" id="settings-invite" class="invite-code-copy">友だちを招待しよう</button><button class="pink-pill" type="button" id="copy-invite">招待リンクをコピー</button></div>
       <p id="invite-status" role="status" hidden></p>
     </section>
@@ -203,7 +206,7 @@
       <div class="gal-picker" id="gal-picker"></div>
     </section>
     <section class="set-card push-card" id="push-card" hidden>
-      <div class="push-row"><h3 class="drawer-h" id="push-title">通知</h3><button class="push-toggle" type="button" id="push-toggle" aria-labelledby="push-title" aria-pressed="false">オフ</button></div>
+      <div class="push-row"><h3 class="drawer-h" id="push-title">通知</h3><button class="sound-switch" type="button" id="push-toggle" aria-labelledby="push-title" aria-pressed="false"><img src="/settings/6b989.svg" alt=""></button></div>
       <p class="push-note" id="push-note" hidden></p>
     </section>
     <section class="set-card push-card" id="sound-card">
