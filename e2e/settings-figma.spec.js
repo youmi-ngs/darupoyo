@@ -27,15 +27,21 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await expect(page.locator('.data-credits')).toContainText('気象データ提供：株式会社ウェザーニューズ');
 });
 
-test('page titles get focus without a blue ring (#153)', async ({ page }) => {
+test('titles, dialog boxes and the how-to swipe area never show a blue ring (#153)', async ({ page }) => {
   await enter(page);
-  await page.keyboard.press('Tab'); // keyboard mode makes :focus-visible apply
-  for (const [open, title] of [['#open-settings', '#settings-title'], ['#open-howto', '#howto-title'], ['#menu-house', '#house-switch-title']]) {
+  await page.keyboard.press('Tab'); // keyboard mode makes :focus-visible apply, the hardest case
+  const ring = loc => page.locator(loc).evaluate(el => getComputedStyle(el).outlineStyle);
+  for (const [open, title, others] of [['#open-settings', '#settings-title', ['#settings']], ['#open-howto', '#howto-title', ['#howto-page', '#howto-track']], ['#menu-house', '#house-switch-title', ['#house-switcher']]]) {
     await page.locator('#open-menu').click(); await page.locator(open).click();
     await expect(page.locator(title)).toBeFocused();
-    expect(await page.locator(title).evaluate(el => getComputedStyle(el).outlineStyle)).toBe('none');
+    expect(await ring(title)).toBe('none');
+    // a tap on text inside lands focus on the box or the swipe area
+    for (const box of others) { await page.locator(box).evaluate(el => el.focus()); expect(await ring(box)).toBe('none'); }
     await page.keyboard.press('Escape');
   }
+  // the Check.exe sheet box too
+  await page.locator('.scene-dot').nth(2).click(); await page.locator('[data-chore="meal"]').click();
+  await page.locator('#sheet').evaluate(el => el.focus()); expect(await ring('#sheet')).toBe('none');
 });
 
 test('あそびかた has no はじめる button on any page (#154)', async ({ page }) => {

@@ -110,8 +110,6 @@ dialog.settings-page { background: #ede6f8; }
 .settings-page .social-card .btn { min-height:36px; padding:6px 12px; border:1px solid #775b9d33; border-radius:999px; box-shadow:none; font-size:12px; }
 .settings-page .social-card .push-row { flex-wrap:wrap; }
 
-/* #153: titles get focus when a page opens (for screen readers); no blue ring. */
-.settings-page .settings-title:focus { outline:none; }
 /* #152: data credits stay readable links, in the footer's own color. */
 .settings-sources a { color:inherit; text-underline-offset:3px; }
 .settings-page .account-icon[aria-busy=true] { opacity:.6; }
