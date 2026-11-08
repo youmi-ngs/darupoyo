@@ -12,7 +12,7 @@ test('pose camera timer counts down and a failed pose can be retaken without lea
   await expect(page.locator('.capture-count')).toBeVisible();await expect(page.locator('.capture-timer')).toHaveCount(0);
   await expect(page.locator('.capture-status')).toContainText('秒後に撮るよ');
   await expect(page.getByRole('button',{name:'もう1回撮る'})).toBeVisible({timeout:45000});
-  await expect(page.locator('.capture-status')).toContainText('全身を見つけられませんでした');
+  await expect(page.locator('.capture-status')).toContainText('人が見つからなかったよ');
   await page.getByRole('button',{name:'もう1回撮る'}).click();
   await expect(page.locator('.capture video')).toBeVisible();
   await expect(page.getByRole('button',{name:'3秒'})).toHaveAttribute('aria-pressed','true');
@@ -25,7 +25,7 @@ export const PRESET_PASS = 60;
 export const PRESET_POSES = {};
 export const presetScore = () => 88;
 export const poseSimilarity = () => 70;
-export const hasFullBody = l => !!l;
+export const hasUpperBody = l => !!l;
 export async function createPoseLandmarker() {
   const landmarks = Array.from({ length: 33 }, (_, i) => ({ x: .5, y: i / 40, z: 0, visibility: 1 }));
   return { detectForVideo: () => ({ landmarks: [landmarks], close() {} }), close() {} };
@@ -41,7 +41,7 @@ test('ゴミ出し: the pose is judged as soon as the photo is in, and プレゼ
   await page.goto('/'); await setWelcomeName(page, 'pose'); await setHouseName(page, 'present'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(0).click(); await page.locator('[data-chore="trash"]').click(); await page.getByRole('button', { name: /^ゴミ捨てる/ }).click(); await page.getByRole('button', { name: /サンタのポーズ/ }).click();
   const send = page.getByRole('button', { name: 'プレゼントを届ける' });
-  await expect(page.locator('.capture-status')).toHaveText('全身が入るように、少し離れてね！');
+  await expect(page.locator('.capture-status')).toHaveText('上半身が入ればOKだよ！');
   await expect(send).toBeDisabled();
   // the timer sits right under the photo, the word under the timer
   expect(await page.locator('.capture > *').evaluateAll(n => n.map(e => e.className).filter(c => /capture-(frame|timer|word|use)/.test(c)).map(c => c.match(/capture-(frame|timer|word|use)/)[0]))).toEqual(['capture-frame', 'capture-timer', 'capture-word', 'capture-use']);

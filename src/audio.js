@@ -152,7 +152,7 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
 }
 
 export async function dryerSound(box, status, signal, resources) {
-  status.textContent = '音の判定モデルを準備中。音声は端末で処理し、アップロードしません。';
+  status.textContent = 'じゅんびちゅ〜…音はスマホの中だけで聞くから安心してね♡';
   const [{ FilesetResolver }, { AudioClassifier }] = await Promise.all([import('@mediapipe/tasks-vision'), import('@mediapipe/tasks-audio')]);
   const classifier = await AudioClassifier.createFromOptions(await FilesetResolver.forAudioTasks('/models/audio'), { baseOptions: { modelAssetPath: '/models/yamnet.tflite' }, runningMode: 'AUDIO_CLIPS', maxResults: 5 });
   resources.push(() => classifier.close()); check(signal);
@@ -163,17 +163,17 @@ export async function dryerSound(box, status, signal, resources) {
   const mute = context.createGain(); mute.gain.value = 0; source.connect(worklet).connect(mute).connect(context.destination);
   resources.push(() => { source.disconnect(); worklet.disconnect(); });
   const progress = document.createElement('progress'); progress.max = 10; progress.value = 0; box.append(progress);
-  status.textContent = 'ドライヤーの音を聞いています。検出した時間が10秒でクリア。';
+  status.textContent = 'ドライヤーぶお〜んってして！10びょ〜でクリアだよん';
   let detected = 0;
   await new Promise((resolve, reject) => {
     resources.push(onAbort(signal, reject));
-    const timeout = setTimeout(() => reject(new Error('音を十分に検出できませんでした。マイクの位置を変えて試してください')), 120000); resources.push(() => clearTimeout(timeout));
+    const timeout = setTimeout(() => reject(new Error('ドライヤーの音、あんま聞こえなかった〜。スマホ近づけてもっかいやってみて！')), 120000); resources.push(() => clearTimeout(timeout));
     worklet.port.onmessage = ({ data }) => {
       try {
         const result = classifier.classify(data, context.sampleRate);
         const categories = result.flatMap(r => r.classifications.flatMap(c => c.categories));
         if (categories.some(c => /hair dryer/i.test(c.categoryName) && c.score >= .2)) detected += data.length / context.sampleRate;
-        progress.value = detected; status.textContent = 'ドライヤーの音：' + Math.min(10, detected).toFixed(1) + ' / 10 秒';
+        progress.value = detected; status.textContent = 'ぶお〜ん…' + Math.min(10, detected).toFixed(1) + ' / 10びょ〜';
         if (detected >= 10) resolve();
       } catch (e) { reject(e); }
     };

@@ -27,6 +27,7 @@
   --pop: 0 6px 18px rgba(155, 120, 210, .28);
 }
 html, body { height: 100%; }
+html, body, button, a, label, input, [role=button] { touch-action: manipulation; } /* no double-tap zoom (#170) */
 body {
   background: linear-gradient(180deg, #C9B6FF 0%, #F0B8EA 8%, #FFB8DC 13%, #FFD3C2 17%, #C9B6FF 17.2%, #B9A6F5 100%);
   background-color: #D9C2FF;

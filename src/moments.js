@@ -7,6 +7,7 @@ import { blobOf, openCamera } from './camera.js';
 import { sfx } from './sfx.js';
 import { momentPraise } from './moment-praise.js';
 import { whileSending } from './sending.js';
+import { burst } from './celebrate.js';
 
 const WIDTH = 600, HEIGHT = 755; // the 302×380 frame of the design
 
@@ -45,7 +46,7 @@ export function setupMoments() {
     lead.textContent = sent ? 'そ〜しんできたよん' : '今のうちら撮ろ〜';
     field.hidden = share.hidden = sent; toBoard.hidden = !sent;
     if (sent) retake.hidden = true;
-    if (!sent) { sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); dialog.classList.remove('is-sent'); }
+    if (!sent) { dialog.querySelector('.now-frame .done-burst')?.remove(); sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); dialog.classList.remove('is-sent'); }
   };
   const ctx = canvas.getContext('2d');
   let stream = null, controller = null, taken = false, mediaId = null, requestId = null, busy = false, house = null;
@@ -129,6 +130,7 @@ export function setupMoments() {
       window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
       stopCamera(); setSent(true);
       dialog.classList.remove('is-sent'); void dialog.offsetWidth; dialog.classList.add('is-sent'); // a little pop
+      dialog.querySelector('.now-frame .done-burst')?.remove(); burst($('.now-frame')); // #175
       sentCaption.textContent = moment.caption || ''; sentCaption.hidden = !moment.caption;
       const praise = momentPraise(moment.praise, document.body.dataset.myTheme); praiseBox.hidden = !praise; if (praise) praiseBox.append(praise);
       toBoard.focus();

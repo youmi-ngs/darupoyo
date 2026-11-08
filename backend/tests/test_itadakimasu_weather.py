@@ -21,6 +21,7 @@ class FakeGemini:
 
     def _generate(self, model, contents, config):
         self.calls.append(contents[0].inline_data.mime_type)
+        self.config = config
         answer = self.answers.pop(0)
         if isinstance(answer, Exception):
             raise answer
@@ -107,3 +108,11 @@ def test_weather_needs_a_key_and_sign_in_and_is_cached(monkeypatch):
         with pytest.raises(Exception) as error:
             weather.current(get=broken)
         assert "secret-key" not in str(error.value.detail)
+
+
+def test_itadakimasu_check_leaves_room_for_the_whole_json_answer():
+    # #174: a 20-token limit cut {"heard": true} short, so every check failed.
+    from src.app.itadakimasu import heard
+    gemini = FakeGemini([True])
+    assert heard(gemini, b"voice", "audio/mp4") is True
+    assert gemini.config.max_output_tokens >= 128

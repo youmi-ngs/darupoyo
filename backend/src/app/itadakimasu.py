@@ -30,7 +30,8 @@ def heard(praise, data, content_type):
         model=praise.settings.model,
         contents=[types.Part.from_bytes(data=data, mime_type=content_type), PROMPT],
         config=types.GenerateContentConfig(
-            temperature=0, max_output_tokens=20, response_mime_type="application/json", response_schema=SCHEMA,
+            # 20 tokens cut the JSON short, so every check failed with 503 (#174).
+            temperature=0, max_output_tokens=256, response_mime_type="application/json", response_schema=SCHEMA,
         ),
     )
     return bool(json.loads(result.text or "{}").get("heard"))
