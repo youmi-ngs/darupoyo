@@ -126,6 +126,38 @@ FALLBACK = {
 }
 
 
+# #158: a word for a 「みんなの今」 selfie. Gemini never sees the photo (it is shared only
+# with the house), so the line reacts to the caption and to the sharing itself.
+MOMENT_RULES = (
+    "家の友だちが、家事とは関係ない「今のじぶん」の自撮りを、同じ家の住人に共有した。"
+    "写真は見えていないので、見た目・顔・服・メイク・場所には触れない。ひとことがあれば、それに軽く反応する。"
+    "共有してくれたことをよろこんで、今日のその人をゆるく肯定する一言を、あなたのキャラのまま日本語で返す。"
+    "50文字以内の1〜2文。説明や前置き、かぎかっこは付けない。"
+    "禁止：見た目の評価、説教、家事をうながすこと、ユーザーへの指示。"
+)
+MOMENT_BANNED = ("かわい", "可愛", "美人", "イケメン", "顔", "服", "メイク", "太っ", "痩せ", "やせ", "家事", "洗濯", "掃除", "ゴミ")
+MOMENT_FALLBACK = {
+    "heisei": ["今のじぶんシェアとかチョーアガるし↑↑", "近況ありがと〜！今日もあげぽよでいこ↑↑"],
+    "reiwa": ["今の共有、ありがたすぎ。それな", "近況たすかる〜。今日もいい感じじゃん"],
+    "kuro": ["今のじぶん見せてくれるの、最強じゃん！", "シェアありがと！今日もウチら味方だから"],
+    "hime": ["今のじぶん見せてくれてうれしい♡", "近況ありがと♡ 今日もえらいこ"],
+}
+
+
+def moment_prompt(gal, caption):
+    sheet = GALS[gal_or_default(gal)]
+    system = "\n".join([MOMENT_RULES, f"あなたは「{sheet['name']}」。{sheet['sheet']}", "話し方の例：" + " / ".join(sheet["examples"])])
+    return system, "ひとこと：" + (caption.strip() or "（なし）")
+
+
+def moment_acceptable(text):
+    return bool(text) and len(text) <= 80 and not any(word in text for word in MOMENT_BANNED)
+
+
+def moment_fallback(gal, rng=random):
+    return rng.choice(MOMENT_FALLBACK[gal_or_default(gal)])
+
+
 def gal_or_default(gal):
     return gal if gal in GALS else "reiwa"
 

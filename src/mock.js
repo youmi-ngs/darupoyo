@@ -157,7 +157,10 @@ export async function mockFetch(url, init = {}) {
     if (prior) return prior.media_id === body.media_id && prior.caption === body.caption.trim() ? json(prior,201) : fail(409, 'Request ID already used');
     const photo = db.media[body.media_id];
     if (!photo || photo.house_id !== houseId || photo.owner_id !== uid || photo.kind !== 'selfie') return fail(422, 'Invalid selfie');
-    const now = new Date(), moment = {id:postId(now),house_id:houseId,user_id:uid,request_id:body.request_id,media_id:body.media_id,caption:body.caption.trim(),created_at:now.toISOString()};
+    // #158: the backend's fixed line when Gemini is not used, in the gal this resident picked.
+    const gals = ['heisei','reiwa','kuro','hime'], picked = db.houses[houseId]?.members?.[uid]?.gal, gal = gals.includes(picked) ? picked : gals[Math.floor(Math.random()*4)];
+    const lines = {heisei:'今のじぶんシェアとかチョーアガるし↑↑',reiwa:'今の共有、ありがたすぎ。それな',kuro:'今のじぶん見せてくれるの、最強じゃん！',hime:'今のじぶん見せてくれてうれしい♡'};
+    const now = new Date(), moment = {id:postId(now),house_id:houseId,user_id:uid,request_id:body.request_id,media_id:body.media_id,caption:body.caption.trim(),created_at:now.toISOString(),praise:{text:lines[gal],source:'fallback',gal}};
     db.moments[moment.id]=moment;save(db);return json(moment,201);
   }
   if (rest === '/completions') {

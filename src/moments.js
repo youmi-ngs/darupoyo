@@ -1,6 +1,7 @@
 import { setBusy } from './busy.js';
 import { client, houseApi } from './api.js';
 import { capture } from './media.js';
+import { momentPraise } from './moment-praise.js';
 
 export function setupMoments() {
   const dialog = document.createElement('dialog');
@@ -30,7 +31,9 @@ export function setupMoments() {
           const name = document.createElement('strong'); name.textContent = house.house.members[moment.user_id]?.display_name || '住人';
           const time = document.createElement('time'); time.dateTime = moment.created_at; time.textContent = new Date(moment.created_at).toLocaleString();
           const caption = document.createElement('p'); caption.textContent = moment.caption;
-          card.append(name,time,img,caption);content.append(card);
+          card.append(name,time,img,caption);
+          const praise = momentPraise(moment.praise); if (praise) card.append(praise);
+          content.append(card);
         }
         if (result.next_cursor && current === generation) {
           const more = document.createElement('button');more.className='btn';more.textContent='もっと見る';content.append(more);

@@ -1,6 +1,7 @@
 """Phone notifications through Firebase Cloud Messaging (web push).
 
 - A friend clears a chore: the other members hear about it in the gal voice they picked.
+- A friend shares 「みんなの今」: the same, inviting them to go and look (#157).
 - 19:00 (Cloud Scheduler): members with nothing done today get a gentle, no-blame nudge.
 
 Tokens live in notify/{uid}, which the browser cannot read (Firestore rules deny it).
@@ -35,6 +36,16 @@ FRIEND_RULE = (
 # Notification titles say what happened; the phone already shows the app name, so
 # a title of 「だるぽよ」 read as 「だるぽよ from だるぽよ」 (#143).
 DONE = {"laundry": "洗濯した", "meal": "ごはんを食べた", "dryer": "髪を乾かした", "garbage": "ゴミを出した"}
+MOMENT_RULE = (
+    "家の友だちが「今のじぶん」の自撮りを共有したことを、スマホの通知でユーザーに知らせる一言を書く。"
+    "見に行こうと誘う。写真は見えていないので見た目には触れない。40文字以内の1文。かぎかっこは付けない。"
+)
+MOMENT_FALLBACK = {
+    "heisei": ["{name}が今のじぶん載せてるよ〜！見にいこ↑↑"],
+    "reiwa": ["{name}の今、上がってる。見に行こ"],
+    "kuro": ["{name}が今をシェアしたって！見てやろ"],
+    "hime": ["{name}ちゃんの今、見にいこ♡"],
+}
 EVENING_RULE = (
     "19時になっても、ユーザーは今日まだ家事をしていない。スマホの通知で声をかける一言を書く。"
     "責めない・急かさない。「今日は休みにしちゃう？」のように、休んでもいいと伝える。40文字以内の1文。かぎかっこは付けない。"
@@ -85,6 +96,11 @@ class Notifier:
         facts = dict(name=name, chore=gals.CHORES[chore], reward=gals.REWARDS[chore])
         made = self._gemini(gal, FRIEND_RULE, "友だち：{name}／家事：{chore}／ごほうび：{reward}".format(**facts), chore=chore)
         return made or random.choice(FRIEND_FALLBACK[gal]).format(**facts)
+
+    def moment_text(self, gal, name):
+        gal = voice(gal)
+        made = self._gemini(gal, MOMENT_RULE, f"友だち：{name}")
+        return made if made and gals.moment_acceptable(made) else random.choice(MOMENT_FALLBACK[gal]).format(name=name)
 
     def evening_text(self, gal):
         gal = voice(gal)
@@ -138,6 +154,14 @@ class Notifier:
             record = store.get(f"notify/{member}") or {} if member != uid else {}
             if record.get("tokens"):
                 self.send(store, member, self.friend_text(record.get("gal"), name, chore), title=f"{name}が{DONE[chore]}よ")
+
+    def friend_moment(self, store, house, uid):
+        """#157: the other members hear that someone shared 「みんなの今」."""
+        name = house["members"].get(uid, {}).get("display_name", "住人")
+        for member in house["member_ids"]:
+            record = store.get(f"notify/{member}") or {} if member != uid else {}
+            if record.get("tokens"):
+                self.send(store, member, self.moment_text(record.get("gal"), name), title=f"{name}が今をシェアしたよ")
 
     def evening(self, store, day):
         """Nudge everyone who has done nothing today in any of their houses (once per person)."""
