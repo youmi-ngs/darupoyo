@@ -46,3 +46,16 @@ test('あそびかた has no はじめる button on any page (#154)', async ({ p
   await expect(page.locator('#howto-page').getByRole('button', { name: 'はじめる' })).toHaveCount(0);
   await page.locator('#howto-close').click(); await expect(page.locator('#howto-page')).toBeHidden();
 });
+
+test('each menu page closes from the same spot as the hamburger, on phone and PC', async ({ page }) => {
+  for (const width of [390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    if (width === 390) await enter(page);
+    const ham = await page.locator('#open-menu').boundingBox();
+    for (const [open, close] of [['#open-settings', '#settings-close'], ['#open-howto', '#howto-close'], ['#menu-house', '#house-switch-close']]) {
+      await page.locator('#open-menu').click(); await page.locator(open).click();
+      await expect.poll(() => page.locator(close).boundingBox()).toEqual(ham); // after the slide-in
+      await page.locator(close).click();
+    }
+  }
+});

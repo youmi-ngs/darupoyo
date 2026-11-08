@@ -3,7 +3,8 @@
 dialog.settings-page { background: #ede6f8; }
 .settings-page .drawer-inner { gap:16px; padding:62px 16px 24px; max-width:480px; min-height:100%; background:var(--settings-gradient); }
 .settings-page .settings-title { margin:0; padding-bottom:4px; min-height:43px; font-family:var(--font-ui); font-size:24px; font-weight:700; line-height:38.4px; }
-.settings-page .drawer-close { width:44px; height:44px; top:max(10px,env(safe-area-inset-top)); right:max(10px,calc((100vw - 480px)/2 + 10px)); border:0; border-radius:12px; box-shadow:none; background:#ffffff8f; }
+/* The × sits exactly where the hamburger is (.utility-actions). */
+.settings-page .drawer-close { width:44px; height:44px; top:calc(env(safe-area-inset-top, 0px) + 10px); right:calc(var(--app-x, 0px) + 12px); border:0; border-radius:12px; box-shadow:none; background:#ffffff8f; }
 .settings-page .drawer-close img { display:block; }
 .settings-page .set-card { padding:16px 20px; border:1px solid #775b9d33; border-radius:24px; background:#ffffff80; gap:8px; }
 .settings-page .drawer-h { font-family:var(--font-ui); font-size:12px; font-weight:700; line-height:27.2px; }
