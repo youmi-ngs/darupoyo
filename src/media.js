@@ -137,29 +137,6 @@ export async function capture(root, chore, choice, reference, signal) {
       video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
     };
     setMirror();
-    // #161: a selfie can use the back camera too (only shown when the device has two).
-    if (chore === 'selfie' && stream) {
-      const cameras = (await navigator.mediaDevices.enumerateDevices?.().catch(() => []) || []).filter(d => d.kind === 'videoinput');
-      if (cameras.length > 1) {
-        const flip = document.createElement('button'); flip.type = 'button'; flip.className = 'capture-flip';
-        flip.setAttribute('aria-label', '外カメラに切り替える');
-        flip.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M9 13a3 3 0 0 1 5.6-1.5M15 13a3 3 0 0 1-5.6 1.5"/><path d="M14.6 9.6v1.9h-1.9M9.4 16.4v-1.9h1.9"/></svg>';
-        flip.onclick = async () => {
-          const next = stream?.getVideoTracks()[0]?.getSettings().facingMode === 'environment' ? 'user' : 'environment';
-          flip.disabled = true;
-          try {
-            stream?.getTracks().forEach(t => t.stop());
-            stream = await openCamera(video, next, resources, signal); setMirror();
-            flip.setAttribute('aria-label', next === 'environment' ? '内カメラに切り替える' : '外カメラに切り替える');
-          } catch (e) {
-            if (e.name === 'AbortError' || signal.aborted) return;
-            status.textContent = 'カメラを切り替えられませんでした';
-            try { stream = await openCamera(video, 'user', resources, signal); setMirror(); } catch {}
-          } finally { flip.disabled = false; }
-        };
-        live.append(flip);
-      }
-    }
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const takePhoto = async () => {
       live.hidden = !stream; canvas.hidden = true;

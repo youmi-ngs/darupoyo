@@ -1,77 +1,122 @@
+// うちらのなう (Figma 207:914): the みんなの今 button opens a camera card. Take a selfie (or pick
+// one), add a word, and みせちゃう shares it with the house; it then shows on けーじばん.
 import { setBusy } from './busy.js';
 import { client, houseApi } from './api.js';
-import { capture } from './media.js';
-import { momentPraise } from './moment-praise.js';
+import { blobOf, openCamera } from './camera.js';
+import { sfx } from './sfx.js';
+
+const WIDTH = 600, HEIGHT = 755; // the 302×380 frame of the design
 
 export function setupMoments() {
   const dialog = document.createElement('dialog');
-  dialog.className = 'moments-dialog';
-  dialog.setAttribute('aria-label', 'みんなの今');
-  dialog.innerHTML = '<button class="btn" type="button" data-close>閉じる</button><h2>みんなの今</h2><p>家事とは別の、気ままな近況。写真はハウスの住人にだけ共有されます。</p><button class="btn btn-main" type="button" data-shoot>自撮りを撮る</button><button class="btn" type="button" data-refresh>更新</button><p role="status"></p><div data-content></div>';
+  dialog.className = 'now-dialog';
+  dialog.setAttribute('aria-labelledby', 'now-title');
+  dialog.innerHTML = `
+    <div class="now-head"><h2 id="now-title">うちらのなう</h2><button type="button" class="now-close" aria-label="閉じる"><img src="/settings/3ad13.svg" alt=""></button></div>
+    <p class="now-lead">今のうちら撮ろ〜</p>
+    <div class="now-frame">
+      <video muted playsinline autoplay hidden></video>
+      <canvas hidden aria-label="撮った写真"></canvas>
+      <p class="now-frame-note" hidden></p>
+      <button type="button" class="now-retake" aria-label="撮り直す" hidden><img src="/moments/retake.svg" alt=""></button>
+      <div class="now-controls">
+        <label class="now-library" aria-label="ライブラリからえらぶ"><input type="file" accept="image/*" hidden></label>
+        <button type="button" class="now-shutter" aria-label="撮る"><img src="/moments/shutter.svg" alt=""></button>
+        <button type="button" class="now-flip" aria-label="外カメラに切り替える" hidden><img src="/moments/flip.svg" alt=""></button>
+      </div>
+    </div>
+    <label class="now-field"><span>ひとこと（30文字まで）</span><input maxlength="30" placeholder="おは！きょうもがんばろ〜" autocomplete="off"></label>
+    <button type="button" class="now-share" disabled>みせちゃう</button>
+    <p class="now-status" role="status" aria-live="polite"></p>`;
   document.body.append(dialog);
-  const content = dialog.querySelector('[data-content]'), status = dialog.querySelector('[role=status]');
-  const shoot = dialog.querySelector('[data-shoot]'), refresh = dialog.querySelector('[data-refresh]');
-  let controller, urls = [], generation = 0, busy = false;
-  const clearUrls = () => { urls.forEach(URL.revokeObjectURL); urls = []; };
-  const reset = () => { generation++; controller?.abort(); controller = null; clearUrls(); busy = false; shoot.disabled = refresh.disabled = false; dialog.classList.remove('is-shooting'); };
-  dialog.addEventListener('close', reset);
-  dialog.querySelector('[data-close]').onclick = () => dialog.close();
-  async function load() {
-    reset(); const current = generation; content.replaceChildren(); status.textContent = '読み込み中…';
-    shoot.disabled = refresh.disabled = true;
-    try {
-      const house = await houseApi('/dashboard'), page = await houseApi('/moments');
-      if (current !== generation) return;
-      const append = async result => {
-        for (const moment of result.items) {
-          const blob = await houseApi('/media/' + moment.media_id);
-          if (current !== generation) return;
-          const url = URL.createObjectURL(blob); urls.push(url);
-          const card = document.createElement('article'), img = document.createElement('img'); img.src = url; img.alt = 'ハウスの近況写真';
-          const name = document.createElement('strong'); name.textContent = house.house.members[moment.user_id]?.display_name || '住人';
-          const time = document.createElement('time'); time.dateTime = moment.created_at; time.textContent = new Date(moment.created_at).toLocaleString();
-          const caption = document.createElement('p'); caption.textContent = moment.caption;
-          card.append(name,time,img,caption);
-          const praise = momentPraise(moment.praise); if (praise) card.append(praise);
-          content.append(card);
-        }
-        if (result.next_cursor && current === generation) {
-          const more = document.createElement('button');more.className='btn';more.textContent='もっと見る';content.append(more);
-          more.onclick = async () => { more.disabled=true;try { const next=await houseApi('/moments?before='+encodeURIComponent(result.next_cursor)); more.remove();await append(next); } catch { more.disabled=false;status.textContent='読み込めませんでした。もう一度試してね'; } };
-        }
-      };
-      await append(page);
-      if (current === generation) status.textContent = page.items.length ? '' : 'まだ写真がありません。今のじぶんを撮ってみよう';
-    } catch(e) { if (current === generation) status.textContent=e.message; }
-    finally { if(current===generation) shoot.disabled=refresh.disabled=false; }
-  }
-  refresh.onclick = load;
-  document.querySelectorAll('#open-moments, [data-open-moments]').forEach(button => {
-    button.onclick = () => { document.querySelector('#menu')?.close(); dialog.showModal(); void load(); };
-  });
-  shoot.onclick = async () => {
-    reset(); const current = generation, house = client.house; controller = new AbortController();
-    dialog.classList.add('is-shooting'); // #161: the camera and its shutter get the whole dialog
-    shoot.disabled=refresh.disabled=true;status.textContent='';content.replaceChildren();
-    try {
-      const evidence=await capture(content,'selfie',{title:'今のじぶん'},null,controller.signal);
-      if(current!==generation) return;
-      const label=document.createElement('label');label.textContent='ひとこと（任意）';
-      const caption=document.createElement('input');caption.maxLength=140;label.append(caption);
-      const save=document.createElement('button');save.className='btn btn-main';save.textContent='みんなに共有';
-      const cancel=document.createElement('button');cancel.className='btn';cancel.textContent='やめる';cancel.onclick=load;
-      content.append(label,save,cancel);
-      let mediaId;const requestId=crypto.randomUUID();
-      save.onclick=async()=>{
-        if(busy || client.house!==house)return;busy=true;setBusy(save,true,'共有しています…');cancel.disabled=true;caption.disabled=true;
-        try {
-          mediaId ||= (await houseApi('/media?kind=selfie',evidence.blob)).id;
-          await houseApi('/moments',{request_id:requestId,media_id:mediaId,caption:caption.value});
-          window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
-          if(current===generation) await load();
-        }catch(e){if(current===generation){status.textContent=e.message;setBusy(save,false);save.disabled=cancel.disabled=false;}}
-        finally{busy=false;}
-      };
-    }catch(e){if(current===generation && e.name!=='AbortError'){status.textContent=e.message;shoot.disabled=refresh.disabled=false;}}
+  const $ = selector => dialog.querySelector(selector);
+  const video = $('video'), canvas = $('canvas'), note = $('.now-frame-note'), retake = $('.now-retake');
+  const controls = $('.now-controls'), shutter = $('.now-shutter'), flip = $('.now-flip'), library = $('.now-library input');
+  const caption = $('.now-field input'), share = $('.now-share'), status = $('.now-status');
+  const ctx = canvas.getContext('2d');
+  let stream = null, controller = null, taken = false, mediaId = null, requestId = null, busy = false, house = null;
+
+  const stopCamera = () => { stream?.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; };
+  const facing = () => stream?.getVideoTracks()[0]?.getSettings().facingMode;
+  // The front camera is shown, and saved, like a mirror (#161).
+  const mirrored = () => facing() !== 'environment';
+  const showLive = () => {
+    taken = false; mediaId = null; canvas.hidden = retake.hidden = true; controls.hidden = false;
+    video.hidden = !stream; video.classList.toggle('is-mirrored', !!stream && mirrored());
+    share.disabled = true;
   };
+  async function startCamera(mode = 'user') {
+    stopCamera(); shutter.disabled = true; // until the camera shows a picture
+    try {
+      stream = await openCamera(video, mode, [], controller.signal);
+      note.hidden = true; shutter.hidden = false; shutter.disabled = false;
+    } catch (e) {
+      if (e.name === 'AbortError') return;
+      stream = null; shutter.hidden = true; note.hidden = false;
+      note.textContent = 'カメラを使えないので、左下からライブラリの写真をえらんでね';
+    }
+    showLive();
+  }
+  // A taken or picked photo fills the frame (cut to its shape).
+  function draw(source, width, height, mirror) {
+    canvas.width = WIDTH; canvas.height = HEIGHT;
+    const scale = Math.max(WIDTH / width, HEIGHT / height), w = WIDTH / scale, h = HEIGHT / scale;
+    if (mirror) ctx.setTransform(-1, 0, 0, 1, WIDTH, 0);
+    ctx.drawImage(source, (width - w) / 2, (height - h) / 2, w, h, 0, 0, WIDTH, HEIGHT);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    taken = true; mediaId = null; video.hidden = true; canvas.hidden = false; retake.hidden = false; controls.hidden = true; note.hidden = true;
+    share.disabled = false; status.textContent = '';
+  }
+
+  async function open() {
+    document.querySelector('#menu')?.close();
+    controller?.abort(); controller = new AbortController();
+    house = client.house; requestId = crypto.randomUUID(); caption.value = ''; status.textContent = '';
+    setBusy(share, false); share.disabled = true; caption.disabled = retake.disabled = false; busy = false;
+    dialog.showModal();
+    await startCamera('user');
+    const cameras = (await navigator.mediaDevices?.enumerateDevices?.().catch(() => []) || []).filter(d => d.kind === 'videoinput');
+    flip.hidden = !stream || cameras.length < 2;
+  }
+  dialog.addEventListener('close', () => { controller?.abort(); stopCamera(); });
+  $('.now-close').onclick = () => dialog.close();
+
+  shutter.onclick = () => {
+    if (!stream || !video.videoWidth) return;
+    draw(video, video.videoWidth, video.videoHeight, mirrored()); sfx.shutter();
+  };
+  retake.onclick = () => { if (!busy) showLive(); };
+  flip.onclick = async () => {
+    const next = facing() === 'environment' ? 'user' : 'environment';
+    flip.disabled = true;
+    await startCamera(next);
+    flip.setAttribute('aria-label', facing() === 'environment' ? '内カメラに切り替える' : '外カメラに切り替える');
+    flip.disabled = false;
+  };
+  library.onchange = async () => {
+    const file = library.files[0]; library.value = ''; if (!file) return;
+    if (file.size > 25 * 1024 * 1024) { status.textContent = '25MB以下の写真をえらんでね'; return; }
+    const url = URL.createObjectURL(file), image = new Image();
+    try { image.src = url; await image.decode(); draw(image, image.naturalWidth, image.naturalHeight, false); }
+    catch { status.textContent = 'この写真は開けませんでした。JPEG・PNGなどの写真をえらんでね'; }
+    finally { URL.revokeObjectURL(url); }
+  };
+
+  share.onclick = async () => {
+    if (!taken || busy || client.house !== house) return;
+    busy = true; setBusy(share, true, 'みせてるよ…'); caption.disabled = retake.disabled = true; status.textContent = '';
+    try {
+      mediaId ||= (await houseApi('/media?kind=selfie', await blobOf(canvas, 'image/jpeg'))).id;
+      await houseApi('/moments', { request_id: requestId, media_id: mediaId, caption: caption.value.trim() });
+      window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
+      dialog.close();
+      const toast = document.getElementById('toast');
+      if (toast) { toast.textContent = 'みんなに見せたよ♡ けーじばんに貼ったよ'; toast.hidden = false; setTimeout(() => { toast.hidden = true; }, 2400); }
+    } catch (e) {
+      status.textContent = e.message;
+      setBusy(share, false); share.disabled = false; caption.disabled = retake.disabled = false;
+    } finally { busy = false; }
+  };
+
+  document.querySelectorAll('#open-moments, [data-open-moments]').forEach(button => { button.onclick = () => void open(); });
 }

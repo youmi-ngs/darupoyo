@@ -20,15 +20,15 @@ test('packaged Google models load and process blank inputs without false complet
 test('camera capture, photo-only fallback, save and stream release',async({page,context})=>{
   await context.grantPermissions(['camera']);
   await page.goto('/');await page.getByLabel('あなたの名前').fill('photo');await page.getByLabel('新しいハウスの名前').fill('camera flow');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:'ごはんを撮る'}).click();await expect(page.locator('video')).toBeVisible();
+  await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:'ごはんを撮る'}).click();await expect(page.locator('.capture video')).toBeVisible();
   await page.getByRole('button',{name:'この写真を撮る'}).waitFor({state:'visible'});
   await page.evaluate(()=>{window.testStream=document.querySelector('video').srcObject;});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
   expect(await page.locator('.capture canvas').evaluate(c => c.width / c.height)).toBeCloseTo(5 / 6);
   // 撮影直後に確認でき、撮り直してもカメラは動いたまま（#12 #13）
-  await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('video')).toBeHidden();
+  await expect(page.locator('.capture canvas')).toBeVisible();await expect(page.locator('.capture video')).toBeHidden();
   await page.getByRole('button',{name:'もう1回撮る'}).click();
-  await expect(page.locator('video')).toBeVisible();await expect(page.locator('.capture canvas')).toBeHidden();
+  await expect(page.locator('.capture video')).toBeVisible();await expect(page.locator('.capture canvas')).toBeHidden();
   await page.getByRole('button',{name:'この写真を撮る'}).click();
   await page.getByRole('button',{name:'この写真を使う'}).click();
   await page.getByRole('button',{name:'写真だけで進む'}).or(page.locator('#post')).first().waitFor({state:'visible'});

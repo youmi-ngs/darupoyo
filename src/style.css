@@ -1001,12 +1001,6 @@ body[data-daylight="night"] .sv-sun { background: #FFFCE3; box-shadow: 0 0 24px 
 @media (prefers-reduced-motion: reduce) { .plan.is-swaying .sv-obj, .plan.is-swaying .sv-hit, .plan.is-swaying .sv-fridge { animation: none; } }
 
 body[data-weather="snow"] .window-rain { display: initial; stroke: white; stroke-width: 4; stroke-dasharray: 1 5; }
-.moments-dialog { width: min(94vw, 480px); max-height: 90dvh; overflow:auto; padding: 20px; border: 3px solid var(--ink); border-radius: 24px; background: var(--paper); color: var(--ink); }
-.moments-dialog article { padding: 16px 0; border-bottom: 1px solid #3b256033; }
-.moments-dialog img { display:block; width:100%; max-height:55vh; object-fit:contain; border-radius:16px; margin-top:8px; }
-.moments-dialog time { display:block; font-size:12px; }
-.moments-dialog input { display:block; width:100%; padding:10px; margin:8px 0; }
-.moments-dialog .btn { margin: 5px 4px 5px 0; }
 
 .capture .is-mirrored { transform: scaleX(-1); }
 
@@ -1097,12 +1091,3 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
   dialog.drawer { left: var(--app-x); right: auto; width: 430px; max-width: 430px; }
   dialog.sheet { width: 430px; }
 }
-/* #161: while taking a selfie, the intro and list buttons step aside and the shutter row stays on screen. */
-.moments-dialog.is-shooting > :is(h2, p:not([role=status]), [data-shoot], [data-refresh]) { display: none; }
-.moments-dialog .capture-actions { position: sticky; bottom: -20px; z-index: 1; margin: 0 -20px -20px; padding: 10px 20px 20px; background: var(--paper); }
-.capture-flip { position: absolute; top: 10px; right: 10px; z-index: 2; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 2px solid var(--ink); border-radius: 50%; background: #ffffffd9; color: var(--ink); }
-.capture-flip svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.capture-flip:disabled { opacity: .5; }
-.moments-dialog.is-shooting .capture .is-photo-frame { width: min(100%, 37.5vh, calc((90dvh - 300px) * 5 / 6)); }
-.moments-dialog .capture-actions { display: flex; gap: 8px; }
-.moments-dialog .capture-actions > * { flex: 1; min-width: 0; margin: 0; padding-inline: 8px; font-size: 13px; white-space: nowrap; }

@@ -13,6 +13,6 @@ test('pose camera timer counts down and a failed pose can be retaken without lea
   await expect(page.getByRole('button',{name:'もう1回撮る'})).toBeVisible({timeout:45000});
   await expect(page.locator('.capture-status')).toContainText('全身を見つけられませんでした');
   await page.getByRole('button',{name:'もう1回撮る'}).click();
-  await expect(page.locator('video')).toBeVisible();
+  await expect(page.locator('.capture video')).toBeVisible();
   await expect(page.getByRole('button',{name:'3秒'})).toHaveAttribute('aria-pressed','true');
 });
