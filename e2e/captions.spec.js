@@ -85,6 +85,6 @@ test('every post shows そ〜しんちゅ〜 while it is sent: ごはん and だ
   await page.getByRole('button', { name: 'きょーゆー' }).click();
   await expect(page.locator('.darupoyo-dialog .sending-veil')).toContainText('そ〜しんちゅ〜');
   await expect.poll(() => !!daru.release).toBe(true); daru.release();
-  await expect(page.getByRole('heading', {name:'だるぽよ、記録かんりょ〜'})).toBeVisible();
+  await expect(page.getByRole('heading', {name:/だるぽよ、\s*記録かんりょ〜/})).toBeVisible();
   await expect(page.locator('.sending-veil')).toHaveCount(0);
 });
