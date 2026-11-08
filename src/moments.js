@@ -22,7 +22,7 @@ export function setupMoments() {
       <p class="now-frame-note" hidden></p>
       <button type="button" class="now-retake" aria-label="撮り直す" hidden><img src="/moments/retake.svg" alt=""></button>
       <div class="now-controls">
-        <label class="now-library" aria-label="ライブラリからえらぶ"><input type="file" accept="image/*" hidden></label>
+        <label class="now-library" aria-label="ライブラリからえらぶ"><img src="/moments/library.svg" alt=""><input type="file" accept="image/*" hidden></label>
         <button type="button" class="now-shutter" aria-label="撮る"><img src="/moments/shutter.svg" alt=""></button>
         <button type="button" class="now-flip" aria-label="外カメラに切り替える" hidden><img src="/moments/flip.svg" alt=""></button>
       </div>

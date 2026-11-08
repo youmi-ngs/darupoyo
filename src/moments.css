@@ -16,7 +16,8 @@ dialog.now-dialog::backdrop { background: #3b256059; }
 .now-retake { position: absolute; top: 10px; left: 10px; width: 27px; height: 27px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
 .now-retake img { display: block; }
 .now-controls { position: absolute; left: 10px; right: 10px; bottom: 13px; display: flex; align-items: center; justify-content: space-between; height: 50px; }
-.now-library { display: block; width: 38px; height: 38px; border-radius: 6px; background: #d9d9d9; cursor: pointer; }
+.now-library { display: block; width: 38px; height: 38px; border-radius: 6px; cursor: pointer; }
+.now-library img { display: block; width: 38px; height: 38px; }
 .now-shutter { width: 50px; height: 50px; padding: 0; border: 0; border-radius: 50%; background: none; box-shadow: none; }
 .now-shutter img { display: block; width: 50px; height: 50px; }
 .now-shutter:active { transform: scale(.93); }
