@@ -65,7 +65,7 @@ async function squareJpeg(file, size = 320) {
 // getMe() → this resident's member entry (with .avatar URL) in the current house.
 export function setupSocialSettings(getMe, toast) {
   const anchor = document.getElementById('sound-card'); if (!anchor) return () => {};
-  const card = document.createElement('section'); card.className = 'set-card social-card'; card.id = 'social-card';
+  const card = document.createElement('div'); card.id = 'social-card';
   // Figma mypage has no photo card: the account icon opens this file input.
   card.hidden = true;
   card.innerHTML = '<input type="file" accept="image/*" hidden aria-label="プロフィール写真">';

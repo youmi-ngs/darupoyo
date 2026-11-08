@@ -20,6 +20,7 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await expect(page.locator('#settings-members span')).toHaveText(['なまえ']);
   await expect(page.locator('.account-management button')).toHaveText(['アカウントを削除', 'ハウスを削除', 'ログアウト']);
   await expect(settings.locator('#share-history')).toHaveCount(0);
+  await expect(settings.locator('#social-card')).toBeHidden();
   await expect(settings.getByText('ほかのハウスの記録を見せる')).toHaveCount(0);
   // the required weather credits stay
   await expect(page.locator('.data-credits')).toContainText('気象データ提供：株式会社ウェザーニューズ');
