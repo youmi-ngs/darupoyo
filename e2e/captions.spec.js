@@ -47,7 +47,7 @@ test('うちらのなう shows そ〜しんちゅ〜 while sending, then そ〜�
   await enter(page);
   let release;
   await page.route('**/api/houses/*/moments', async route => { if (route.request().method() !== 'POST') return route.continue(); await new Promise(r => { release = r; }); await route.continue(); });
-  await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
+  await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   const now = page.getByRole('dialog', { name: 'うちらのなう' });
   await now.getByRole('button', { name: '撮る' }).click();
   await now.getByRole('button', { name: 'みせちゃう' }).click();

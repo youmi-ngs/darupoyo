@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 test('the みんなの今 button opens うちらのなう: take, retake, add a word and みせちゃう (Figma 207:914)', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('カメラ'); await page.getByLabel('新しいハウスの名前').fill('近況'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
+  await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   const now = page.getByRole('dialog', { name: 'うちらのなう' });
   await expect(now).toBeVisible();
   await expect(now.getByText('今のうちら撮ろ〜')).toBeVisible();
@@ -31,7 +31,7 @@ test('the みんなの今 button opens うちらのなう: take, retake, add a w
   await expect(now).toBeHidden();
   await expect(page.locator('#board-view')).toBeVisible();
   // the next time the card opens it is ready to take a new one
-  await page.locator('.board-back').click(); await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
+  await page.locator('.board-back').click(); await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   await expect(now.getByText('今のうちら撮ろ〜')).toBeVisible();
   await expect(now.getByRole('button', { name: 'みせちゃう' })).toBeDisabled();
   await expect(now.locator('.now-praise')).toBeHidden();
@@ -45,7 +45,7 @@ test('the みんなの今 button opens うちらのなう: take, retake, add a w
 test('without a camera, a photo from the library can be shown', async ({ page, context }) => {
   await context.addInitScript(() => { localStorage.setItem('darupoyo-howto-seen', '1'); navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('denied', 'NotAllowedError'); }; });
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('え'); await page.getByLabel('新しいハウスの名前').fill('ら'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
+  await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   const now = page.getByRole('dialog', { name: 'うちらのなう' });
   await expect(now.getByText('カメラを使えないので、左下からライブラリの写真をえらんでね')).toBeVisible();
   await expect(now.getByRole('button', { name: '撮る' })).toBeHidden();
@@ -91,7 +91,7 @@ const twoCameras = () => {
 async function openSelfie(page) {
   await page.addInitScript(twoCameras); await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/'); await page.getByLabel('あなたの名前').fill('かがみ'); await page.getByLabel('新しいハウスの名前').fill('いま'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
-  await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
+  await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   await expect(page.locator('.now-dialog video')).toBeVisible();
 }
 const show = async page => {
@@ -163,4 +163,23 @@ test('in the けーじばん viewer, みんなの今 posts can be swiped through
   await viewer.getByRole('button', { name: '閉じる' }).click();
   await page.locator('.pin-grid .pin-moment').nth(1).click();
   await expect(count).toHaveText('2 / 3');
+});
+
+test('うちらのなう opens from the camera table under けーじばん; the hallway keeps only the residents, centered', async ({ page, context }) => {
+  await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await page.goto('/'); await page.getByLabel('あなたの名前').fill('もち'); await page.getByLabel('新しいハウスの名前').fill('げんかん'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  const table = page.locator('[data-scene="entry"] .now-table');
+  await expect(table).toBeVisible();
+  // under the board, on the floor, swaying with a blue glow like an action that is not a chore
+  const [board, tbl] = await Promise.all([page.locator('#open-board').boundingBox(), table.boundingBox()]);
+  expect(tbl.y).toBeGreaterThan(board.y + board.height - 1);
+  expect(Math.abs((tbl.x + tbl.width / 2) - (board.x + board.width / 2))).toBeLessThan(12);
+  expect(await table.locator('svg[data-furniture]').evaluate(s => getComputedStyle(s).animationName)).toContain('halo-blue');
+  // the hallway has no みんなの今 button any more, and the resident icons sit in the middle
+  await page.locator('.scene-dot').nth(5).click();
+  await expect(page.locator('#hall-bar [data-open-moments]')).toHaveCount(0);
+  const [left, right] = await page.evaluate(() => { const r = document.getElementById('hall-icons').getBoundingClientRect(); return [r.left, innerWidth - r.right]; });
+  expect(Math.abs(left - right)).toBeLessThan(2);
+  await page.locator('.scene-dot').nth(1).click(); await table.click();
+  await expect(page.getByRole('dialog', { name: 'うちらのなう' })).toBeVisible();
 });
