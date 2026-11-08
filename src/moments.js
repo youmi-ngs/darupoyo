@@ -1,6 +1,7 @@
 import { setBusy } from './busy.js';
 import { client, houseApi } from './api.js';
 import { capture } from './media.js';
+import { momentPraise } from './moment-praise.js';
 
 export function setupMoments() {
   const dialog = document.createElement('dialog');
@@ -12,7 +13,7 @@ export function setupMoments() {
   const shoot = dialog.querySelector('[data-shoot]'), refresh = dialog.querySelector('[data-refresh]');
   let controller, urls = [], generation = 0, busy = false;
   const clearUrls = () => { urls.forEach(URL.revokeObjectURL); urls = []; };
-  const reset = () => { generation++; controller?.abort(); controller = null; clearUrls(); busy = false; shoot.disabled = refresh.disabled = false; };
+  const reset = () => { generation++; controller?.abort(); controller = null; clearUrls(); busy = false; shoot.disabled = refresh.disabled = false; dialog.classList.remove('is-shooting'); };
   dialog.addEventListener('close', reset);
   dialog.querySelector('[data-close]').onclick = () => dialog.close();
   async function load() {
@@ -30,7 +31,9 @@ export function setupMoments() {
           const name = document.createElement('strong'); name.textContent = house.house.members[moment.user_id]?.display_name || '住人';
           const time = document.createElement('time'); time.dateTime = moment.created_at; time.textContent = new Date(moment.created_at).toLocaleString();
           const caption = document.createElement('p'); caption.textContent = moment.caption;
-          card.append(name,time,img,caption);content.append(card);
+          card.append(name,time,img,caption);
+          const praise = momentPraise(moment.praise); if (praise) card.append(praise);
+          content.append(card);
         }
         if (result.next_cursor && current === generation) {
           const more = document.createElement('button');more.className='btn';more.textContent='もっと見る';content.append(more);
@@ -48,6 +51,7 @@ export function setupMoments() {
   });
   shoot.onclick = async () => {
     reset(); const current = generation, house = client.house; controller = new AbortController();
+    dialog.classList.add('is-shooting'); // #161: the camera and its shutter get the whole dialog
     shoot.disabled=refresh.disabled=true;status.textContent='';content.replaceChildren();
     try {
       const evidence=await capture(content,'selfie',{title:'今のじぶん'},null,controller.signal);

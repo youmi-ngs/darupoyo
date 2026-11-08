@@ -129,6 +129,19 @@ class Domain:
             return moment
         return self.store.atomic(apply)
 
+    def set_moment_praise(self, house_id, moment_id, praise):
+        path = f"houses/{house_id}/moments/{moment_id}"
+
+        def run(tx):
+            moment = tx.get(path)
+            if not moment:
+                raise HTTPException(409, "Moment was removed")
+            moment["praise"] = praise
+            tx.set(path, moment)
+            return moment
+
+        return self.store.atomic(run)
+
     def dashboard(self, uid, house_id, day=None):
         house = require_member(self.store, house_id, uid)
         date = day or self.day()

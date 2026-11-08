@@ -130,6 +130,30 @@ class Praise:
             logging.getLogger(__name__).warning("praise_provider_unavailable")
         return fallback
 
+    def moment(self, gal, caption=""):
+        """#158: a line for a 「みんなの今」 selfie (caption only, never the photo)."""
+        fallback = {"text": gals.moment_fallback(gal), "source": "fallback", "gal": gal}
+        if self.client is None:
+            return fallback
+        try:
+            from google.genai import types
+
+            system, contents = gals.moment_prompt(gal, caption)
+            for _ in range(2):
+                result = self.client.models.generate_content(
+                    model=self.settings.model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system, temperature=1.0, max_output_tokens=200
+                    ),
+                )
+                text = (result.text or "").strip().strip("「」\"")
+                if gals.moment_acceptable(text):
+                    return {"text": text, "source": "gemini", "gal": gal}
+        except Exception:  # noqa: BLE001 -- the selfie is shared even without a line
+            logging.getLogger(__name__).warning("praise_provider_unavailable")
+        return fallback
+
     def close(self):
         if self.client is not None:
             self.client.close()

@@ -30,7 +30,7 @@ from .models import (
     Profile,
     Reaction,
 )
-from .notify import Notifier
+from .notify import Notifier, voice
 from . import social
 from . import itadakimasu, weather
 from .services import MAX_IMAGE_BYTES, MediaStorage, Praise, normalize_image, normalize_voice
@@ -260,8 +260,17 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         return Response(app.state.media.read(meta["object_name"]), media_type=meta["content_type"])
 
     @app.post("/api/houses/{house_id}/moments", status_code=201)
-    def share_moment(house_id: UUID, body: Moment, uid=Depends(current_user)):
-        return app.state.domain.share_moment(uid, str(house_id), body)
+    def share_moment(house_id: UUID, body: Moment, tasks: BackgroundTasks, uid=Depends(current_user)):
+        house = str(house_id)
+        moment = app.state.domain.share_moment(uid, house, body)
+        if "praise" not in moment:  # new (a retry already has its line and its notification)
+            store = app.state.store
+            home = require_member(store, house, uid)
+            # #158: the gal this resident picked (ノリで: a different one each time)
+            gal = voice(home["members"][uid].get("gal"))
+            moment = app.state.domain.set_moment_praise(house, moment["id"], app.state.praise.moment(gal, moment["caption"]))
+            tasks.add_task(app.state.notify.friend_moment, store, home, uid)  # #157
+        return moment
 
     @app.get("/api/houses/{house_id}/moments")
     def moments(house_id: UUID, before: str | None = Query(default=None, max_length=100), uid=Depends(current_user)):

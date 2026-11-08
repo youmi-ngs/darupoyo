@@ -3,6 +3,7 @@
 // shows the poster's gal doing that chore. The entrance shows the newest six.
 import { client, houseApi } from './api.js';
 import { galCharacter } from './gal-figure.js';
+import { momentPraise } from './moment-praise.js';
 
 const LABELS = { laundry: '洗濯', meal: 'ごはん', dryer: 'ドライヤー', garbage: 'ゴミ捨て', trash: 'ゴミ捨て' };
 const PROP = { laundry: 'laundry', meal: 'meal', dryer: 'dryer', garbage: 'trash', trash: 'trash' };
@@ -49,7 +50,7 @@ export function setupBoardView(ctx) {
   function cards() {
     return [
       ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.praise?.text || '', post: p })),
-      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || '今のじぶん📷' })),
+      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || '今のじぶん📷', caption: m.caption, praise: m.praise })),
       ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ' })),
     ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
@@ -96,6 +97,10 @@ export function setupBoardView(ctx) {
     const text = document.createElement('p'); text.className = 'pin-viewer-text'; text.textContent = card.text;
     const pic = picture(card); pic.load?.();
     viewer.append(close, pic, title, time, text);
+    if (card.type === 'moment') { // the caption, then the gal's line (#158)
+      text.textContent = card.caption || ''; text.hidden = !card.caption;
+      const praise = momentPraise(card.praise); if (praise) viewer.append(praise);
+    }
     viewer.showModal();
   }
   function render() {

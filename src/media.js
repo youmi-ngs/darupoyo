@@ -128,10 +128,38 @@ export async function capture(root, chore, choice, reference, signal) {
     catch (e) { if (e.name === 'AbortError' || signal.aborted) throw e; live.hidden = true; }
     let landmarker, segmenter, segmenterReady, stopPreview = () => {};
     const canvas = document.createElement('canvas'); canvas.hidden = true; canvas.classList.toggle('is-photo-frame', isPhoto); box.append(canvas);
-    // Mirror only the preview; retain raw pixels/landmarks for pose scoring and storage.
-    const facing = stream?.getVideoTracks()[0]?.getSettings().facingMode;
-    const mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
-    video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored);
+    // Mirror the preview. Pose scoring keeps raw pixels/landmarks; a selfie is saved as the
+    // person saw it in the preview (#161), so it does not come out flipped.
+    let mirrored = false;
+    const setMirror = () => {
+      const facing = stream?.getVideoTracks()[0]?.getSettings().facingMode;
+      mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
+      video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
+    };
+    setMirror();
+    // #161: a selfie can use the back camera too (only shown when the device has two).
+    if (chore === 'selfie' && stream) {
+      const cameras = (await navigator.mediaDevices.enumerateDevices?.().catch(() => []) || []).filter(d => d.kind === 'videoinput');
+      if (cameras.length > 1) {
+        const flip = document.createElement('button'); flip.type = 'button'; flip.className = 'capture-flip';
+        flip.setAttribute('aria-label', '外カメラに切り替える');
+        flip.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><path d="M9 13a3 3 0 0 1 5.6-1.5M15 13a3 3 0 0 1-5.6 1.5"/><path d="M14.6 9.6v1.9h-1.9M9.4 16.4v-1.9h1.9"/></svg>';
+        flip.onclick = async () => {
+          const next = stream?.getVideoTracks()[0]?.getSettings().facingMode === 'environment' ? 'user' : 'environment';
+          flip.disabled = true;
+          try {
+            stream?.getTracks().forEach(t => t.stop());
+            stream = await openCamera(video, next, resources, signal); setMirror();
+            flip.setAttribute('aria-label', next === 'environment' ? '内カメラに切り替える' : '外カメラに切り替える');
+          } catch (e) {
+            if (e.name === 'AbortError' || signal.aborted) return;
+            status.textContent = 'カメラを切り替えられませんでした';
+            try { stream = await openCamera(video, 'user', resources, signal); setMirror(); } catch {}
+          } finally { flip.disabled = false; }
+        };
+        live.append(flip);
+      }
+    }
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const takePhoto = async () => {
       live.hidden = !stream; canvas.hidden = true;
@@ -153,9 +181,12 @@ export async function capture(root, chore, choice, reference, signal) {
         if (isPhoto) {
           const crop = photoCrop(video.videoWidth, video.videoHeight);
           canvas.width = Math.floor(crop.width / 5) * 5; canvas.height = canvas.width * 6 / 5;
+          const keepMirror = chore === 'selfie' && mirrored; // the saved selfie matches the preview (#161)
+          if (keepMirror) ctx.setTransform(-1, 0, 0, 1, canvas.width, 0);
           ctx.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, canvas.width, canvas.height);
+          ctx.setTransform(1, 0, 0, 1, 0, 0);
         } else { canvas.width = video.videoWidth; canvas.height = video.videoHeight; ctx.drawImage(video, 0, 0); }
-        canvas.classList.toggle('is-mirrored', mirrored);
+        canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
         sfx.shutter();
       } else canvas.classList.remove('is-mirrored'); // a library photo is shown as it is
       live.hidden = true; canvas.hidden = false;
