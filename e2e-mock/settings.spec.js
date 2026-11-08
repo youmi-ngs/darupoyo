@@ -26,7 +26,7 @@ test('menu, profile editing, gal and sound preferences survive reopening', async
   await expect(page.locator('.account-row b')).toHaveText('もち');
   await page.locator('#house-edit').click();
   await page.locator('[name=house_name]').fill('もちハウス');
-  await page.locator('#account-form [type=submit]').click();
+  await page.locator('#house-form [type=submit]').click();
   await expect(page.locator('#settings-house-name')).toHaveText('もちハウス');
   await page.getByRole('button', { name: '姫ギャル', exact: true }).click();
   await expect(page.getByRole('button', { name: '姫ギャル', exact: true })).toHaveAttribute('aria-pressed', 'true');

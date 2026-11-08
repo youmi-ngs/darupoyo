@@ -65,17 +65,12 @@ async function squareJpeg(file, size = 320) {
 // getMe() → this resident's member entry (with .avatar URL) in the current house.
 export function setupSocialSettings(getMe, toast) {
   const anchor = document.getElementById('sound-card'); if (!anchor) return () => {};
-  const card = document.createElement('section'); card.className = 'set-card social-card'; card.id = 'social-card';
+  const card = document.createElement('div'); card.id = 'social-card';
   // Figma mypage has no photo card: the account icon opens this file input.
-  card.innerHTML = '<input type="file" accept="image/*" hidden aria-label="プロフィール写真">'
-    + '<div class="push-row"><h3 class="drawer-h" id="share-history-title">ほかのハウスの記録を見せる</h3><button class="sound-switch" type="button" id="share-history" aria-labelledby="share-history-title" aria-pressed="false"><img src="/settings/6b989.svg" alt=""></button></div>'
-    + '<p class="push-note">オンにすると、別のハウスで残した写真・記録を、このハウスの住人もアルバムで見られるよ（コメントとリアクションは見せないよ）。</p>';
+  card.hidden = true;
+  card.innerHTML = '<input type="file" accept="image/*" hidden aria-label="プロフィール写真">';
   anchor.after(card);
-  const file = card.querySelector('input[type=file]'), share = card.querySelector('#share-history');
-  const render = () => {
-    const on = !!getMe()?.share_history;
-    share.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; share.setAttribute('aria-pressed', String(on));
-  };
+  const file = card.querySelector('input[type=file]');
   file.onchange = async () => {
     const chosen = file.files[0]; file.value = ''; if (!chosen) return;
     const pick = document.getElementById('profile-photo'); pick.setAttribute('aria-busy', 'true'); // #144
@@ -84,10 +79,5 @@ export function setupSocialSettings(getMe, toast) {
       await houseApi('/avatar', { media_id: id }, 'PUT'); await refresh(); toast('プロフィール写真を変えたよ');
     } catch (e) { toast(e.message); } finally { pick.removeAttribute('aria-busy'); }
   };
-  share.onclick = async () => {
-    share.disabled = true;
-    try { await houseApi('/history-sharing', { enabled: !getMe()?.share_history }, 'PUT'); await refresh(); toast(getMe()?.share_history ? 'このハウスの住人にも見せるよ' : '自分だけに戻したよ'); }
-    catch (e) { toast(e.message); } finally { share.disabled = false; }
-  };
-  return render;
+  return () => {};
 }

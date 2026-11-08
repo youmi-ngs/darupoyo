@@ -553,31 +553,37 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     sheet.showModal(); $('move-in-ok').focus();
   });
   // ---------- rename yourself / the house ----------
-  const accountEdit = $('account-edit'), accountForm = $('account-form');
+  const accountForm = $('account-form'), houseForm = $('house-form');
   function renderAccountForm() {
-    accountEdit.hidden = false;
-    if (accountForm.hidden) { accountForm.display_name.value = nameOf(ME); accountForm.house_name.value = dashboard.house.name; }
+    if (accountForm.hidden) accountForm.elements.display_name.value = nameOf(ME);
+    if (houseForm.hidden) houseForm.elements.house_name.value = dashboard.house.name;
   }
-  function toggleAccountForm(open) {
-    if (open && accountForm.hidden) renderAccountForm();
-    accountForm.hidden = !open; accountEdit.setAttribute('aria-expanded', String(open));
-    document.querySelector('.account-row').hidden = open;
-    if (open) { renderAccountForm(); accountForm.display_name.focus(); } else if (accountForm.contains(document.activeElement)) accountEdit.focus();
+  function setupNameEditor(form, edit, row, field, current, endpoint, key) {
+    const toggle = open => {
+      if (open) form.elements[field].value = current();
+      const hadFocus = form.contains(document.activeElement);
+      form.hidden = !open; row.hidden = open;
+      edit.setAttribute('aria-expanded', String(open));
+      if (open) form.elements[field].focus(); else if (hadFocus) edit.focus();
+    };
+    edit.addEventListener('click', () => toggle(form.hidden));
+    form.querySelector('.account-cancel').addEventListener('click', () => toggle(false));
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const value = form.elements[field].value.trim();
+      if (!value) { toast('名前を入力してね'); return; }
+      const save = form.querySelector('[type=submit]');
+      if (save.disabled) return;
+      save.disabled = true;
+      try {
+        if (value !== current()) await houseApi(endpoint, { [key]: value }, 'PUT');
+        toggle(false); await refresh(); toast('変更したよ');
+      } catch (err) { toast(err.message); } finally { save.disabled = false; }
+    });
+    $('settings').addEventListener('close', () => toggle(false));
   }
-  accountEdit.addEventListener('click', () => toggleAccountForm(accountForm.hidden));
-  accountForm.querySelector('.account-cancel').addEventListener('click', () => toggleAccountForm(false));
-  accountForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const name = accountForm.display_name.value.trim(), house = accountForm.house_name.value.trim();
-    if (!name || !house) { toast('名前を入力してね'); return; }
-    const save = accountForm.querySelector('[type=submit]'); save.disabled = true;
-    try {
-      if (name !== nameOf(ME)) await houseApi('/profile', { display_name: name }, 'PUT');
-      if (house !== dashboard.house.name) await houseApi('', { name: house }, 'PUT');
-      toggleAccountForm(false); await refresh(); toast('変更したよ');
-    } catch (err) { toast(err.message); } finally { save.disabled = false; }
-  });
-  $('settings').addEventListener('close', () => toggleAccountForm(false));
+  setupNameEditor(accountForm, $('account-edit'), document.querySelector('.account-row'), 'display_name', () => nameOf(ME), '/profile', 'display_name');
+  setupNameEditor(houseForm, $('house-edit'), document.querySelector('.house-name-row'), 'house_name', () => dashboard.house.name, '', 'name');
   const logoutButton = $('settings-logout'); logoutButton.disabled = false; logoutButton.textContent = 'ログアウト'; logoutButton.onclick = () => disablePush().finally(() => logout().catch(e=>toast(e.message)));
 
   const deleteDialog = document.createElement('dialog'); deleteDialog.className = 'delete-dialog';
@@ -663,18 +669,18 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     const card = $('push-card'), button = $('push-toggle'), note = $('push-note');
     card.hidden = state === 'unsupported';
     const on = state === 'ready' && pushOn();
-    button.disabled = state !== 'ready'; button.textContent = on ? 'オン' : 'オフ'; button.setAttribute('aria-pressed', String(on));
+    button.disabled = state !== 'ready'; button.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; button.setAttribute('aria-pressed', String(on));
     note.hidden = !PUSH_NOTES[state]; note.textContent = PUSH_NOTES[state] || '';
   }
   $('push-toggle').addEventListener('click', async () => {
     const button = $('push-toggle'), note = $('push-note'); button.disabled = true;
-    button.textContent = '設定中…'; note.hidden = true;
+    button.setAttribute('aria-busy', 'true'); note.hidden = false; note.textContent = '設定中…';
     let error;
     try {
       if (pushOn()) { await disablePush(); toast('通知をオフにしたよ'); }
       else { await enablePush(galPref); toast('通知をオンにしたよ'); }
     } catch (e) { error = e.message; toast(error); }
-    await renderPush();
+    await renderPush(); button.removeAttribute('aria-busy');
     if (error) { note.hidden = false; note.textContent = error; }
   });
   listenInApp((body) => { sfx.ding(); toast(body); });

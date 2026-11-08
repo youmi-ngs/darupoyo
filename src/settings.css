@@ -114,3 +114,5 @@ dialog.settings-page { background: #ede6f8; }
 .settings-sources a { color:inherit; text-underline-offset:3px; }
 .settings-page .account-icon[aria-busy=true] { opacity:.6; }
 .settings-page .social-card .push-note { font-size:11px; line-height:16px; color:#6a5590; }
+
+.house-name-row[hidden] { display:none; }
