@@ -38,15 +38,15 @@ test('camera capture, photo-only fallback, save and stream release',async({page,
   expect(await page.evaluate(()=>window.testStream.getTracks().every(t=>t.readyState==='ended'))).toBe(true);
   await page.getByRole('button',{name:'け〜じばんをちぇけらする'}).click();await page.locator('.board-back').click();await page.locator('.scene-dot').nth(5).click(); await page.locator('.door.is-me').click();await expect(page.locator('.mr-frame img')).toHaveCount(1);
 });
-test('preset pose shows live guidance and rejects a frame without a person',async({page,context})=>{
+test('preset pose is not mirrored, shows live guidance and rejects a frame without a person',async({page,context})=>{
   test.setTimeout(90000);
   await context.grantPermissions(['camera']);
   await page.goto('/');await setWelcomeName(page, 'pose');await setHouseName(page, 'pose flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(0).click();await page.locator('[data-chore="trash"]').click();await page.getByRole('button',{name:/^ゴミ捨てる/}).click();await page.getByRole('button',{name:/サンタのポーズ/}).click();
-  await expect(page.locator('.capture video')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
+  await expect(page.locator('.capture video')).toHaveCSS('transform', 'none');
   await expect(page.locator('.capture-status')).toHaveText('顔と肩が入るように映ってね',{timeout:30000});
   await page.getByRole('button',{name:'この写真を撮る'}).click();
-  await expect(page.locator('.capture canvas')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
+  await expect(page.locator('.capture canvas')).toHaveCSS('transform', 'none');
   await expect(page.locator('.capture-status')).toContainText('人が見つからなかったよ');
   await expect(page.getByRole('button',{name:'もう1回撮る'})).toBeVisible();
   await expect(page.locator('.door.is-lit')).toHaveCount(0);

@@ -151,7 +151,8 @@ export async function capture(root, chore, choice, reference, signal) {
     let mirrored = false;
     const setMirror = () => {
       const facing = stream?.getVideoTracks()[0]?.getSettings().facingMode;
-      mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
+      // Poses are shown as the camera sees them, before and after the shot, like the saved photo.
+      mirrored = isPhoto && (facing === 'user' || (chore !== 'meal' && facing !== 'environment'));
       video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
     };
     setMirror();
