@@ -32,14 +32,15 @@
 .entry-board-grid .pin-magnet { width: 26px; height: 26px; top: -10px; border-width: 2px; }
 .entry-board-grid .pin-photo { aspect-ratio: auto; flex: 1; min-height: 0; height: auto; }
 .entry-board-grid .pin-photo .resident-character { transform: scale(.55); }
-.okaeri { position: absolute; z-index: 2; left: calc(6% + 34% - 8px); bottom: calc(var(--fl) + 4%); width: 120px; height: 116px; pointer-events: none; }
+.okaeri { position: absolute; z-index: 2; left: calc(6% + 34% - 8px); bottom: calc(var(--fl) - 10px); width: 120px; height: 116px; pointer-events: none; }
 .okaeri-peek { position: absolute; left: 0; bottom: 0; width: 80px; height: 116px; overflow: hidden; }
-.okaeri-gal { position: absolute; left: 0; bottom: 6px; transform: translateX(-62px); opacity: 0; }
+.okaeri-gal { position: absolute; left: 0; bottom: 0; transform: translateX(-62px); opacity: 0; }
 .okaeri.is-out .okaeri-gal { animation: peek 4.2s cubic-bezier(.2, 1.2, .4, 1) both; }
-.okaeri-gal .resident-character { width: 60px; height: 102px; }
+.okaeri-gal .resident-character { width: 60px; height: 102px; z-index:1; }
+.okaeri-gal::before { content:''; position:absolute; left:14px; bottom:0; width:32px; height:6px; border-radius:50%; background:#3b256026; }
 .okaeri-bubble { position: absolute; left: 50px; top: -34px; margin: 0; padding: 5px 10px; white-space: nowrap; border: 2px solid var(--ink); border-radius: 14px 14px 14px 2px; background: var(--paper); font-family: var(--font-hand); font-size: 14px; box-shadow: var(--soft-shadow); opacity: 0; }
 .okaeri.is-out .okaeri-bubble { animation: bubble 3.4s .5s ease both; }
-@keyframes peek { 0% { transform: translateX(-62px); opacity: 1; } 18%, 82% { transform: translateX(-8px) rotate(8deg); opacity: 1; } 100% { transform: translateX(-62px); opacity: 1; } }
+@keyframes peek { 0% { transform: translateX(-62px); opacity: 1; } 18%, 82% { transform: translateX(-8px); opacity: 1; } 100% { transform: translateX(-62px); opacity: 1; } }
 @keyframes bubble { 0% { opacity: 0; transform: scale(.6); } 12%, 85% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .okaeri.is-out .okaeri-gal { animation: none; opacity: 1; transform: translateX(-8px); } }
 
@@ -185,3 +186,23 @@ body[data-weather] .weather-credit { display: block; }
 .moment-praise-face svg { width: 30px; height: 30px; }
 .moment-praise b { font-size: 11px; color: #6a5590; }
 .moment-praise > span:last-child { font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
+
+/* Play once per opening; fetching or updating records does not replay it. */
+.board-view:not([hidden]) { transform-origin:50% 0; animation:board-arrive .28s ease-out both; }
+@keyframes board-arrive {
+  0% { opacity:0; transform:translateY(-52px) rotate(-1deg); }
+  55% { opacity:1; transform:translateY(5px) rotate(1.1deg); }
+  75% { opacity:1; transform:translateY(-2px) rotate(-.6deg); }
+  90% { opacity:1; transform:translateY(0) rotate(.2deg); }
+  100% { opacity:1; transform:translateY(0) rotate(0); }
+}
+@media(prefers-reduced-motion:reduce) { .board-view:not([hidden]) { animation:none; } }
+
+/* Softer room entry: a short approach with a small settling movement. */
+.room-view:not([hidden]) { transform-origin:50% 60%; animation:room-arrive .38s ease-out; }
+@keyframes room-arrive {
+  0% { opacity:0; transform:translate(-6%, 8%) scale(.82) rotate(-.6deg); }
+  72% { opacity:1; transform:translateY(-2px) scale(1.012) rotate(.12deg); }
+  100% { opacity:1; transform:translateY(0) scale(1) rotate(0); }
+}
+@media(prefers-reduced-motion:reduce) { .room-view:not([hidden]) { animation:none; } }

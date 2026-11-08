@@ -68,7 +68,7 @@ export function setupMoments() {
           mediaId ||= (await houseApi('/media?kind=selfie',evidence.blob)).id;
           await houseApi('/moments',{request_id:requestId,media_id:mediaId,caption:caption.value});
           window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
-          if(current===generation) await load();
+          if(current===generation) { dialog.close(); window.dispatchEvent(new Event('darupoyo:open-board')); }
         }catch(e){if(current===generation){status.textContent=e.message;setBusy(save,false);save.disabled=cancel.disabled=false;}}
         finally{busy=false;}
       };

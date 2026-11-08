@@ -146,7 +146,7 @@ class Domain:
         house = require_member(self.store, house_id, uid)
         date = day or self.day()
         state = self.store.get(f"houses/{house_id}/days/{date}") or new_day(date)
-        lights = {member: bool(state["completed"].get(member)) for member in house["member_ids"]}
+        lights = {member: bool(state["completed"].get(member) or state.get("darupoyo_shared", {}).get(member)) for member in house["member_ids"]}
         return {
             "house": house,
             "state": state,

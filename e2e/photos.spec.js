@@ -1,10 +1,11 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
 });
 async function enter(page, name = 'もち', houseName = 'photos') {
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill(name); await page.getByLabel('新しいハウスの名前').fill(houseName);
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, name); await setHouseName(page, houseName);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 // A meal photo record made through the API, then shown by a refresh.
 const mealPost = page => page.evaluate(async () => {

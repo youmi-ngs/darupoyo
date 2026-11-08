@@ -1,8 +1,9 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page) {
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill('なまえ'); await page.getByLabel('新しいハウスの名前').fill('おんたまハウス');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'なまえ'); await setHouseName(page, 'おんたまハウス');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 
 test('マイページ follows the Figma mypage frame (#152)', async ({ page }) => {
@@ -11,7 +12,7 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   const settings = page.locator('#settings');
   // Cards stay in Figma order; history sharing has no settings section.
   await expect(settings.locator('.set-card:visible .drawer-h').first()).toHaveText('アカウント');
-  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '効果音']);
+  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '通知', '効果音']);
   // the invite code shows in the house card; no extra 招待リンク button or photo card
   await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
   await expect(settings.getByRole('button', { name: '招待リンク', exact: true })).toHaveCount(0);
@@ -46,7 +47,7 @@ test('titles, dialog boxes and the how-to swipe area never show a blue ring (#15
 test('あそびかた has no はじめる button on any page (#154)', async ({ page }) => {
   await enter(page);
   await page.locator('#open-menu').click(); await page.locator('#open-howto').click();
-  await page.locator('.howto-card.is-active').getByRole('button', { name: '4ページ目へ' }).click();
+  await page.locator('.howto-card.is-active').getByRole('button', { name: '5ページ目へ' }).click();
   await expect(page.locator('.howto-card').last()).toHaveClass(/is-active/);
   await expect(page.locator('#howto-page').getByRole('button', { name: 'はじめる' })).toHaveCount(0);
   await page.locator('#howto-close').click(); await expect(page.locator('#howto-page')).toBeHidden();

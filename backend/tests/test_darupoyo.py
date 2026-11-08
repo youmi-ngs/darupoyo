@@ -30,8 +30,9 @@ def test_record_shares_without_completion_and_retries_without_duplicates():
         assert c.post(base+'/darupoyo', headers=auth(), json={**data,'caption':'変更'}).status_code == 409
         assert len(c.get(base+'/darupoyo', headers=auth('bob')).json()['items']) == 1
         after = c.get(base+'/dashboard', headers=auth()).json()
-        assert after['lights'] == before['lights']
-        assert after['happiness'] == before['happiness']
+        assert before['lights'] == {'alice': False, 'bob': False}
+        assert after['lights'] == {'alice': True, 'bob': False}
+        assert after['happiness'] == 50
         for key in ('completed','goals','poses','recent','latest','activity'):
             assert after['state'][key] == before['state'][key]
         assert c.get(base+'/posts', headers=auth()).json()['items'] == []
@@ -65,9 +66,15 @@ def test_day_boundary_and_paginated_history():
         h = house(c); base = f'/api/houses/{h}'
         r = c.post(base+'/darupoyo',headers=auth(),json=record()).json()['record']
         assert r['day'] == '2026-11-07'
+        assert c.get(base+'/dashboard', headers=auth()).json()['lights']['alice']
+        other_house = house(c)
+        assert not c.get(f'/api/houses/{other_house}/dashboard', headers=auth()).json()['lights']['alice']
         now[0] = datetime(2026,11,7,19,0,tzinfo=UTC)
+        assert not c.get(base+'/dashboard', headers=auth()).json()['lights']['alice']
+        assert c.get(base+'/dashboard?day=2026-11-07', headers=auth()).json()['lights']['alice']
         r = c.post(base+'/darupoyo',headers=auth(),json=record()).json()['record']
         assert r['day'] == '2026-11-08'
+        assert c.get(base+'/dashboard', headers=auth()).json()['lights']['alice']
         for _ in range(29): c.post(base+'/darupoyo',headers=auth(),json=record())
         first = c.get(base+'/darupoyo',headers=auth()).json()
         second = c.get(base+'/darupoyo',params={'before':first['next_cursor']},headers=auth()).json()

@@ -1,9 +1,9 @@
+import { createWelcome } from './welcome-ui.js';
 import { initializeApp } from 'firebase/app';
-import { setBusy } from './busy.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, collection, onSnapshot, query, orderBy, limit, connectFirestoreEmulator } from 'firebase/firestore';
 
-export const client = { uid: '', house: '', config: null, auth: null };
+export const client = { uid: '', house: '', config: null, auth: null, houses: [] };
 // All Backend calls go through here. VITE_API_BASE_URL set → that Backend.
 // Unset → the Vite proxy (/api); in development, if no Backend answers (or VITE_API_MOCK=1),
 // the in-browser mock in mock.js answers instead.
@@ -65,6 +65,7 @@ export async function refresh({ onPaint } = {}) {
   refreshing = (async () => {
     const dashboard = await houseApi('/dashboard');
     watchDay(dashboard.state.day);
+    client.houses = client.houses.map(h => h.id === dashboard.house.id ? {...h, name:dashboard.house.name} : h);
     const posts = []; let cursor;
     do { const page = await houseApi('/posts?limit=100' + (cursor ? '&before=' + cursor : '')); posts.push(...page.items); cursor = page.next_cursor; } while (cursor);
     const poses = Object.values(dashboard.state.poses), members = Object.values(dashboard.house.members);
@@ -81,13 +82,17 @@ export async function refresh({ onPaint } = {}) {
   })().finally(() => { refreshing = null; if (refreshQueued) { refreshQueued = false; void refresh().catch(report); } });
   return refreshing;
 }
-function button(label, action, parent) {
-  const b = document.createElement('button'); b.className = 'btn btn-main'; b.textContent = label;
-  b.onclick = async () => { setBusy(b, true); try { await action(); } catch (e) { parent.querySelector('[role=status]').textContent = e.message; } finally { setBusy(b, false); b.disabled = false; } }; parent.append(b); return b;
-}
 export async function start(onUpdate, onError) {
   update = onUpdate; report = onError;
+  const welcome = createWelcome(), dialog = welcome.dialog;
+  client.houses = [];
   client.config = await config();
+  // Google authorizes localhost, not its numeric loopback alias. Keep invite links.
+  const localGoogleOrigin = import.meta.env.DEV && import.meta.env.VITE_GOOGLE_LOCAL_ORIGIN;
+  if (client.config.auth_mode === 'firebase' && localGoogleOrigin && location.hostname === '127.0.0.1' && location.origin !== localGoogleOrigin) {
+    location.replace(new URL(location.pathname + location.search + location.hash, localGoogleOrigin).href);
+    return;
+  }
   if (client.config.auth_mode === 'firebase') {
     if (!client.config.firebase.apiKey || !client.config.firebase.appId) throw new Error('Firebase Web設定が必要です');
     const app = initializeApp(client.config.firebase); client.auth = getAuth(app);
@@ -101,62 +106,36 @@ export async function start(onUpdate, onError) {
   } else {
     client.uid = read('darupoyo-uid', userStore()) || crypto.randomUUID(); write('darupoyo-uid', client.uid, userStore());
   }
-  const dialog = document.createElement('dialog'); dialog.className = 'onboarding'; dialog.setAttribute('aria-label', 'だるぽよへようこそ');
-  // #133: opening the app first shows a short loading screen; the welcome appears only
-  // when the person has to sign in or choose a house.
-  dialog.classList.add('is-loading'); dialog.setAttribute('aria-label', 'だるぽよ 読み込み中');
-  dialog.innerHTML = '<h2>だるぽよ</h2><p class="onboarding-welcome" hidden>今日の「できた」を、みんなのお部屋に。</p><p class="loading-row onboarding-loading">よみこみ中…</p><p role="status" aria-live="polite"></p>';
-  const welcome = () => {
-    dialog.classList.remove('is-loading'); dialog.setAttribute('aria-label', 'だるぽよへようこそ');
-    dialog.querySelector('h2').textContent = 'だるぽよへようこそ';
-    dialog.querySelector('.onboarding-welcome').hidden = false; dialog.querySelector('.onboarding-loading').hidden = true;
-  };
-  dialog.addEventListener('cancel', e => e.preventDefault()); document.body.append(dialog); dialog.showModal();
-  if (client.auth && !client.auth.currentUser) welcome();
-  if (client.auth && !client.auth.currentUser) await new Promise(resolve => button('Googleでログイン', async () => { await signInWithPopup(client.auth, new GoogleAuthProvider()); resolve(); }, dialog));
+  if (client.auth && !client.auth.currentUser) await welcome.login(() => signInWithPopup(client.auth, new GoogleAuthProvider()));
   client.uid = client.auth?.currentUser?.uid || client.uid;
-  dialog.querySelectorAll('button').forEach(b => b.remove());
-  if (mockFetch) dialog.querySelector('[role=status]').textContent = 'モックで動いています（Backendなし）：記録はこのブラウザにだけ残ります';
-  else if (client.config.data_backend === 'memory') dialog.querySelector('[role=status]').textContent = 'チームテスト用：記録はサーバーを再起動すると消えます';
   const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
   const me = await api('/me');
   if (me.deletion_pending) {
-    welcome();
-    dialog.querySelector('[role=status]').textContent = 'アカウント削除が途中です。再開して残りのデータを削除してください。';
-    button('削除を再開', deleteAccount, dialog);
+    welcome.deletion(deleteAccount);
     return;
   }
   const houses = await api('/houses');
   const items = houses.items || houses;
-  const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); dialog.close(); dialog.remove(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
+  client.houses = items;
+  const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); await welcome.leave(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
   if (!invite) {
     const saved = read('darupoyo-house-' + client.uid);
     if (items.some(h => h.id === saved)) { await enter(saved); return; }
   }
-  welcome();
-  if (!invite) {
-    items.forEach(h => button(h.name + 'に入る', () => enter(h.id), dialog));
-  }
-  const name = document.createElement('input'); name.placeholder = 'あなたの名前'; name.setAttribute('aria-label', 'あなたの名前'); name.maxLength = 40; name.value = client.auth?.currentUser?.displayName || ''; dialog.append(name);
-  // One field: a new house name, or an invite code after tapping 招待コードで入る.
-  let joining = Boolean(invite);
-  const field = document.createElement('input'); dialog.append(field);
-  const main = button('', async () => {
-    if (!name.value.trim() || !field.value.trim()) throw new Error(joining ? '名前と招待コードを入力してください' : '名前を入力してください');
-    const h = await api(joining ? '/join' : '/houses', joining ? { token: field.value.trim(), display_name: name.value.trim() } : { name: field.value.trim(), display_name: name.value.trim() });
-    await enter(h.id);
-    if (joining) { if (invite) history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
-  }, dialog);
-  const swap = document.createElement('button'); swap.type = 'button'; swap.className = 'onboarding-swap'; dialog.append(swap);
-  const setMode = join => {
-    joining = join;
-    field.placeholder = join ? '招待コード' : '新しいハウスの名前'; field.setAttribute('aria-label', field.placeholder);
-    field.maxLength = join ? 200 : 60; field.autocapitalize = join ? 'characters' : 'sentences'; field.autocomplete = 'off';
-    main.textContent = join ? '招待に参加する' : 'ハウスを作る';
-    swap.textContent = join ? '新しくハウスを作る' : '招待コードで入る';
-  };
-  swap.onclick = () => { field.value = ''; dialog.querySelector('[role=status]').textContent = ''; setMode(!joining); field.focus(); };
-  setMode(joining); if (invite) field.value = invite;
+  const nameKey = 'darupoyo-name-' + client.uid;
+  const rememberedName = read(nameKey, userStore());
+  welcome.choose({ items, invite, initialName: rememberedName || client.auth?.currentUser?.displayName || '',
+    askName: !rememberedName && !items.length,
+    saveName: name => write(nameKey, name, userStore()), enter,
+    submit: async (joining, value, name) => {
+      const h = await api(joining ? '/join' : '/houses', joining ? { token: value, display_name: name } : { name: value, display_name: name });
+      client.houses = [...client.houses.filter(item => item.id !== h.id), h];
+      write(nameKey, name, userStore());
+      if (!joining) { welcome.created(h.name || value, () => enter(h.id)); return; }
+      await enter(h.id);
+      if (joining) { if (invite) history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
+    },
+  });
 }
 const sync = () => refresh().catch(report);
 // The first snapshot is the state we just loaded; only later changes need a refresh (#98).
@@ -207,7 +186,7 @@ export async function deleteAccount() {
   await api('/me', undefined, 'DELETE');
   clearInterval(timer); subscriptions.forEach(stop => stop()); subscriptions = [];
   for (const area of ['localStorage', 'sessionStorage']) {
-    remove('darupoyo-uid', area); remove('darupoyo-house-' + client.uid, area); remove('darupoyo-push', area);
+    remove('darupoyo-uid', area); remove('darupoyo-name-' + client.uid, area); remove('darupoyo-house-' + client.uid, area); remove('darupoyo-push', area);
   }
   images.forEach(URL.revokeObjectURL); images.clear();
   if (client.auth) await signOut(client.auth);

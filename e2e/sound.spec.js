@@ -1,3 +1,4 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 // 効果音とギャルの声っぽい音（#8 #17）。鳴らした音（オシレーター）の数で確かめる。
 test.beforeEach(async ({ context }) => {
@@ -10,8 +11,8 @@ test.beforeEach(async ({ context }) => {
 });
 async function enter(page) {
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill('oto'); await page.getByLabel('新しいハウスの名前').fill('sound');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'oto'); await setHouseName(page, 'sound');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 test('picking a gal plays her voice, and the setting turns every sound off', async ({ page }) => {

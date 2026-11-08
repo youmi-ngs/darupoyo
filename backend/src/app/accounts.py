@@ -38,7 +38,7 @@ def remove_from_house(store, media, uid, house_id, empty):
                     tx.delete(path)
                     return
                 if collection == 'days':
-                    for key in ('goals', 'completed', 'activity'):
+                    for key in ('goals', 'completed', 'activity', 'darupoyo_shared'):
                         value.get(key, {}).pop(uid, None)
                     value['poses'] = {k: p for k, p in value.get('poses', {}).items() if p['user_id'] != uid}
                     for latest in value.get('latest', {}).values():

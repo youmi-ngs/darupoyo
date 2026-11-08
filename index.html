@@ -10,13 +10,14 @@
 <meta name="theme-color" content="#D9C2FF">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="だるぽよ">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Hachi+Maru+Pop&family=Zen+Maru+Gothic:wght@400;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Hachi+Maru+Pop&family=Roboto:wght@500&family=Zen+Maru+Gothic:wght@400;700;900&display=swap">
 <link rel="stylesheet" href="/src/style.css">
 <link rel="stylesheet" href="/src/integration.css">
 <link rel="stylesheet" href="/src/photos.css">
 <link rel="stylesheet" href="/src/home.css">
 <link rel="stylesheet" href="/src/settings.css">
 <link rel="stylesheet" href="/src/busy.css">
+<link rel="stylesheet" href="/src/refined.css">
 </head>
 <body>
 <div class="vapor" aria-hidden="true">
@@ -164,9 +165,10 @@
 
 
 <dialog class="log-modal" id="log-modal" aria-labelledby="log-title">
-  <button class="sheet-close pm-close" type="button" id="log-close" aria-label="閉じる">×</button>
-  <h2 class="pm-title" id="log-title"></h2>
-  <p class="pm-meta" id="log-total"></p>
+  <header class="log-header">
+    <div class="log-heading"><h2 class="pm-title" id="log-title"></h2><p class="pm-meta" id="log-total"></p></div>
+    <div class="log-actions"><button class="sheet-close pm-close" type="button" id="log-close" aria-label="閉じる"><img src="/refined/edfe8.svg" alt=""></button></div>
+  </header>
   <div class="log-list" id="log-list"></div>
   <div class="log-dots" id="log-dots" aria-hidden="true"></div>
 </dialog>
@@ -193,20 +195,21 @@
     </section>
     <section class="set-card house-card">
       <h3 class="drawer-h">ハウス</h3>
-      <div><div class="house-name-row"><b id="settings-house-name"></b><button class="account-edit" id="house-edit" type="button" aria-label="ハウス名を編集" aria-expanded="false" aria-controls="house-form">編集</button></div><p id="settings-members"></p></div>
+      <div id="house-summary"><div class="house-name-row"><b id="settings-house-name"></b><button class="account-edit" id="house-edit" type="button" aria-label="ハウス名を編集" aria-expanded="false" aria-controls="house-form">編集</button></div><p id="settings-members"></p></div>
       <form class="account-form" id="house-form" hidden>
         <label>家の名前<input name="house_name" maxlength="60" required></label>
         <div class="account-actions"><button class="btn account-cancel" type="button">やめる</button><button class="btn" type="submit">保存</button></div>
       </form>
-      <div class="invite-row"><button type="button" id="settings-invite" class="invite-code-copy">友だちを招待しよう</button><button class="pink-pill" type="button" id="copy-invite">招待リンクをコピー</button></div>
+      <div class="invite-row"><button type="button" id="settings-invite" class="invite-code-copy">友だちを招待しよう</button><button class="pink-pill" type="button" id="copy-invite">招待コードをコピー</button></div>
       <p id="invite-status" role="status" hidden></p>
     </section>
     <section class="set-card" id="gal-toggle">
       <h3 class="drawer-h">ほめてくれるギャル</h3>
       <div class="gal-picker" id="gal-picker"></div>
+      <p class="sr-only" id="gal-selection-status" role="status"></p>
     </section>
-    <section class="set-card push-card" id="push-card" hidden>
-      <div class="push-row"><h3 class="drawer-h" id="push-title">通知</h3><button class="sound-switch" type="button" id="push-toggle" aria-labelledby="push-title" aria-pressed="false"><img src="/settings/6b989.svg" alt=""></button></div>
+    <section class="set-card push-card" id="push-card">
+      <div class="push-row"><h3 class="drawer-h" id="push-title">通知</h3><button class="sound-switch" type="button" id="push-toggle" disabled aria-describedby="push-note" aria-labelledby="push-title" aria-pressed="false"><img src="/settings/6b989.svg" alt=""></button></div>
       <p class="push-note" id="push-note" hidden></p>
     </section>
     <section class="set-card push-card" id="sound-card">
@@ -220,7 +223,7 @@
   <div class="howto-inner">
     <button class="sheet-close drawer-close" type="button" id="howto-close" aria-label="閉じる"><img src="/settings/3ad13.svg" alt=""></button>
     <h2 class="settings-title" id="howto-title" tabindex="-1">あそびかた</h2>
-    <div class="howto-track" id="howto-track" tabindex="0" role="region" aria-label="遊び方・左右にスワイプして全4ページ"></div>
+    <div class="howto-track" id="howto-track" tabindex="0" role="region" aria-label="遊び方・左右にスワイプして全5ページ"></div>
     <p class="sr-only" id="howto-status" aria-live="polite"></p>
   </div>
 </dialog>
@@ -230,7 +233,7 @@
     <h2 class="settings-title" id="house-switch-title" tabindex="-1">ハウス切り替え</h2>
     <p class="house-intro">今日はどのおうちにする？</p>
     <div id="house-list"></div><p id="house-switch-status" role="status"></p>
-    <button class="pink-pill house-add" type="button" id="house-add">＋ ハウスを作る・招待で入る</button>
+    <button class="pink-pill house-add" type="button" id="house-add">＋ ハウスをつくる・招待で入る</button>
   </div>
 </dialog>
 

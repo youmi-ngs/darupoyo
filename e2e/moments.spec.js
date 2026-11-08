@@ -1,7 +1,8 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test('selfies share a photo without completing chores or lighting rooms',async({page,context})=>{
  await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
- await page.goto('/');await page.getByLabel('あなたの名前').fill('カメラ');await page.getByLabel('新しいハウスの名前').fill('近況');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+ await page.goto('/');await setWelcomeName(page, 'カメラ');await setHouseName(page, '近況');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
  await page.locator('.scene-dot').nth(5).click();await page.locator('[data-open-moments]').click();
  await page.getByRole('button',{name:'自撮りを撮る',exact:true}).click();
  await page.getByRole('button',{name:'この写真を撮る',exact:true}).click();
@@ -10,12 +11,14 @@ test('selfies share a photo without completing chores or lighting rooms',async({
  await page.getByRole('button',{name:'この写真を使う',exact:true}).click();
  await page.getByLabel('ひとこと（任意）').fill('おはよう');
  await page.getByRole('button',{name:'みんなに共有',exact:true}).click();
- await expect(page.locator('.moments-dialog article')).toHaveCount(1);
- await expect(page.locator('.moments-dialog article')).toContainText('おはよう');
+ await expect(page.locator('#board-view')).toBeVisible();
+ await expect(page.locator('.pin-grid .pin-moment')).toHaveCount(1);
+ await expect(page.locator('.pin-grid .pin-moment')).toContainText('おはよう');
+ await page.locator('.pin-grid .pin-moment').click();
  // #158: the gal this resident picked answers under the selfie
- await expect(page.locator('.moments-dialog article .moment-praise')).toContainText(/ギャル/);
- await expect(page.locator('.moments-dialog article .moment-praise > span:last-child')).not.toHaveText('');
- await page.locator('.moments-dialog [data-close]').click();
+ await expect(page.locator('.pin-viewer .moment-praise')).toContainText(/ギャル/);
+ await expect(page.locator('.pin-viewer .moment-praise > span:last-child')).not.toHaveText('');
+ await page.locator('.pin-viewer .pm-close').click();
  await expect(page.locator('.door.is-lit')).toHaveCount(0);
  await page.reload();await expect(page.locator('.onboarding')).toHaveCount(0);
  await page.locator('.scene-dot').nth(5).click();await page.locator('[data-open-moments]').click();
@@ -24,7 +27,7 @@ test('selfies share a photo without completing chores or lighting rooms',async({
 
 test('the gal line shows on the けーじばん card of a selfie too (#158)', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill('もち'); await page.getByLabel('新しいハウスの名前').fill('いま'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'いま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
     const { houseApi } = await import('/src/api.js');
     await houseApi('/profile', { gal: 'hime' }, 'PUT');
@@ -56,7 +59,7 @@ const twoCameras = () => {
 };
 async function openSelfie(page) {
   await page.addInitScript(twoCameras); await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill('かがみ'); await page.getByLabel('新しいハウスの名前').fill('いま'); await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'かがみ'); await setHouseName(page, 'いま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(5).click(); await page.locator('[data-open-moments]').click();
   await page.getByRole('button', { name: '自撮りを撮る', exact: true }).click();
   await expect(page.locator('.capture-live video')).toBeVisible();
@@ -75,7 +78,8 @@ test('a front-camera selfie is saved as it looked in the preview, not flipped (#
   await expect(page.locator('.capture canvas')).not.toHaveClass(/is-mirrored/); // the pixels themselves are mirrored
   await page.getByRole('button', { name: 'この写真を使う' }).click();
   await page.getByRole('button', { name: 'みんなに共有', exact: true }).click();
-  await expect(page.locator('.moments-dialog article')).toHaveCount(1);
+  await expect(page.locator('#board-view')).toBeVisible();
+ await expect(page.locator('.pin-grid .pin-moment')).toHaveCount(1);
   expect(await leftColor(page)).toBe('blue');
 });
 
@@ -88,7 +92,8 @@ test('the back camera can be used for a selfie, and it is not mirrored (#161)', 
   await page.getByRole('button', { name: 'この写真を撮る' }).click();
   await page.getByRole('button', { name: 'この写真を使う' }).click();
   await page.getByRole('button', { name: 'みんなに共有', exact: true }).click();
-  await expect(page.locator('.moments-dialog article')).toHaveCount(1);
+  await expect(page.locator('#board-view')).toBeVisible();
+ await expect(page.locator('.pin-grid .pin-moment')).toHaveCount(1);
   expect(await leftColor(page)).toBe('red');
 });
 

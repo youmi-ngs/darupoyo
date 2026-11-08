@@ -1,3 +1,4 @@
+import { setWelcomeName, setHouseName } from '../e2e/onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 import { playRhythm, stillCamera } from '../e2e/rhythm-helper.js';
 test.beforeEach(async ({ context }) => {
@@ -19,9 +20,9 @@ async function signIn(page, name) {
 
 test('a friend clearing a chore lights their room on my screen via Firestore', async ({ page, browser }) => {
   await signIn(page, 'もち');
-  await page.getByLabel('あなたの名前').fill('もち');
-  await page.getByLabel('新しいハウスの名前').fill('エミュハウス');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'もち');
+  await setHouseName(page, 'エミュハウス');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('#open-menu').click();
   await page.locator('#open-settings').click(); await page.getByRole('button', { name: '招待リンク', exact: true }).click();
@@ -35,8 +36,8 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await friend.goto('/');
   await friend.reload();
-  await friend.getByRole('button', { name: '招待コードで入る' }).click(); await friend.getByLabel('招待コード').fill(code);
-  await friend.getByLabel('あなたの名前').fill('ともだち');
+  await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);
+
   await friend.getByRole('button', { name: '招待に参加する' }).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
   await friend.getByRole('button', { name: 'おじゃまします！' }).click();
@@ -46,7 +47,7 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   // The friend clears laundry with the camera rhythm.
   await friend.locator('.scene-dot').nth(4).click();
   await friend.locator('[data-chore="laundry"]').click();
-  await friend.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await friend.getByRole('button', { name: /^干す/ }).click();
   await playRhythm(friend, 8);
   await friend.getByRole('button', { name: '部屋に飾る', exact: true }).click();
   await expect(friend.getByText('記録できた！')).toBeVisible();

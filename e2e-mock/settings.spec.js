@@ -1,11 +1,12 @@
+import { setWelcomeName, setHouseName } from '../e2e/onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/');
-  await page.getByLabel('あなたの名前').fill('のぶぽよ');
-  await page.getByLabel('新しいハウスの名前').fill('おんたまハウス');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'のぶぽよ');
+  await setHouseName(page, 'おんたまハウス');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 });
 
@@ -79,9 +80,9 @@ test('house picker selects existing houses and preserves the signed-in user', as
   await open(page, '#menu-house');
   await expect(page.locator('.house-choice[aria-current]')).toContainText('おんたまハウス');
   await page.locator('#house-add').click();
-  await page.getByLabel('あなたの名前').fill('のぶぽよ');
-  await page.getByLabel('新しいハウスの名前').fill('ふたつめハウス');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click();
+  await setWelcomeName(page, 'のぶぽよ');
+  await setHouseName(page, 'ふたつめハウス');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await open(page, '#menu-house');
   await expect(page.locator('.house-choice')).toHaveCount(2);

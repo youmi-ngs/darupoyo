@@ -23,6 +23,7 @@ export function mockDarupoyo({ db, houseId, uid, rest, method, body, searchParam
   const now = new Date(), record = {id:postId(now),kind:'darupoyo',house_id:houseId,user_id:uid,chore:body.chore,caption,media_id:body.media_id || null,day,created_at:now.toISOString()};
   db.darupoyo_records[record.id] = record;
   db.darupoyo_requests[key] = {id:record.id,user_id:uid,house_id:houseId,fingerprint};
+  (state.darupoyo_shared ||= {})[uid] = true;
   state.darupoyo_updated_at = record.created_at; db.days[houseId+'/'+day] = state;
   save(db); return json({record,created:true},201);
 }

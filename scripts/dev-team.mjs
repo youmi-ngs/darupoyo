@@ -12,8 +12,9 @@ try {
   const originArg = process.argv[2];
   if (!originArg) throw new Error('Usage: npm run dev:team -- https://YOUR-SHARED-URL');
   const url = new URL(originArg);
-  if (url.protocol !== 'https:' || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
-    throw new Error('Pass the HTTPS origin of the shared app, without a path or invite code');
+  const local = url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname);
+  if ((!local && url.protocol !== 'https:') || url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('Pass an HTTPS origin or an HTTP localhost origin, without a path or invite code');
   }
   const token = gcloud(['auth', 'print-access-token', '--project', project]);
   // Admin SDK needs ADC to validate token revocation, separate from CLI login.
@@ -44,6 +45,7 @@ try {
   const auth = await request(`${authBase}/config`);
   const domains = auth.authorizedDomains || [];
   if (!domains.includes(url.hostname)) {
+    if (local) throw new Error(`${url.hostname} is not authorized for Google sign-in. Add it in Firebase Authentication → Settings → Authorized domains.`);
     await request(`${authBase}/config?updateMask=authorizedDomains`, { authorizedDomains: [...domains, url.hostname] });
   }
   if (!web.apiKey || !web.appId || !web.authDomain) throw new Error('Firebase Web configuration is incomplete');
@@ -52,6 +54,7 @@ try {
     FIREBASE_WEB_API_KEY: web.apiKey, FIREBASE_AUTH_DOMAIN: web.authDomain, FIREBASE_APP_ID: web.appId, FIREBASE_MESSAGING_SENDER_ID: web.messagingSenderId,
     CORS_ORIGINS: `${url.origin},http://127.0.0.1:5173,http://localhost:5173`,
     VITE_API_BASE_URL: '',
+    VITE_GOOGLE_LOCAL_ORIGIN: local ? url.origin : '',
   });
   console.log(`Google sign-in enabled for ${url.origin}. Test records reset when the backend restarts.`);
   await import('./dev-all.mjs');

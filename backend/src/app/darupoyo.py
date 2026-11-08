@@ -46,6 +46,7 @@ def share(domain, uid, house_id, body):
         }
         # Wake the existing days subscription without recording any completion,
         # pose, activity avatar, reward or friend-cleared notification.
+        state.setdefault('darupoyo_shared', {})[uid] = True
         state['darupoyo_updated_at'] = now.isoformat()
         tx.set(f"{root}/darupoyo_records/{record['id']}", record)
         tx.set(request_path, {"id": record['id'], "user_id": uid, "fingerprint": fingerprint})

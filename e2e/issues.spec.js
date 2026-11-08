@@ -1,9 +1,10 @@
+import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 import { playRhythm, stillCamera } from './rhythm-helper.js';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page, name = 'もち') {
-  await page.goto('/'); await page.getByLabel('あなたの名前').fill(name); await page.getByLabel('新しいハウスの名前').fill('issues');
-  await page.getByRole('button', { name: 'ハウスを作る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, name); await setHouseName(page, 'issues');
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 const png = page => page.evaluate(async () => {
   const c = document.createElement('canvas'); c.width = 600; c.height = 400; const g = c.getContext('2d'); g.fillStyle = '#ffcf8a'; g.fillRect(0, 0, 600, 400);
@@ -14,7 +15,7 @@ test('a meal photo can come from the photo library (#117)', async ({ page, conte
   await context.grantPermissions(['camera']);
   await enter(page);
   await page.locator('.scene-dot').nth(2).click();
-  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: 'ごはんを撮る' }).click();
+  await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^たべる/ }).click();
   await expect(page.getByRole('button', { name: 'この写真を撮る' })).toBeVisible();
   await page.locator('.capture-library input').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: Buffer.from(await png(page)) });
   await expect(page.locator('.capture canvas')).toBeVisible();
@@ -32,7 +33,7 @@ test('after a missed laundry game, もう一回 can start right away (#124)', as
   await stillCamera(context); await context.grantPermissions(['camera']);
   await enter(page);
   await page.locator('.scene-dot').nth(4).click(); await page.locator('[data-chore="laundry"]').click();
-  await page.getByRole('button', { name: /バサバサでリズム/ }).click();
+  await page.getByRole('button', { name: /^干す/ }).click();
   await playRhythm(page, 1);
   await expect(page.getByText('おしい〜！')).toBeVisible();
   await page.getByRole('button', { name: 'もう一回' }).click();

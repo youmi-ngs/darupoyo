@@ -22,6 +22,7 @@
     "dev:mock": "VITE_API_MOCK=1 vite --host 127.0.0.1 --port 5173",
     "deploy": "node scripts/deploy.mjs",
     "setup:cloud": "node scripts/setup-cloud.mjs",
+    "dev:google": "node scripts/dev-team.mjs http://localhost:5173",
     "dev:team": "node scripts/dev-team.mjs"
   },
   "dependencies": {

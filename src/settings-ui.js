@@ -2,6 +2,7 @@ import { api, client, houseApi, inviteCode, switchHouse } from './api.js';
 import { setBusy } from './busy.js';
 import './utility-menu.css';
 import { sfx } from './sfx.js';
+import { setupInstallGuide } from './install-guide.js';
 
 const $ = id => document.getElementById(id);
 const asset = name => `/settings/${name}.svg`;
@@ -22,11 +23,56 @@ export function setupSettingsUI() {
   trigger.addEventListener('click', placeMenu);
   quick.addEventListener('toggle', e => { trigger.setAttribute('aria-expanded', String(e.newState === 'open')); if (e.newState === 'open') sfx.pop(); });
   window.addEventListener('resize', placeMenu);
-  quick.addEventListener('click', e => { if (e.target.closest('[data-menu-action]') && quick.matches(':popover-open')) quick.hidePopover(); }, true);
+  let exitCopy = null, menuExit = Promise.resolve();
+  quick.addEventListener('beforetoggle', e => {
+    exitCopy?.remove(); exitCopy = null;
+    if (e.newState !== 'closed' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // A visual-only copy survives native light-dismiss, including Safari's immediate hide.
+    const rect = quick.getBoundingClientRect(), copy = quick.cloneNode(true);
+    copy.removeAttribute('id'); copy.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+    copy.classList.add('menu-exit'); copy.removeAttribute('popover');
+    copy.setAttribute('aria-hidden', 'true'); copy.inert = true;
+    Object.assign(copy.style, {top:`${rect.top}px`,left:`${rect.left}px`,right:'auto',width:`${rect.width}px`});
+    document.body.append(copy); exitCopy = copy;
+    menuExit = (async () => {
+      const animations = [...copy.children].map((item, i, items) => item.animate([
+        {opacity:1,transform:'translateY(0) scale(1)'},
+        {opacity:0,transform:'translateY(-12px) scale(.75)'}
+      ], {duration:180,delay:(items.length - 1 - i)*35,easing:'ease-in',fill:'both'}));
+      await Promise.all(animations.map(a => a.finished.catch(() => {})));
+      copy.remove(); if (exitCopy === copy) exitCopy = null;
+    })();
+  });
+  quick.addEventListener('click', async e => {
+    const item = e.target.closest('[data-menu-action]');
+    if (!item || !quick.matches(':popover-open')) return;
+    e.preventDefault(); e.stopImmediatePropagation(); quick.hidePopover();
+    await menuExit; item.click();
+  }, true);
   $('menu-house').onclick = openHouses;
   $('profile-photo').onclick = () => document.querySelector('#social-card input[type=file]')?.click();
   for (const id of ['settings', 'howto-page', 'house-switcher']) {
-    $(id).addEventListener('close', () => { if (!document.querySelector('dialog[open]')) trigger.focus(); });
+    const page = $(id);
+    let closing = false;
+    const closePage = async () => {
+      if (closing || !page.open) return;
+      closing = true;
+      let fade;
+      try {
+        if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          page.classList.add('is-closing');
+          // Opacity only: a transform would move the fixed × button again.
+          fade = page.animate([{opacity:getComputedStyle(page).opacity},{opacity:0}], {duration:220,easing:'ease-in',fill:'forwards'});
+          await fade.finished.catch(() => {});
+        }
+        if (page.open) page.close();
+      } finally { fade?.cancel(); page.classList.remove('is-closing'); closing = false; }
+    };
+    page.querySelector('.drawer-close').addEventListener('click', e => {
+      e.preventDefault(); e.stopImmediatePropagation(); closePage();
+    }, true);
+    page.addEventListener('cancel', e => { e.preventDefault(); closePage(); });
+    page.addEventListener('close', () => { if (!document.querySelector('dialog[open]')) trigger.focus(); });
   }
 
   // Figma mypage: the invite code sits in the house card, next to the copy button.
@@ -38,7 +84,7 @@ export function setupSettingsUI() {
     return code;
   };
   new MutationObserver(() => { if ($('settings').open) loadInvite().catch(() => {}); }).observe($('settings'), { attributes: true, attributeFilter: ['open'] });
-  // Both the code and the pill copy: the code alone, or a link that fills it in.
+  // Both the code and the pill copy the invitation code.
   const copyInvite = (button, what, value) => async () => {
     const status = $('invite-status');
     button.disabled = true; status.hidden = false; status.textContent = what + 'を準備中…';
@@ -49,44 +95,68 @@ export function setupSettingsUI() {
     } catch (e) { status.textContent = e.message; }
     finally { button.disabled = false; }
   };
-  $('copy-invite').onclick = copyInvite($('copy-invite'), '招待リンク', code => { const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({ invite: code }).toString(); return url.href; });
+  $('copy-invite').onclick = copyInvite($('copy-invite'), '招待コード', code => code);
   $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
 
   const track = $('howto-track');
-  steps.forEach((step, i) => {
-    const card = document.createElement('article'); card.className = 'howto-card'; card.setAttribute('aria-label', `${i + 1} / 4：${step.title}`);
-    card.innerHTML = `<div class="howto-art ${step.kind}" aria-hidden="true"><img class="howto-illustration" src="${asset(step.icon)}" alt="">${step.sparkle ? `<img class="howto-sparkle" src="${asset(step.sparkle)}" alt="">` : ''}</div><h3>${step.title}</h3><p>${step.lines.join('<br>')}</p><div class="howto-pagination" aria-label="ページ選択"></div>`;
-    steps.forEach((_, j) => {
+  const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['だるぽよを、ワンタップで開こ♡','いつでもすぐ、おうちへ。']}];
+  guideSteps.forEach((step, i) => {
+    const card = document.createElement('article'); card.className = 'howto-card'; card.setAttribute('aria-label', `${i + 1} / ${guideSteps.length}：${step.title}`);
+    card.innerHTML = `<div class="howto-art ${step.kind}" aria-hidden="true">${step.icon ? `<img class="howto-illustration" src="${asset(step.icon)}" alt="">` : ''}${step.sparkle ? `<img class="howto-sparkle" src="${asset(step.sparkle)}" alt="">` : ''}</div><h3>${step.title}</h3><p>${step.lines.join('<br>')}</p><div class="howto-pagination" aria-label="ページ選択"></div>`;
+    if (step.kind === 'install') {
+      card.id = 'install-card';
+      card.querySelector('.howto-art').innerHTML = '<svg class="howto-install-art" width="166" height="166" viewBox="0 0 166 166" fill="none"><rect x="44" y="8" width="78" height="148" rx="20" fill="#fff5fc" stroke="#6a5590" stroke-width="4"/><path d="M70 20h26M73 144h20" stroke="#6a5590" stroke-width="4" stroke-linecap="round"/><rect x="60" y="56" width="46" height="46" rx="13" fill="#ffb8dc"/><path d="M83 67v24M71 79h24" stroke="#6a5590" stroke-width="4" stroke-linecap="round"/><path d="m130 32 5-12 5 12 12 5-12 5-5 12-5-12-12-5Z" fill="#c9b6ff"/></svg>';
+      const button = document.createElement('button'); button.id = 'install-app'; button.type = 'button'; button.className = 'refined-button secondary'; button.textContent = '追加方法を見る'; card.append(button);
+    }
+    guideSteps.forEach((_, j) => {
       const dot = document.createElement('button'); dot.type = 'button'; dot.setAttribute('aria-label', `${j + 1}ページ目へ`); dot.innerHTML = `<img src="${asset(j === i ? 'c25c8' : 'b0fb5')}" alt="">`;
       if (i === j) dot.setAttribute('aria-current', 'step');
-      dot.onclick = () => move(j); card.querySelector('.howto-pagination').append(dot);
+      dot.dataset.page = j; dot.onclick = () => move(j); card.querySelector('.howto-pagination').append(dot);
     });
     card.onclick = e => { if (!card.classList.contains('is-active') && !e.target.closest('button')) move(i); };
     track.append(card);
   });
   let active = 0;
   const cards = [...track.children];
-  const move = i => { const next = cards[Math.max(0, Math.min(3, i))]; track.scrollTo({ left: next.offsetLeft - (track.clientWidth - next.offsetWidth) / 2, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); };
+  const visibleCards = () => cards.filter(card => !card.hidden);
+  const move = i => { const shown = visibleCards(); const next = shown[Math.max(0, Math.min(shown.length - 1, i))]; track.scrollTo({ left: next.offsetLeft - (track.clientWidth - next.offsetWidth) / 2, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); };
   const mark = () => {
     const center = track.scrollLeft + track.clientWidth / 2;
-    active = cards.reduce((best, card, i) => Math.abs(card.offsetLeft + card.offsetWidth / 2 - center) < Math.abs(cards[best].offsetLeft + cards[best].offsetWidth / 2 - center) ? i : best, 0);
+    const shown = visibleCards();
+    active = shown.reduce((best, card, i) => Math.abs(card.offsetLeft + card.offsetWidth / 2 - center) < Math.abs(shown[best].offsetLeft + shown[best].offsetWidth / 2 - center) ? i : best, 0);
     cards.forEach((card, i) => { card.classList.toggle('is-active', i === active); card.querySelectorAll('button').forEach(b => { b.tabIndex = i === active ? 0 : -1; }); });
-    $('howto-status').textContent = `${active + 1} / 4：${steps[active].title}`;
+    $('howto-status').textContent = `${active + 1} / ${shown.length}：${guideSteps[active].title}`;
   };
   track.addEventListener('scroll', mark, { passive: true });
   track.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { e.preventDefault(); move(active + (e.key === 'ArrowRight' ? 1 : -1)); } });
   new MutationObserver(() => { if ($('howto-page').open) { track.scrollLeft = 0; mark(); } }).observe($('howto-page'), { attributes: true, attributeFilter: ['open'] });
   new ResizeObserver(() => { if ($('howto-page').open) move(active); }).observe(track);
-  cards[0].classList.add('is-active');
+  const updatePages = () => {
+    const count = visibleCards().length;
+    track.setAttribute('aria-label', `遊び方・左右にスワイプして全${count}ページ`);
+    cards.forEach((card,i) => {
+      card.setAttribute('aria-label', `${i+1} / ${count}：${guideSteps[i].title}`);
+      card.querySelectorAll('[data-page]').forEach(dot => { dot.hidden = Number(dot.dataset.page) >= count; });
+    });
+    active = Math.min(active, count - 1);
+    if ($('howto-page').open) move(active);
+    mark();
+  };
+  new MutationObserver(updatePages).observe($('install-card'), {attributes:true,attributeFilter:['hidden']});
+  setupInstallGuide(); updatePages();
 
   setupHouseRemoval();
   $('house-switch-close').onclick = () => $('house-switcher').close();
   $('house-add').onclick = () => switchHouse();
+  let houseRequest = 0;
   async function openHouses() {
+    const request = ++houseRequest, owner = client.uid;
     const dialog = $('house-switcher'), list = $('house-list'), status = $('house-switch-status');
-    list.replaceChildren(); status.textContent = 'おうちを探してるよ…'; dialog.showModal(); $('house-switch-title').focus();
-    try {
-      const result = await api('/houses'); const houses = result.items || result;
+    let shown = '';
+    const render = houses => {
+      const signature = JSON.stringify(houses.map(h => [h.id, h.name, h.id === client.house]));
+      if (signature === shown) return;
+      shown = signature; list.replaceChildren();
       houses.forEach(house => {
         const current = house.id === client.house;
         const button = document.createElement('button'); button.type = 'button'; button.className = 'house-choice';
@@ -99,18 +169,36 @@ export function setupSettingsUI() {
         list.append(button);
       });
       status.textContent = houses.length < 2 ? '招待コードで、友だちのおうちにも参加できるよ。' : 'おうちを選んで、ただいま！';
+    };
+    // Startup already fetched memberships; show them before opening the page.
+    render(client.houses);
+    if (!client.houses.length) {
+      const placeholder = document.createElement('div'); placeholder.className = 'house-choice house-loading';
+      placeholder.textContent = 'おうちを読み込み中…'; list.append(placeholder); status.textContent = '';
+    }
+    if (!dialog.open) dialog.showModal(); $('house-switch-title').focus();
+    try {
+      const result = await api('/houses');
+      if (request !== houseRequest || owner !== client.uid) return;
+      client.houses = result.items || result;
+      // Replace placeholders even when the server confirms an empty list.
+      if (list.querySelector('.house-loading')) shown = '';
+      render(client.houses);
     } catch (e) {
-      status.textContent = e.message;
-      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'pink-pill'; retry.textContent = 'もう一度読み込む'; retry.onclick = () => { dialog.close(); openHouses(); }; list.append(retry);
+      if (request !== houseRequest || owner !== client.uid) return;
+      list.querySelector('.house-loading')?.remove();
+      status.textContent = client.houses.length ? '一覧を更新できなかったよ。もう一度試してね。' : e.message;
+      const retry = document.createElement('button'); retry.type = 'button'; retry.className = 'pink-pill'; retry.textContent = 'もう一度読み込む'; retry.onclick = openHouses; list.append(retry);
     }
   }
+
 }
 
 // Moving out (any resident) and deleting the house (only its last resident).
 let shownHouse = null;
 function setupHouseRemoval() {
-  const dialog = document.createElement('dialog'); dialog.className = 'house-remove-dialog';
-  dialog.innerHTML = '<h2></h2><p data-what></p><p>この操作は元に戻せません。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="btn btn-sub" data-cancel>やめる</button><button type="button" class="btn btn-main" data-confirm disabled></button>';
+  const dialog = document.createElement('dialog'); dialog.className = 'house-remove-dialog refined-modal confirmation-dialog';
+  dialog.innerHTML = '<h2></h2><p data-what></p><p>この操作は元に戻せません。</p><label><input type="checkbox">削除する内容を確認しました</label><p role="status"></p><button type="button" class="refined-button secondary" data-cancel>やめる</button><button type="button" class="refined-button" data-confirm disabled></button>';
   document.body.append(dialog);
   const title = dialog.querySelector('h2'), what = dialog.querySelector('[data-what]'), check = dialog.querySelector('input');
   const status = dialog.querySelector('[role=status]'), cancel = dialog.querySelector('[data-cancel]'), confirm = dialog.querySelector('[data-confirm]');

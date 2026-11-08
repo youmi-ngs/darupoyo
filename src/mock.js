@@ -50,7 +50,7 @@ function removeResident(db, uid, only = null) {
   for (const [key, state] of Object.entries(db.days)) {
     if (!here(key.split('/')[0])) continue;
     if (removedHouses.has(key.split('/')[0])) { delete db.days[key]; continue; }
-    delete state.goals[uid]; delete state.completed[uid]; if (state.activity) delete state.activity[uid];
+    delete state.goals[uid]; delete state.completed[uid]; if (state.darupoyo_shared) delete state.darupoyo_shared[uid]; if (state.activity) delete state.activity[uid];
     for (const [chore, pose] of Object.entries(state.poses)) if (pose.user_id === uid) delete state.poses[chore];
     Object.values(state.latest).forEach(v => delete v[uid]);
     state.recent = state.recent.filter(p => p.user_id !== uid).map(p => ({...p, sync_with: p.sync_with.filter(m => m !== uid)}));
@@ -125,7 +125,7 @@ export async function mockFetch(url, init = {}) {
 
   if (rest === '/dashboard') {
     const shown = db.days[houseId + '/' + (searchParams.get('day') || day)] || newDay(searchParams.get('day') || day);
-    const lights = Object.fromEntries(house.member_ids.map(m => [m, !!shown.completed[m]?.length]));
+    const lights = Object.fromEntries(house.member_ids.map(m => [m, !!(shown.completed[m]?.length || shown.darupoyo_shared?.[m])]));
     return json({ house, state: shown, lights, happiness: Math.round(100 * Object.values(lights).filter(Boolean).length / house.member_ids.length), timezone: 'Asia/Tokyo' });
   }
   if (rest === '/goals') { state.goals[uid] = [...new Set(body.chores)]; db.days[dayKey] = state; save(db); return json(state); }
