@@ -56,3 +56,4 @@
 .push-toggle[aria-pressed="true"]{background:#ffb3de}
 .push-toggle:disabled{opacity:.5;cursor:default}
 .push-note{margin:0;font-size:12px;line-height:1.5;color:#655575}
+.meal-voice[data-state="success"] .meal-voice-toggle:disabled{background:#d8f5df;color:#2f8a4e;border-color:#2f8a4e;opacity:1}

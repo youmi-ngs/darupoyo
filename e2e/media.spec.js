@@ -55,12 +55,11 @@ test('いただきます is recorded with the meal and plays back from the album
   await page.goto('/');await page.getByLabel('あなたの名前').fill('itadaki');await page.getByLabel('新しいハウスの名前').fill('voice');await page.getByRole('button',{name:'ハウスを作る',exact:true}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:'ごはんを撮る'}).click();
   await page.getByRole('button',{name:'この写真を撮る'}).click();await page.getByRole('button',{name:'この写真を使う'}).click();
+  // The fake mic hums nonstop: drive the loudness the page measures (a 0.6s voice, then quiet).
+  await page.evaluate(() => { window.testLevel = 0; AnalyserNode.prototype.getFloatTimeDomainData = function(a) { a.fill(0); for (let i = 0; i < a.length; i += 2) a[i] = window.testLevel * Math.SQRT2; }; });
   await page.getByRole('button',{name:'マイクをオンにする'}).click();
-  await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'recording');
-  // Allow the real fake-device audio encoder to produce the short spoken clip.
-  await page.waitForTimeout(700);
-  await page.getByRole('button', { name: '録音を止める' }).click();
-  await page.getByRole('button', { name: 'この音声を使う' }).click();
+  await expect(page.locator('.meal-voice')).toHaveAttribute('data-state', 'listening');
+  await page.evaluate(() => new Promise(r => setTimeout(() => { window.testLevel = 0.2; setTimeout(() => { window.testLevel = 0; r(); }, 600); }, 400)));
   await expect(page.locator('.result-main')).toHaveText('「いただきます」聞こえた！');
   await expect(page.locator('.result-card .voice-play')).toBeVisible();
   const saved=page.waitForResponse(r=>r.url().includes('/completions'));
