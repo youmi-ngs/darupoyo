@@ -52,6 +52,14 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   const isFirstToday = (id) => !(state.doneToday[id] || []).length;
   const kindText = { pose: 'のポーズ写真（切り抜き）', photo: 'の写真', sound: 'の検出記録', rhythm: 'のリズム記録' };
 
+  const PROP = { laundry: 'laundry', meal: 'meal', dryer: 'dryer', garbage: 'trash' };
+  function galShot(p) {
+    const d = document.createElement('div'); d.className = 'shot pin-photo is-drawing';
+    d.setAttribute('role', 'img'); d.setAttribute('aria-label', nameOf(p.who) + '・' + TASKS[p.task].label + kindText[p.kind]);
+    d.innerHTML = galCharacter(memberGal(p.who, p.gal), themeOf(p.who), PROP[p.chore]);
+    if (p.voice_media_id) { const v = document.createElement('span'); v.className = 'voice-badge'; v.setAttribute('aria-hidden', 'true'); v.textContent = '♪'; d.append(v); }
+    return d;
+  }
   function shotEl(p) {
     const d = document.createElement('div');
     d.className = 'shot shot-' + p.kind;
@@ -133,7 +141,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     items.forEach(({ p, day }) => {
       const sl = document.createElement('div'); sl.className = 'pm-slide';
       sl.innerHTML = '<div class="pm-photo"></div><h2 class="pm-title"></h2><p class="pm-meta"></p><div class="verdict"><span class="gal-slot"></span><p class="bubble"><span class="gal-text"></span></p></div><p class="pm-get"><span class="tl-get"></span> をゲット</p>';
-      sl.querySelector('.pm-photo').append(shotEl(p));
+      // No photo (sound, rhythm): the poster's gal doing the chore, as on the small けーじばん card.
+      sl.querySelector('.pm-photo').append(p.image ? shotEl(p) : galShot(p));
       sl.querySelector('.pm-title').textContent = nameOf(p.who) + 'の' + TASKS[p.task].label;
       sl.querySelector('.pm-meta').textContent = (day || '今日') + ' ' + p.time + '　' + ({ pose: 'ポーズ', photo: '写真', sound: '音', rhythm: 'リズム' })[p.kind] + 'でクリア';
       const pg = galOf(p);
