@@ -1,7 +1,7 @@
 // A resident's gal, dressed in that resident's theme color. Used for the gals
 // standing in the house, the 「おかえり」 at the door, praise, and the picture
 // on けーじばん cards that have no photo.
-import { GALS } from './data.js';
+import { GALS, galFaceImg } from './data.js';
 import { THEMES } from './themes.js';
 
 const S = 'stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
@@ -17,17 +17,16 @@ export const PROPS = {
 
 export const outfitOf = theme => THEMES[theme]?.accent || THEMES.pink.accent;
 
-// Full-body gal: face, body in the outfit color, arms, legs and an optional prop.
+// Full-body gal (the cut-out picture) with an optional prop in her hands.
 export function galCharacter(galId, theme, prop, className = '') {
   const gal = GALS[galId] || GALS.reiwa;
   return '<div class="resident-character ' + className + '" style="--avatar-color:' + outfitOf(theme) + ';--outfit:' + outfitOf(theme) + '">'
-    + '<span class="resident-face">' + gal.svg + '</span>'
-    + '<span class="resident-body"><i class="arm left"></i><i class="arm right"></i><i class="legs"></i></span>'
+    + '<img class="resident-art" src="' + gal.full + '" alt="" draggable="false">'
     + '<span class="resident-prop" aria-hidden="true">' + (PROPS[prop] || '') + '</span></div>';
 }
 
-// Round face icon with the shoulders of the outfit showing at the bottom.
+// Round face icon cut from the same picture.
 export function galIcon(galId, theme) {
-  const gal = GALS[galId] || GALS.reiwa;
-  return '<span class="gal-face has-outfit" style="background:' + gal.bg + ';--outfit:' + outfitOf(theme) + '">' + gal.svg + '</span>';
+  const id = GALS[galId] ? galId : 'reiwa';
+  return '<span class="gal-face" style="background:' + GALS[id].bg + '">' + galFaceImg(id) + '</span>';
 }

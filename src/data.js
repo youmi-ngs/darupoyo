@@ -36,29 +36,28 @@ export const ORIGINAL_FIGS = [0, 1, 2, 3, 4, 5];
 export const figSvg = (i) => '<svg viewBox="0 0 120 144" aria-hidden="true">' + POSES[i % POSES.length] + '</svg>';
 export const MEAL_SVG = '<svg viewBox="0 0 120 144" aria-hidden="true"><g stroke="#3B2560" stroke-width="4" fill="none" stroke-linecap="round"><ellipse cx="60" cy="96" rx="34" ry="12" fill="#FFFFFF"/><path d="M34 92q26-34 52 0" fill="#FFF4A8"/><path d="M92 58v44M98 58v44"/></g></svg>';
 
-export const GH = '<circle cx="32" cy="36" r="17" fill="#FFE8DE"/>';
-export const BL = '<ellipse cx="22" cy="42.5" rx="3.6" ry="2" fill="#FFB3C7" stroke="none"/><ellipse cx="42" cy="42.5" rx="3.6" ry="2" fill="#FFB3C7" stroke="none"/>';
-export const EYES = '<ellipse cx="25" cy="38" rx="2.8" ry="3.4" fill="#3B2560"/><ellipse cx="39" cy="38" rx="2.8" ry="3.4" fill="#3B2560"/><circle cx="26" cy="36.8" r="1" fill="#FFFFFF" stroke="none"/><circle cx="40" cy="36.8" r="1" fill="#FFFFFF" stroke="none"/>';
-export const G = (inner) => '<svg viewBox="0 0 64 64" aria-hidden="true"><g stroke="#3B2560" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">' + inner + '</g></svg>';
+// Gal pictures are cut out of the supplied character art (public/gals): <id>-full.png is the whole
+// body (transparent background), <id>-face.png is the head, used in round icons.
 export const GALS = {
   heisei: { name: '平成ギャル', tag: 'Y2K・あげぽよ', bg: '#FFF1D6',
-    svg: G('<path d="M12 56 Q8 18 32 15 Q56 18 52 56 Q46 44 47 34 L17 34 Q18 44 12 56Z" fill="#D9A35B"/><circle cx="32" cy="36" r="17" fill="#F6CFAF"/><path d="M15 34 Q16 19 32 18 Q48 19 49 34 Q41 25 33 29 Q27 24 15 34Z" fill="#D9A35B"/><path d="M24 21 Q20 28 18 33" stroke="#FFE08A" stroke-width="3"/><rect x="39" y="21" width="9" height="3.4" rx="1.7" fill="#FF8FCB" transform="rotate(-22 43.5 22.7)"/><rect x="41" y="26" width="9" height="3.4" rx="1.7" fill="#A8E6FF" transform="rotate(-22 45.5 27.7)"/><path d="M21.5 35.5q3.5-2.2 7 0M35.5 35.5q3.5-2.2 7 0" stroke-width="2.6"/>' + EYES + '<path d="M21.6 41.4l-1.2 1.2M42.4 41.4l1.2 1.2"/>' + BL + '<path d="M29 44.5q3 2.6 6 0z" fill="#FF7FA0"/><path d="M45.5 45.5c-.8-1.2-2.6-.4-1.8.9l1.8 1.7 1.8-1.7c.8-1.3-1-2.1-1.8-.9z" fill="#FF8FCB" stroke-width="1.2"/>'),
+    full: '/gals/heisei-full.png', face: '/gals/heisei-face.png',
     title: 'あげぽよ〜↑↑',
     lines: { laundry_pose: '魔法使いとかチョーうける！洗濯もできるとか神だし！', laundry_sound: 'バサバサ音きこえた〜！いい匂いの服ゲットとか最強だし', meal: 'いただきます入りました〜！ちゃんと食べるとかチョーえらいじゃん', dryer: 'ドライヤー10秒完走！髪サラサラでテンアゲ↑↑', trash_santa: 'ゴミのサンタ降臨〜！玄関スッキリでちょべりぐ', trash_thief: '泥棒ポーズうけるんだけど！ゴミ出しえらすぎだし', original_new: '一番乗りじゃん！このポーズ今日の流行り決定〜', original_copy: 'まねっこ完ぺき！うちらズッ友じゃん', cutout: 'え、切り抜きチョーかわいいんだけど！プリ超えたし！' } },
   reiwa: { name: '令和ギャル', tag: 'ビジュ・それな', bg: '#E9E3FF',
-    svg: G('<path d="M12 58 Q9 16 32 15 Q55 16 52 58 L46 58 Q48 40 46 32 L18 32 Q16 40 18 58Z" fill="#F2C4CF"/><circle cx="32" cy="36" r="17" fill="#FFE8DE"/><path d="M15 41 Q14 20 32 18 Q50 20 49 41 Q46 27 34 22.5 L32 25.5 L30 22.5 Q18 27 15 41Z" fill="#F2C4CF"/>' + EYES + '<path d="M21.5 35.4l-1.4-1.1M42.5 35.4l1.4-1.1"/><path d="M21.6 42.2q3.4 1.6 6.8 0M35.6 42.2q3.4 1.6 6.8 0" stroke="#FF9FB8" stroke-width="1.6"/><ellipse cx="21" cy="44.5" rx="4" ry="1.8" fill="#FFB3C7" stroke="none"/><ellipse cx="43" cy="44.5" rx="4" ry="1.8" fill="#FFB3C7" stroke="none"/><path d="M29.5 45.6q2.5 2.2 5 0q-2.5-1.5-5 0z" fill="#FF6F91"/><circle cx="16" cy="45" r="1.6" fill="#FFFFFF"/><circle cx="48" cy="45" r="1.6" fill="#FFFFFF"/>'),
+    full: '/gals/reiwa-full.png', face: '/gals/reiwa-face.png',
     title: 'え、天才すぎん？',
     lines: { laundry_pose: '魔法使いビジュ良すぎ。洗濯までやるとか優勝じゃん', laundry_sound: 'バサバサ音ガチで聞こえた。えぐい、えらすぎ', meal: 'いただきます聞こえた〜。ちゃんと食べるの、ありよりのあり', dryer: 'ドライヤーおつ〜。髪ツヤツヤでビジュ爆上がり', trash_santa: 'ゴミのサンタえぐ。玄関スッキリしか勝たん', trash_thief: '泥棒ポーズ天才？ゴミ出しまでできるの尊い', original_new: '一番乗りえぐい。このポーズ今日の正解ね', original_copy: 'まねっこ精度えぐ。それなすぎてシンクロ', cutout: '切り抜きビジュ良すぎ。かわいいしか勝たん' } },
   kuro: { name: '黒ギャル', tag: '姉御・自分の機嫌は自分で', bg: '#FFF6C9',
-    svg: G('<path d="M10 56 Q6 16 32 14 Q58 16 54 56 Q47 46 47 34 L17 34 Q17 46 10 56Z" fill="#FFF3C4"/><circle cx="32" cy="36" r="17" fill="#B97A57"/><path d="M15 34 Q17 18 33 17 Q48 18 49 32 Q40 22 28 28 Q22 30 15 34Z" fill="#FFF3C4"/><ellipse cx="25" cy="38" rx="4.4" ry="4.8" fill="none" stroke="#FFFFFF" stroke-width="1.8"/><ellipse cx="39" cy="38" rx="4.4" ry="4.8" fill="none" stroke="#FFFFFF" stroke-width="1.8"/>' + EYES + '<path d="M21 35l-1.4-1.3M43 35l1.4-1.3" stroke-width="2.4"/><ellipse cx="21" cy="43.5" rx="3.6" ry="2" fill="#F28A8A" stroke="none"/><ellipse cx="43" cy="43.5" rx="3.6" ry="2" fill="#F28A8A" stroke="none"/><path d="M28.5 44.5q3.5 3 7 0z" fill="#FFFFFF"/><circle cx="14" cy="47" r="4" fill="none" stroke="#FFD84D" stroke-width="2.2"/><circle cx="50" cy="47" r="4" fill="none" stroke="#FFD84D" stroke-width="2.2"/>'),
+    full: '/gals/kuro-full.png', face: '/gals/kuro-face.png',
     title: 'やるじゃん！最強！',
     lines: { laundry_pose: '魔法使いアガる〜！だるいのにやったの、マジ最強だから', laundry_sound: 'バサバサいい音！明日の服いい匂い確定じゃん', meal: 'いただきます聞こえた！食べるのも立派な家事っしょ', dryer: 'ドライヤーおつかれ！自分の機嫌、自分でとれてえらい', trash_santa: 'ゴミ出しサンタ最高！玄関も気分もアガるね', trash_thief: 'こっそりでも出したら勝ち！ウチ見てたからね', original_new: '一番乗りアツい！みんなこのポーズについてきな〜', original_copy: 'まねっこバッチリ！仲間とそろうとアガるよね', cutout: '切り抜きキマってる！マジかわいいじゃん' } },
   hime: { name: '姫ギャル', tag: '盛り髪・リボン・♡', bg: '#FFE6F4',
-    svg: G('<circle cx="32" cy="31" r="20" fill="#F6A9C8"/><circle cx="32" cy="17" r="12" fill="#F6A9C8"/><circle cx="12" cy="44" r="7" fill="#F6A9C8"/><circle cx="52" cy="44" r="7" fill="#F6A9C8"/><circle cx="14" cy="55" r="6" fill="#F6A9C8"/><circle cx="50" cy="55" r="6" fill="#F6A9C8"/><circle cx="32" cy="37" r="16.5" fill="#FFEBE3"/><path d="M15.5 36 Q17 22 32 21 Q47 22 48.5 36 Q44 29 38 31 Q35 26 32 29 Q29 26 26 31 Q20 29 15.5 36Z" fill="#F6A9C8"/><path d="M32 9l-10-5.5v11zM32 9l10-5.5v11z" fill="#FFFFFF"/><circle cx="32" cy="9" r="2.6" fill="#FF8FCB"/><ellipse cx="25" cy="39" rx="3" ry="3.8" fill="#3B2560"/><ellipse cx="39" cy="39" rx="3" ry="3.8" fill="#3B2560"/><circle cx="26.1" cy="37.6" r="1.1" fill="#FFFFFF" stroke="none"/><circle cx="40.1" cy="37.6" r="1.1" fill="#FFFFFF" stroke="none"/><path d="M21 36.2l-1.7-1.6M22.9 35.2l-.9-2M43 36.2l1.7-1.6M41.1 35.2l.9-2"/><ellipse cx="22" cy="43.5" rx="3.4" ry="1.9" fill="#FFB3C7" stroke="none"/><ellipse cx="42" cy="43.5" rx="3.4" ry="1.9" fill="#FFB3C7" stroke="none"/><path d="M30 44.8q2 2.6 4 0" fill="#FF8FA8"/>'),
+    full: '/gals/hime-full.png', face: '/gals/hime-face.png',
     title: 'えらすぎて姫キュン…♡',
     lines: { laundry_pose: '魔法使いかわちい〜♡ 洗濯できる子、姫的に満点', laundry_sound: 'バサバサの音、ちゃんと届いたよ♡ いい匂いの服で無敵', meal: 'いただきます聞こえた♡ ちゃんと食べる子、かわいすぎ', dryer: 'ドライヤーおつかれさま♡ 髪サラサラで今日も姫', trash_santa: 'ゴミのサンタさん、きらきら♡ 玄関もお城みたい', trash_thief: '泥棒ちゃん、ハートまで盗まれたかも…♡', original_new: '一番乗り♡ このポーズ、今日のトレンドにしちゃお', original_copy: 'まねっこ上手すぎ♡ おそろいでテンションあがる', cutout: '切り抜きかわちい〜♡ お部屋に飾りたくなっちゃう' } }
 };
 export const GAL_IDS = Object.keys(GALS);
+export const galFaceImg = (id) => '<img class="gal-face-img" src="' + (GALS[id] || GALS.reiwa).face + '" alt="" draggable="false">';
 export const HEX = { pink: '#FFB3DE', cyan: '#A8E6FF', lilac: '#D9C2FF', lime: '#E6F7A0' };
 export const ITEM_SVG = {
   laundry: '<path d="M20 6a4 4 0 1 1 4 4v3" fill="none"/><path d="M24 13L6 22h36z" fill="none"/><path d="M10 22l-4 6l6 3v15h24V31l6-3l-4-6z" fill="#A8E6FF"/>',
