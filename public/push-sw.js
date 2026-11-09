@@ -24,7 +24,9 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil((async () => {
     const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
     const app = windows.find((w) => new URL(w.url).origin === self.location.origin);
-    if (app) { await app.focus(); return; }
-    await self.clients.openWindow(link);
+    const destination = new URL(link, self.location.origin);
+    if (destination.origin !== self.location.origin) return;
+    if (app) { await app.navigate(destination.href); await app.focus(); return; }
+    await self.clients.openWindow(destination.href);
   })());
 });

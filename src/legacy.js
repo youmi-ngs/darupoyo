@@ -1,3 +1,7 @@
+import './feedback.css';
+import { setupFirstGuide } from './first-guide.js';
+import { captionCounter } from './composer-ui.js';
+import { textLength } from './text-limits.js';
 import './input-mode.js';
 import './no-zoom.js';
 import { setBusy } from './busy.js';
@@ -342,7 +346,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     if (window.__tapMark) window.__tapMark(box.querySelector('.mr-album'));
     const fr = box.querySelector('.mr-frames');
     if (!mine.length) { for (let k = 0; k < 3; k++) { const e = document.createElement('span'); e.className = 'mr-frame-empty'; fr.append(e); } }
-    mine.slice(0, 6).forEach((p, k) => { const f = document.createElement('button'); f.type = 'button'; f.className = 'mr-frame'; f.style.setProperty('--r', (k % 2 ? 3 : -3) + 'deg'); f.append(shotEl(p)); const c = document.createElement('span'); c.textContent = p.time + ' ' + TASKS[p.task].label; f.append(c); f.setAttribute('aria-label', p.time + 'の' + TASKS[p.task].label); f.addEventListener('click', () => openPhotos(mine.slice(0, 6).map((x) => ({ p: x, day: '今日' })), k)); fr.append(f); });
+    mine.slice(0, 6).forEach((p, k) => { const f = document.createElement('button'); f.type = 'button'; f.className = 'mr-frame'; f.style.setProperty('--r', (k % 2 ? 3 : -3) + 'deg'); f.append(['sound', 'rhythm'].includes(p.kind) ? galShot(p) : shotEl(p)); const c = document.createElement('span'); c.textContent = p.time + ' ' + TASKS[p.task].label; f.append(c); f.setAttribute('aria-label', p.time + 'の' + TASKS[p.task].label); f.addEventListener('click', () => openPhotos(mine.slice(0, 6).map((x) => ({ p: x, day: '今日' })), k)); fr.append(f); });
     const it = box.querySelector('.mr-items');
     const got = [...new Set(mine.map((p) => p.task))];
     if (!got.length) { const e = document.createElement('span'); e.className = 'shelf-empty'; e.textContent = 'まだからっぽ'; it.append(e); }
@@ -389,6 +393,14 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   const goEntry = () => { window.__toScene = sceneIndexOf('entry'); showHouse(); };
   window.addEventListener('darupoyo:open-board', goBoard);
   window.addEventListener('darupoyo:go-entry', goEntry);
+  window.addEventListener('darupoyo:entered', async () => {
+    const params = new URLSearchParams(location.hash.slice(1));
+    if (!params.get('post')) return;
+    if (params.get('house') !== client.house) { toast('通知のハウスに参加していないため、投稿を開けないよ'); return; }
+    history.replaceState(null, '', location.pathname + location.search);
+    try { await refresh(); showHouse(); await boardView.openNotification(params.get('post'), params.get('kind') || 'post'); }
+    catch { toast('投稿を読み込めなかったよ。もう一度試してね'); }
+  });
 
   function openRoom(who) {
     const mine = state.posts.filter((p) => p.who === who);
@@ -488,6 +500,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       const body = { ...fields, chore: toApi(id), gal, request_id: crypto.randomUUID() };
       if (id === 'meal' || id === 'trash') { photoTaskResult(id, c, gal, body, blob, kind, voice, fields); return; }
       sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録する？</h2><div class="result-card" role="group" aria-label="結果"><span class="result-label"></span><b class="result-main"></b><span class="result-sub"></span></div><p class="sheet-text">できたことをお部屋に残そう。</p><label class="post-caption"><span>ひとこと（30文字まで・なくてもOK）</span><input maxlength="30" placeholder="きょうもえらかった〜" autocomplete="off"></label><button class="btn btn-main" id="post">部屋に飾る</button><button class="btn btn-sub" id="redo">やり直す</button>';
+      captionCounter(sheetBody.querySelector('.post-caption input'));
       const shown = resultOf(c, fields, result || {});
       sheetBody.querySelector('.result-label').textContent = shown.label;
       sheetBody.querySelector('.result-main').textContent = shown.main;
@@ -680,12 +693,15 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       edit.setAttribute('aria-expanded', String(open));
       if (open) form.elements[field].focus(); else if (hadFocus) edit.focus();
     };
+    form.elements[field].removeAttribute('maxlength');
     edit.addEventListener('click', () => toggle(form.hidden));
     form.querySelector('.account-cancel').addEventListener('click', () => toggle(false));
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const value = form.elements[field].value.trim();
       if (!value) { toast('名前を入力してね'); return; }
+      const limit = field === 'display_name' ? 12 : 20;
+      if (value !== current() && textLength(value) > limit) { toast(limit + '文字までで入力してね'); return; }
       const save = form.querySelector('[type=submit]');
       if (save.disabled) return;
       save.disabled = true;
@@ -731,7 +747,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   let sceneIdx = 1;
   function goScene(i, instant) {
     sceneIdx = Math.max(0, Math.min(scenes().length - 1, i));
-    plan.scrollTo({ left: sceneIdx * plan.clientWidth, behavior: instant ? 'auto' : 'smooth' });
+    plan.scrollTo({ left: sceneIdx * plan.clientWidth, behavior: instant ? 'instant' : 'smooth' });
     markScene();
   }
   function renderDots() {
@@ -797,19 +813,20 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     await renderPush(); button.removeAttribute('aria-busy');
     if (error) { note.hidden = false; note.textContent = error; }
   });
-  listenInApp((body) => { sfx.ding(); toast(body); });
+  listenInApp((body, link) => {
+    sfx.ding(); toast(body);
+    if (!link || link === '/') return;
+    const url = new URL(link, location.origin); if (url.origin !== location.origin) return;
+    const button = document.createElement('button'); button.type = 'button'; button.textContent = '投稿を見る';
+    button.onclick = () => { location.href = url.href; location.reload(); }; $('toast').append(button);
+  });
   // ---------- sound effects (#8 #17) ----------
   function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; b.setAttribute('aria-pressed', String(on)); }
   $('sound-toggle').addEventListener('click', () => { setSound(!soundOn()); renderSound(); sfx.pop(); });
   $('settings-close').addEventListener('click', () => settings.close());
   $('open-howto').addEventListener('click', () => { $('howto-page').showModal(); $('howto-title').focus(); });
   $('howto-close').addEventListener('click', () => $('howto-page').close());
-  // 初めて家に入ったときだけ、あそびかたを自動で開く
-  window.addEventListener('darupoyo:entered', () => {
-    const KEY = 'darupoyo-howto-seen';
-    try { if (localStorage.getItem(KEY)) return; localStorage.setItem(KEY, '1'); } catch (e) { return; }
-    $('howto-page').showModal();
-  });
+  setupFirstGuide(() => { showHouse(); goScene(sceneIndexOf('ldk'), true); });
   // Back from a room: the page of みんなの部屋 with that door.
   window.__goScene = () => requestAnimationFrame(() => { if (window.__toHall) { sceneIdx = sceneIndexOf('rooms', Math.floor(Math.max(0, roomOrder().indexOf(currentRoom)) / PER_PAGE)); window.__toHall = false; } if (window.__toScene != null) { sceneIdx = window.__toScene; window.__toScene = null; } goScene(sceneIdx, true); });
   renderDots();

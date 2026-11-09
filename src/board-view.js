@@ -77,9 +77,13 @@ export function setupBoardView(ctx) {
     el.style.setProperty('--r', ((k * 7) % 5 - 2) * 1.2 + 'deg');
     const magnet = ctx.iconOf(card.who); magnet.classList.add('pin-magnet');
     const text = document.createElement('span'); text.className = 'pin-text'; text.textContent = card.text;
+    if (card.type === 'darupoyo' && !card.record.caption) text.hidden = true;
     el.append(magnet, picture(card));
     if (!small) {
-      el.append(text);
+      const category = document.createElement('span'); category.className = 'pin-category';
+      category.textContent = card.type === 'moment' ? 'うちらのなう' : (LABELS[card.chore] || '') + (card.type === 'darupoyo' ? ' · だるぽよ' : ' · やったよ');
+      const author = document.createElement('span'); author.className = 'pin-author'; author.textContent = ctx.nameOf(card.who);
+      el.append(category, author, text);
       el.setAttribute('aria-label', ctx.nameOf(card.who) + '：' + card.text);
       el.addEventListener('click', () => openCard(card));
     }
@@ -166,6 +170,11 @@ export function setupBoardView(ctx) {
   window.addEventListener('darupoyo:moment', () => void loadExtra());
   return {
     open, close,
+    async openNotification(id, kind) {
+      open(); await loadExtra();
+      const card = cards().find(c => c.id === id && c.type === kind);
+      if (card) openCard(card); else ctx.toast("この投稿は見つからないか、削除されているよ");
+    },
     update(data, allPosts) {
       const switched = dashboard && dashboard.house.id !== data.house.id;
       dashboard = data; posts = allPosts;

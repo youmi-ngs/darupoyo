@@ -289,7 +289,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
                 photo = None
             line = app.state.praise.moment(gal, moment["caption"], photo)
             moment = app.state.domain.set_moment_praise(house, moment["id"], line)
-            tasks.add_task(app.state.notify.friend_moment, store, home, uid)  # #157
+            tasks.add_task(app.state.notify.friend_moment, store, home, uid, moment["id"])  # #157
         return moment
 
     @app.get("/api/houses/{house_id}/moments")
@@ -317,6 +317,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
                 require_member(store, house, uid),
                 uid,
                 body.chore.value,
+                post["id"],
             )
         return {"post": post, "created": created}
 

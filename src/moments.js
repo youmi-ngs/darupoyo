@@ -1,3 +1,4 @@
+import { captionCounter, photoPreview } from './composer-ui.js';
 // うちらのなう (Figma 207:914): the うちらのなう button opens a camera card. Take a selfie (or pick
 // one), add a word, and みせちゃう shares it with the house. The card then shows what was sent
 // and the gal's word on it (Figma 207:958), with a way to けーじばん.
@@ -29,7 +30,7 @@ export function setupMoments() {
         <button type="button" class="now-flip" aria-label="外カメラに切り替える" hidden><img src="/moments/flip.svg" alt=""></button>
       </div>
     </div>
-    <label class="now-field"><span>ひとこと（30文字まで）</span><input maxlength="30" placeholder="おは！きょうもがんばろ〜" autocomplete="off"></label>
+    <label class="now-field"><span>ひとこと（かかなくてもおけ♡）</span><input maxlength="30" placeholder="おは！きょうもがんばろ〜" autocomplete="off"></label>
     <p class="now-caption" hidden></p>
     <div class="now-praise" hidden></div>
     <button type="button" class="now-share" disabled>みせちゃう</button>
@@ -40,6 +41,7 @@ export function setupMoments() {
   const video = $('video'), canvas = $('canvas'), note = $('.now-frame-note'), retake = $('.now-retake');
   const controls = $('.now-controls'), shutter = $('.now-shutter'), flip = $('.now-flip'), library = $('.now-library input');
   const caption = $('.now-field input'), share = $('.now-share'), status = $('.now-status');
+  captionCounter(caption); photoPreview(canvas);
   const lead = $('.now-lead'), field = $('.now-field'), sentCaption = $('.now-caption'), praiseBox = $('.now-praise'), toBoard = $('.now-board');
   // Before sending: camera, word and みせちゃう. After: the photo, the word, the gal's line and けーじばん.
   const setSent = sent => {

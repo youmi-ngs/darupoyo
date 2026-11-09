@@ -468,6 +468,7 @@ def test_notifications_friend_cleared_and_evening(client):
     assert [m["uid"] for m in sent] == ["bob"]
     # #143: the title says what happened (the phone already shows the app name).
     assert sent[0]["title"] == "Aliceが髪を乾かしたよ"
+    assert f"house={h}" in sent[0]["link"] and "post=" in sent[0]["link"] and "kind=post" in sent[0]["link"]
     assert sent[0]["body"] in {
         line.format(name="Alice", chore="ドライヤー", reward="美髪") for line in notify.FRIEND_FALLBACK["kuro"]
     }

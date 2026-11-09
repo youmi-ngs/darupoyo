@@ -1,3 +1,4 @@
+import { textLength } from './text-limits.js';
 import { mockDarupoyo } from './mock-darupoyo.js';
 // In-browser stand-in for the Backend API (backend/docs/api.md), used only in development
 // when no Backend answers. Same paths and response shapes; data stays in this browser.
@@ -69,6 +70,11 @@ export async function mockFetch(url, init = {}) {
   const method = init.method || 'GET';
   const uid = (init.headers?.Authorization || '').replace(/^Bearer dev:/, '');
   const body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body;
+  if (body && !(body instanceof Blob)) {
+    for (const [key, max] of [['caption',30],['display_name',12],['name',20]]) {
+      if (body[key] != null && (typeof body[key] !== 'string' || textLength(body[key]) > max)) return fail(422, key + ' is too long');
+    }
+  }
   const db = load(); db.houses ||= {}; db.invites ||= {}; db.days ||= {}; db.posts ||= {}; db.media ||= {}; db.requests ||= {}; db.moments ||= {};
 
   if (path === '/config') return json({ auth_mode: 'dev', timezone: 'Asia/Tokyo', firebase: {}, mock: true });

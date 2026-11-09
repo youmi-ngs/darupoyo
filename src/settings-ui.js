@@ -71,7 +71,11 @@ export function setupSettingsUI() {
     page.querySelector('.drawer-close').addEventListener('click', e => {
       e.preventDefault(); e.stopImmediatePropagation(); closePage();
     }, true);
-    page.addEventListener('cancel', e => { e.preventDefault(); closePage(); });
+    page.addEventListener('cancel', e => {
+      // A file input's cancel event bubbles too; only Escape on this dialog closes it.
+      if (e.target !== page) return;
+      e.preventDefault(); closePage();
+    });
     page.addEventListener('close', () => { if (!document.querySelector('dialog[open]')) trigger.focus(); });
   }
 
@@ -97,6 +101,18 @@ export function setupSettingsUI() {
   };
   $('copy-invite').onclick = copyInvite($('copy-invite'), '招待コード', code => code);
   $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
+  $('share-invite').onclick = async () => {
+    const button = $('share-invite'), status = $('invite-status');
+    button.disabled = true; status.hidden = false;
+    try {
+      const house = client.house, code = await loadInvite();
+      if (house !== client.house) return;
+      const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({invite:code}).toString();
+      if (navigator.share) { await navigator.share({title:'だるぽよのハウスへの招待',url:url.href}); status.textContent='招待リンクを共有したよ（7日間有効）'; }
+      else { await copyInvite(button, '招待リンク', () => url.href)(); }
+    } catch(e) { status.textContent = e.name === 'AbortError' ? '' : e.message; }
+    finally { button.disabled = false; }
+  };
 
   const track = $('howto-track');
   const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['ホーム画面に追加すると、','通知がとどくよ♡']}];

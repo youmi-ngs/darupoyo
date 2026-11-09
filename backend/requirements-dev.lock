@@ -148,6 +148,8 @@ python-dotenv==1.2.4
     # via uvicorn
 pyyaml==6.0.3
     # via uvicorn
+regex==2026.11.9
+    # via -r requirements.txt
 requests==2.34.2
     # via
     #   cachecontrol

@@ -1,3 +1,4 @@
+import { limitInput } from './text-limits.js';
 // Refined first-entry flow. Submission stays explicit; typing never creates a house.
 export function createWelcome() {
   const dialog = document.createElement('dialog');
@@ -92,7 +93,7 @@ export function createWelcome() {
       const formScreen=(title, label, value, limit, confirm, onSubmit, back) => {
         const {card,status}=screen(title); const form=document.createElement('form'); card.insertBefore(form,status);
         const input=document.createElement('input'); input.placeholder=label==='あなたの名前'?'なまえ':label==='新しいハウスの名前'?'ハウスのなまえ':label;
-        input.setAttribute('aria-label',label); input.required=true; input.maxLength=limit; input.value=value; input.enterKeyHint='done'; input.autocomplete=label==='あなたの名前'?'nickname':'off'; form.append(input);
+        input.setAttribute('aria-label',label); input.required=true; input.maxLength=limit; input.value=value; input.enterKeyHint='done'; input.autocomplete=label==='あなたの名前'?'nickname':'off'; form.append(input); limitInput(input, limit);
         const b=action(card,confirm,()=>onSubmit(input.value.trim())); b.hidden=!input.value.trim();
         input.oninput=()=>{ b.hidden=!input.value.trim(); };
         form.onsubmit=e=>{e.preventDefault();if(input.value.trim())b.click();};
@@ -100,7 +101,7 @@ export function createWelcome() {
         // Keep the initial screen's empty-input composition. A tap or Tab starts editing.
         return input;
       };
-      const create=()=>formScreen('新しく家をつくる','新しいハウスの名前',houseName,60,'ハウスをつくる',async value=>{await submit(false,value,name);}, value=>{houseName=value;choose('back');});
+      const create=()=>formScreen('新しく家をつくる','新しいハウスの名前',houseName,20,'ハウスをつくる',async value=>{await submit(false,value,name);}, value=>{houseName=value;choose('back');});
       const join=()=>formScreen('友達の家に住む','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
       // #181: the houses you already live in sit one step further in, under 帰る.
       const homes=()=>{
@@ -115,7 +116,7 @@ export function createWelcome() {
         action(card,'友達の家に住む',join).classList.add('welcome-join');
         action(card,'新しく家をつくる',create,true).classList.add('welcome-create');
       };
-      if(askName || !name) formScreen('なまえおしえて〜','あなたの名前',name,40,'次へ',value=>{name=value;saveName(value);invite?join():choose();});
+      if(askName || !name) formScreen('なまえおしえて〜','あなたの名前',name,12,'次へ',value=>{name=value;saveName(value);invite?join():choose();});
       else invite?join():choose();
     },
   };

@@ -52,5 +52,5 @@ export function syncPushGal(gal) {
 // While the app is open, the service worker hands notifications to the page instead.
 export function listenInApp(show) {
   if (!('serviceWorker' in navigator)) return;
-  navigator.serviceWorker.addEventListener('message', (event) => { if (event.data?.type === 'darupoyo-push') show(event.data.body); });
+  navigator.serviceWorker.addEventListener('message', (event) => { if (event.data?.type === 'darupoyo-push') show(event.data.body, event.data.link); });
 }
