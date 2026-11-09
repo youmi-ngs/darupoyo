@@ -81,3 +81,18 @@ test('the terms and privacy policy are linked from マイページ and the sign-
   await expect(page.locator('#settings .legal-links a[href="/terms.html"]')).toHaveCount(1);
   await expect(page.locator('#settings .legal-links a[href="/privacy.html"]')).toHaveCount(1);
 });
+for (const [name, viewport] of [['phone', { width: 375, height: 568 }], ['pc', { width: 1280, height: 800 }]]) {
+  test(`the sign-in logo keeps clear of the Google button (${name})`, async ({ page }) => {
+    await page.setViewportSize(viewport);
+    await page.goto('/');
+    await page.evaluate(async () => {
+      document.querySelectorAll('dialog[open]').forEach(d => d.close()); document.querySelector('.onboarding')?.remove();
+      const { createWelcome } = await import('/src/welcome-ui.js'); createWelcome().login(() => new Promise(() => {}));
+    });
+    const button = page.locator('.google-sign-in');
+    await expect(button).toBeVisible(); await page.waitForTimeout(1200); // after the logo has risen
+    const [logo, sign, legal] = await Promise.all(['.refined-welcome .welcome-logo', '.google-sign-in', '.welcome-legal'].map(s => page.locator(s).boundingBox()));
+    expect(sign.y - (logo.y + logo.height)).toBeGreaterThanOrEqual(40);
+    expect(legal.y).toBeGreaterThan(sign.y + sign.height);
+  });
+}
