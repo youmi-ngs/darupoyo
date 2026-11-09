@@ -13,11 +13,9 @@ export function setupInstallGuide() {
   const addressBar = icon('<rect x="2" y="7" width="28" height="18" rx="4"/><rect x="6" y="12" width="20" height="8" rx="4"/><path d="M10 16h8"/>');
   const phone = icon('<rect x="8" y="2" width="16" height="28" rx="4"/><path d="M13 6h6m-5 20h4"/>');
   const computer = icon('<rect x="2" y="4" width="28" height="19" rx="3"/><path d="M16 23v5m-6 0h12"/>');
-  const bell = icon('<path d="M8 22V14a8 8 0 0 1 16 0v8l2 3H6zM13 28h6"/>');
   const devices = [['ios',phone,'iPhone・iPad','Safari'],['android',phone,'Android','Chrome'],['desktop',computer,'パソコン','Chrome・Edge']];
   const steps = items => `<ol class="install-steps">${items.map(([art, label],i) => `<li><span class="install-step-number">${i+1}</span><span class="install-step-icon">${art}</span><b>${label}</b></li>`).join('')}</ol>`;
   dialog.innerHTML = `<header class="refined-header"><h2 id="install-guide-title">ホーム画面に追加</h2><button class="refined-close" type="button" aria-label="閉じる"><img src="/refined/edfe8.svg" alt=""></button></header>
-    <p class="install-perks"><span class="install-perk-icon">${bell}</span><b>ホーム画面に追加すると、<br>通知がとどくよ♡</b></p>
     <p class="refined-description">使っている端末を選んでね</p>
     <div class="install-device-picker" role="group" aria-label="端末を選ぶ">${devices.map(([id, art, name, browser]) => `<button type="button" class="install-device-button" data-choose="${id}" aria-pressed="false" aria-controls="install-device-${id}">${art}<b>${name}</b><small>${browser}</small></button>`).join('')}</div>
     <section class="install-device" data-device="ios" id="install-device-ios" hidden><h3>iPhone・iPad（Safari）</h3><p class="install-browser-note">Safariで開いて、この順にタップ</p>${steps([[share,'共有ボタン'],[add,'ホーム画面に追加']])}<p class="install-tip">「Webアプリとして開く」があればオンにしてね。</p></section>
