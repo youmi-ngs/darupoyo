@@ -1,4 +1,4 @@
-"""#157 #158: 「みんなの今」 gets a gal's line and tells the other residents."""
+"""#157 #158: 「うちらのなう」 gets a gal's line and tells the other residents."""
 
 from uuid import uuid4
 
@@ -43,7 +43,7 @@ def test_other_residents_with_a_device_hear_about_a_moment(client):
     assert created.status_code == 201
     # bob has a device; alice shared it herself; carol has no device
     assert [m["uid"] for m in sent] == ["bob"]
-    assert sent[0]["title"] == "Aliceが今をシェアしたよ"
+    assert sent[0]["title"] == "Aliceがなうをシェアしたよ"
     assert sent[0]["body"] in [line.format(name="Alice") for line in notify.MOMENT_FALLBACK["reiwa"]]
     sent.clear()
     client.post(f"/api/houses/{h}/moments", headers=auth(), json=body)  # a retry
