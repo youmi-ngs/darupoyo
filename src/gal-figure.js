@@ -20,10 +20,10 @@ export const outfitOf = theme => THEMES[theme]?.accent || THEMES.pink.accent;
 // Full-body gal (the cut-out picture, dress in the theme color) with an optional prop in her hands.
 export function galCharacter(galId, theme, prop, className = '') {
   const gal = GALS[galId] || GALS.reiwa;
-  return '<div class="resident-character ' + className + '" style="--avatar-color:' + outfitOf(theme) + ';--outfit:' + outfitOf(theme) + '">'
+  return '<div class="resident-character ' + className + '" style="--avatar-color:' + outfitOf(theme) + ';--outfit:' + outfitOf(theme) + ';--art-aspect:' + gal.aspect + '">'
     + '<img class="resident-art" src="' + gal.full + '" alt="" draggable="false">'
     + outfitLayer('/gals/' + (GALS[galId] ? galId : 'reiwa') + '-outfit-full.png', 'resident-outfit')
-    + '<span class="resident-prop" aria-hidden="true">' + (PROPS[prop] || '') + '</span></div>';
+    + '<span class="resident-prop' + (prop ? ' prop-' + prop : '') + '" aria-hidden="true">' + (PROPS[prop] || '') + '</span></div>';
 }
 
 // Round face icon cut from the same picture, dress in the theme color.
