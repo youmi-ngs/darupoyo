@@ -211,7 +211,7 @@ function setupHouseRemoval() {
     dialog.setAttribute('aria-label', leaving ? 'ハウスから退去の確認' : 'ハウス削除の確認');
     title.textContent = leaving ? `「${name}」から退去しますか？` : `「${name}」を削除しますか？`;
     what.textContent = leaving
-      ? 'このハウスでのあなたの写真・音声・記録・自撮り・だるぽよと、ほかの住人の記録に付けたコメント・リアクションを削除します。ほかの住人の記録は残ります。'
+      ? 'このハウスでのあなたの写真・音声・記録・うちらのなう・だるぽよと、ほかの住人の記録に付けたコメント・リアクションを削除します。ほかの住人の記録は残ります。'
       : 'このハウスと、中の写真・音声・記録をすべて削除します。';
     confirm.textContent = leaving ? '退去する' : 'ハウスを削除';
     action = leaving ? () => houseApi('/leave', {}) : () => houseApi('', undefined, 'DELETE');

@@ -84,3 +84,14 @@ def test_a_chore_record_keeps_its_word_and_the_gal_hears_it(client):
     # without a word nothing changes
     assert client.post(f"/api/houses/{h}/completions", headers=auth(), json=sound()).json()["post"]["caption"] == ""
     assert "本人のひとこと「髪さらさら〜」" in gals.prompt("dryer", "reiwa", {"caption": "髪さらさら〜"})[1]
+
+
+def test_the_gal_does_not_assume_the_photo_is_a_selfie():
+    # #184: うちらのなう can be food, a view or a pet, so no line calls it a selfie.
+    system, _ = gals.moment_prompt("reiwa", "")
+    assert "自撮りを" not in system and "決めつける言葉は使わない" in system
+    praise = Praise(LOCAL)
+    praise.client = FakeGemini(["自撮りたすかる〜", "近況ありがと、それな"])
+    assert praise.moment("reiwa", "")["text"] == "近況ありがと、それな"
+    for lines in gals.MOMENT_FALLBACK.values():
+        assert not any(word in line for line in lines for word in ("自撮り", "じぶん"))

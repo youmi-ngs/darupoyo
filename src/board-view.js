@@ -52,13 +52,13 @@ export function setupBoardView(ctx) {
   function cards() {
     return [
       ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.caption || p.praise?.text || '', post: p })),
-      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || '今のじぶん📷', caption: m.caption, praise: m.praise, record: m })),
+      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || 'うちらのなう📷', caption: m.caption, praise: m.praise, record: m })),
       ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ', record: r })),
     ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
   function picture(card) {
     const box = document.createElement('span'); box.className = 'pin-photo';
-    const img = document.createElement('img'); img.alt = ctx.nameOf(card.who) + 'の' + (card.type === 'moment' ? '自撮り' : (LABELS[card.chore] || '') + 'の記録');
+    const img = document.createElement('img'); img.alt = ctx.nameOf(card.who) + 'の' + (card.type === 'moment' ? 'うちらのなうの写真' : (LABELS[card.chore] || '') + 'の記録');
     if (card.image) { img.src = card.image; box.append(img); return box; }
     if (card.media) {
       box.classList.add('is-loading'); box.append(img);
