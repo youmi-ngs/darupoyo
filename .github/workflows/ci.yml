@@ -1,5 +1,10 @@
 name: App CI
-on: [push, pull_request]
+# A PR runs once (pull_request); main runs again after the merge (push). Pushing to a branch
+# with an open PR used to run everything twice.
+on:
+  push:
+    branches: [main]
+  pull_request:
 permissions:
   contents: read
 jobs:
@@ -32,7 +37,13 @@ jobs:
       - run: python -m pytest -q
       - run: docker build -t darupoyo-back:test .
   integration:
+    # The browser tests run one at a time (they share one backend), so they are split across
+    # four machines that run side by side: about 11 minutes became about 3.
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -46,11 +57,11 @@ jobs:
       - run: npm ci
       - run: npm run setup:backend
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:e2e
+      - run: npm run test:e2e -- --shard=${{ matrix.shard }}/4
         env:
           VITE_API_BASE_URL: http://127.0.0.1:8080/api
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: integration-failure
+          name: integration-failure-${{ matrix.shard }}
           path: test-results/
