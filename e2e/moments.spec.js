@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test('the みんなの今 button opens うちらのなう: take, retake, add a word and みせちゃう (Figma 207:914)', async ({ page, context }) => {
+test('the うちらのなう button opens うちらのなう: take, retake, add a word and みせちゃう (Figma 207:914)', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/'); await setWelcomeName(page, 'カメラ'); await setHouseName(page, '近況'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
@@ -136,7 +136,7 @@ test('on a short phone screen the shutter and みせちゃう are visible withou
   await expect(page.getByRole('button', { name: 'みせちゃう' })).toBeInViewport();
 });
 
-test('in the けーじばん viewer, みんなの今 posts can be swiped through', async ({ page, context }) => {
+test('in the けーじばん viewer, うちらのなう posts can be swiped through', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'すわいぷ'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
@@ -179,7 +179,7 @@ test('うちらのなう opens from the camera on the wall shelf under けーじ
   expect(tbl.y).toBeGreaterThan(board.y + board.height - 1);
   expect(Math.abs((tbl.x + tbl.width / 2) - (board.x + board.width / 2))).toBeLessThan(12);
   expect(await table.locator('svg[data-furniture]').evaluate(s => getComputedStyle(s).animationName)).toContain('halo-blue');
-  // the hallway has no みんなの今 button any more, and the resident icons sit in the middle
+  // the hallway has no うちらのなう button any more, and the resident icons sit in the middle
   await page.locator('.scene-dot').nth(5).click();
   await expect(page.locator('#hall-bar [data-open-moments]')).toHaveCount(0);
   const [left, right] = await page.evaluate(() => { const r = document.getElementById('hall-icons').getBoundingClientRect(); return [r.left, innerWidth - r.right]; });
