@@ -280,7 +280,15 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             home = require_member(store, house, uid)
             # #158: the gal this resident picked (ノリで: a different one each time)
             gal = voice(home["members"][uid].get("gal"))
-            moment = app.state.domain.set_moment_praise(house, moment["id"], app.state.praise.moment(gal, moment["caption"]))
+            # The gal looks at the photo itself (the house agreed to show it to Gemini).
+            photo = None
+            try:
+                meta = store.get(f"houses/{house}/media/{moment['media_id']}")
+                photo = (app.state.media.read(meta["object_name"]), meta["content_type"])
+            except Exception:  # noqa: BLE001 -- without the photo the line comes from the caption
+                photo = None
+            line = app.state.praise.moment(gal, moment["caption"], photo)
+            moment = app.state.domain.set_moment_praise(house, moment["id"], line)
             tasks.add_task(app.state.notify.friend_moment, store, home, uid)  # #157
         return moment
 

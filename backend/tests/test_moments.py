@@ -84,3 +84,33 @@ def test_a_chore_record_keeps_its_word_and_the_gal_hears_it(client):
     # without a word nothing changes
     assert client.post(f"/api/houses/{h}/completions", headers=auth(), json=sound()).json()["post"]["caption"] == ""
     assert "本人のひとこと「髪さらさら〜」" in gals.prompt("dryer", "reiwa", {"caption": "髪さらさら〜"})[1]
+
+
+def test_the_gal_does_not_assume_the_photo_is_a_selfie():
+    # #184: うちらのなう can be food, a view or a pet, so no line calls it a selfie.
+    system, _ = gals.moment_prompt("reiwa", "")
+    assert "自撮りを" not in system and "決めつける言葉は使わない" in system
+    praise = Praise(LOCAL)
+    praise.client = FakeGemini(["自撮りたすかる〜", "近況ありがと、それな"])
+    assert praise.moment("reiwa", "")["text"] == "近況ありがと、それな"
+    for lines in gals.MOMENT_FALLBACK.values():
+        assert not any(word in line for line in lines for word in ("自撮り", "じぶん"))
+
+
+def test_gemini_sees_the_photo_and_reacts_to_it_without_judging_looks():
+    praise = Praise(LOCAL)
+    praise.client = FakeGemini(["顔ちっちゃ", "ねこかわいすぎ、癒やされる〜"])
+    out = praise.moment("reiwa", "", (b"jpeg", "image/jpeg"))
+    assert out == {"text": "ねこかわいすぎ、癒やされる〜", "source": "gemini", "gal": "reiwa"}
+    contents, system = praise.client.calls[0]
+    assert contents[0].inline_data.mime_type == "image/jpeg" and contents[1] == "ひとこと：（なし）"
+    assert "写真が添付されている" in system and "見た目の評価はせず" in system
+
+
+def test_sharing_a_moment_hands_its_photo_to_the_gal(client):
+    seen = []
+    client.app.state.praise.moment = lambda gal, caption, photo=None: seen.append(photo) or {"text": "いいね", "source": "fallback", "gal": gal}
+    h = house(client)
+    photo = upload(client, h, "selfie")
+    client.post(f"/api/houses/{h}/moments", headers=auth(), json={"request_id": str(uuid4()), "media_id": photo, "caption": ""})
+    assert seen and seen[0][1].startswith("image/") and len(seen[0][0]) > 0

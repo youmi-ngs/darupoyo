@@ -130,15 +130,17 @@ class Praise:
             logging.getLogger(__name__).warning("praise_provider_unavailable")
         return fallback
 
-    def moment(self, gal, caption=""):
-        """#158: a line for a 「みんなの今」 selfie (caption only, never the photo)."""
+    def moment(self, gal, caption="", photo=None):
+        """#158: a line for a 「うちらのなう」 photo. photo = (bytes, mime type): Gemini looks at
+        it and reacts to what is in it; without it the line comes from the caption alone."""
         fallback = {"text": gals.moment_fallback(gal), "source": "fallback", "gal": gal}
         if self.client is None:
             return fallback
         try:
             from google.genai import types
 
-            system, contents = gals.moment_prompt(gal, caption)
+            system, text = gals.moment_prompt(gal, caption, with_photo=photo is not None)
+            contents = [types.Part.from_bytes(data=photo[0], mime_type=photo[1]), text] if photo else text
             for _ in range(2):
                 result = self.client.models.generate_content(
                     model=self.settings.model,
@@ -148,9 +150,9 @@ class Praise:
                     ),
                 )
                 text = (result.text or "").strip().strip("「」\"")
-                if gals.moment_acceptable(text):
+                if gals.moment_acceptable(text, with_photo=photo is not None):
                     return {"text": text, "source": "gemini", "gal": gal}
-        except Exception:  # noqa: BLE001 -- the selfie is shared even without a line
+        except Exception:  # noqa: BLE001 -- the photo is shared even without a line
             logging.getLogger(__name__).warning("praise_provider_unavailable")
         return fallback
 

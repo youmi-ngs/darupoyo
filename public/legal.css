@@ -1,0 +1,20 @@
+/* プライバシーポリシー・利用規約: plain reading pages in the app's colours. */
+:root { --ink: #3b2560; --soft: #6a5590; --line: #6a559024; color-scheme: light; }
+* { box-sizing: border-box; }
+body { margin: 0; background: linear-gradient(180deg, #f3ecff 0%, #fff5fc 40%, #fbf8ff 100%) fixed; color: var(--ink);
+  font: 400 15px/1.85 "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; }
+main { max-width: 680px; margin: 0 auto; padding: max(24px, env(safe-area-inset-top)) 16px 48px; }
+.back { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border: 1px solid var(--line);
+  border-radius: 999px; background: #ffffffcc; color: var(--ink); font-weight: 700; text-decoration: none; }
+h1 { margin: 20px 0 4px; font-size: 26px; line-height: 1.4; }
+.updated { margin: 0 0 20px; color: var(--soft); font-size: 13px; }
+section { margin: 0 0 14px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 20px; background: #ffffffd9; }
+h2 { margin: 0 0 6px; font-size: 17px; line-height: 1.5; }
+p { margin: 6px 0; }
+ul, ol { margin: 6px 0; padding-left: 1.3em; }
+li + li { margin-top: 4px; }
+small, .note { color: var(--soft); font-size: 13px; }
+a { color: #a32862; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 8px 6px; border-top: 1px solid var(--line); text-align: left; vertical-align: top; }
+th { width: 34%; font-weight: 700; }

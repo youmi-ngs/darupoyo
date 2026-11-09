@@ -66,6 +66,9 @@ export function createWelcome() {
         b.className='google-sign-in'; b.setAttribute('aria-label','Googleでログイン');
         if (!reduced) { b.disabled=true; setTimeout(()=>{ if(b.isConnected) b.disabled=false; },700); }
         const icon=document.createElement('img'); icon.src='/refined/99579.svg'; icon.alt=''; b.prepend(icon);
+        const agree=document.createElement('p'); agree.className='welcome-legal';
+        agree.innerHTML='ログインすると、<a href="/terms.html">利用規約</a>と<a href="/privacy.html">プライバシーポリシー</a>に同意したことになるよ（18歳以上）';
+        b.after(agree);
       }); loading();
     },
     created(houseName, enter) {

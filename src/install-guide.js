@@ -27,14 +27,19 @@ export function setupInstallGuide() {
   const status = dialog.querySelector('[role=status]'), native = dialog.querySelector('[data-install]');
   const standalone = matchMedia('(display-mode: standalone)');
   const fullscreen = matchMedia('(display-mode: fullscreen)');
-  let promptEvent = null, installed = false, selectedDevice = null;
+  let promptEvent = null, installed = false, selectedDevice = null, copy = '';
   function render() {
-    card.hidden = installed || standalone.matches || fullscreen.matches || navigator.standalone === true;
+    // #177: the card always shows; on the home-screen app it says it is already added.
+    const added = installed || standalone.matches || fullscreen.matches || navigator.standalone === true;
+    card.classList.toggle('is-added', added);
+    copy ||= card.querySelector('p').innerHTML;
+    card.querySelector('p').innerHTML = added ? 'もうホーム画面に追加できてるよ♡<br>通知はマイページでオンにできるよ' : copy;
+    button.hidden = added;
     native.hidden = !promptEvent || !selectedDevice || selectedDevice === 'ios'; native.disabled = false;
     dialog.querySelectorAll('[data-choose]').forEach(choice => choice.setAttribute('aria-pressed', String(choice.dataset.choose === selectedDevice)));
     dialog.querySelectorAll('[data-device]').forEach(panel => { panel.hidden = panel.dataset.device !== selectedDevice; });
     dialog.querySelector('.install-hint').hidden = !selectedDevice;
-    if (card.hidden && dialog.open) dialog.close();
+    if (button.hidden && dialog.open) dialog.close();
   }
   window.addEventListener('beforeinstallprompt', event => {
     event.preventDefault(); promptEvent = event; render();
@@ -60,7 +65,7 @@ export function setupInstallGuide() {
   };
   dialog.querySelector('.refined-close').onclick = () => dialog.close();
   dialog.addEventListener('close', () => {
-    (card.hidden ? document.getElementById('howto-title') : button).focus({ preventScroll: true });
+    (button.hidden ? document.getElementById('howto-title') : button).focus({ preventScroll: true });
   });
   render();
 }
