@@ -99,7 +99,7 @@ export function setupSettingsUI() {
   $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
 
   const track = $('howto-track');
-  const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['追加すると、通知がとどくよ♡','みんなの記録も、すぐわかる。']}];
+  const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['ホーム画面に追加すると、','通知がとどくよ♡']}];
   guideSteps.forEach((step, i) => {
     const card = document.createElement('article'); card.className = 'howto-card'; card.setAttribute('aria-label', `${i + 1} / ${guideSteps.length}：${step.title}`);
     card.innerHTML = `<div class="howto-art ${step.kind}" aria-hidden="true">${step.icon ? `<img class="howto-illustration" src="${asset(step.icon)}" alt="">` : ''}${step.sparkle ? `<img class="howto-sparkle" src="${asset(step.sparkle)}" alt="">` : ''}</div><h3>${step.title}</h3><p>${step.lines.join('<br>')}</p><div class="howto-pagination" aria-label="ページ選択"></div>`;
