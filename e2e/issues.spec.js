@@ -4,7 +4,7 @@ import { playRhythm, stillCamera } from './rhythm-helper.js';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page, name = 'もち') {
   await page.goto('/'); await setWelcomeName(page, name); await setHouseName(page, 'issues');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 const png = page => page.evaluate(async () => {
   const c = document.createElement('canvas'); c.width = 600; c.height = 400; const g = c.getContext('2d'); g.fillStyle = '#ffcf8a'; g.fillRect(0, 0, 600, 400);

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async({context})=>{await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));});
 
 test('joining by invite shows who you will live with, creating a house does not (#16)', async ({ page, browser }) => {
-  await page.goto('/'); await setWelcomeName(page, 'まりん'); await setHouseName(page, '温玉'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.goto('/'); await setWelcomeName(page, 'まりん'); await setHouseName(page, '温玉'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.move-in')).toHaveCount(0);
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();

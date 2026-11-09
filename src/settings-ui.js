@@ -7,7 +7,7 @@ import { setupInstallGuide } from './install-guide.js';
 const $ = id => document.getElementById(id);
 const asset = name => `/settings/${name}.svg`;
 const steps = [
-  { title: 'おうち、ぶらっとしよ〜', lines: ['左右にスワイプでお部屋を移動〜！', '今日できそうな家事、探してこ♡'], icon: '8f750', kind: 'walk' },
+  { title: 'ハウス、ぶらっとしよ〜', lines: ['左右にスワイプでお部屋を移動〜！', '今日できそうな家事、探してこ♡'], icon: '8f750', kind: 'walk' },
   { title: 'できたら、記録しよ♡', lines: ['ゆれてる物をタップでスタート！', 'ポーズ・写真・音で記録しよ。', '家事やったの、えらすぎ〜♡'], icon: 'fdc42', sparkle: '33c2d', kind: 'record' },
   { title: 'みんなの「できた」見よ！', lines: ['け〜じばんで友達の記録をチェック！', 'みんながんばってて、まじえらい♡'], icon: 'a2f56', sparkle: '7fd34', kind: 'share' },
   { title: 'うちら、意外とやってる♡', lines: ['お部屋で今までの記録を見返せるよ。', '小さな「できた！」も立派じゃん♡'], icon: 'lookback', sparkle: '7fd34', kind: 'lookback' },
@@ -162,19 +162,19 @@ export function setupSettingsUI() {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'house-choice';
         const icon = document.querySelector('#menu-house svg').cloneNode(true);
         const name = document.createElement('b'); name.textContent = house.name;
-        const label = document.createElement('span'); label.textContent = current ? 'いまのおうち' : 'このおうちへ →';
+        const label = document.createElement('span'); label.textContent = current ? 'いまのハウス' : 'このハウスへ →';
         button.append(icon, name, label); button.disabled = current;
         if (current) button.setAttribute('aria-current', 'true');
         button.onclick = () => switchHouse(house.id);
         list.append(button);
       });
-      status.textContent = houses.length < 2 ? '招待コードで、友だちのおうちにも参加できるよ。' : 'おうちを選んで、ただいま！';
+      status.textContent = houses.length < 2 ? '招待コードで、友だちのハウスにも参加できるよ。' : 'ハウスを選んで、ただいま！';
     };
     // Startup already fetched memberships; show them before opening the page.
     render(client.houses);
     if (!client.houses.length) {
       const placeholder = document.createElement('div'); placeholder.className = 'house-choice house-loading';
-      placeholder.textContent = 'おうちを読み込み中…'; list.append(placeholder); status.textContent = '';
+      placeholder.textContent = 'ハウスを読み込み中…'; list.append(placeholder); status.textContent = '';
     }
     if (!dialog.open) dialog.showModal(); $('house-switch-title').focus();
     try {

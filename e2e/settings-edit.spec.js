@@ -7,7 +7,7 @@ test('each section keeps its own draft and a failed save can be retried', async 
   await page.goto('/');
   await setWelcomeName(page, 'もち');
   await setHouseName(page, '温玉');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await page.locator('#account-edit').click(); await page.locator('#house-edit').click();
   const account = page.locator('#account-form'), house = page.locator('#house-form');

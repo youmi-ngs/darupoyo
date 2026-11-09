@@ -22,7 +22,7 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   await signIn(page, 'もち');
   await setWelcomeName(page, 'もち');
   await setHouseName(page, 'エミュハウス');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('#open-menu').click();
   await page.locator('#open-settings').click(); await page.getByRole('button', { name: '招待リンク', exact: true }).click();

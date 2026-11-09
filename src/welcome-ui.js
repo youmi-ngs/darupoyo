@@ -82,7 +82,7 @@ export function createWelcome() {
       const name=document.createElement('p'); name.className='created-house-name'; name.textContent=houseName;
       const message=document.createElement('p'); message.className='refined-description'; message.textContent='ここから、みんなの「できた」を増やそ〜♡';
       card.insertBefore(name,status); card.insertBefore(message,status);
-      action(card,'おうちに入る',enter).focus();
+      action(card,'ハウスに入る',enter).focus();
     },
     deletion(work) {
       const {card,status}=screen('アカウント削除の再開'); status.hidden=false; status.textContent='アカウント削除が途中です。再開して残りのデータを削除してください。'; action(card,'削除を再開',work);
@@ -104,7 +104,7 @@ export function createWelcome() {
       const join=()=>formScreen('友達の家に住む','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
       // #181: the houses you already live in sit one step further in, under 帰る.
       const homes=()=>{
-        const {card}=screen('どのおうちに帰る？','card');
+        const {card}=screen('どのハウスに帰る？','card');
         items.forEach(h=>action(card,h.name+'に帰る',()=>enter(h.id)).classList.add('welcome-home'));
         action(card,'もどる',()=>choose('back'),true).classList.add('welcome-back');
       };

@@ -20,7 +20,7 @@ test('packaged Google models load and process blank inputs without false complet
 });
 test('camera capture, photo-only fallback, save and stream release',async({page,context})=>{
   await context.grantPermissions(['camera']);
-  await page.goto('/');await setWelcomeName(page, 'photo');await setHouseName(page, 'camera flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/');await setWelcomeName(page, 'photo');await setHouseName(page, 'camera flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'ハウスに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(2).click();await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:/^たべる/}).click();await expect(page.locator('.capture video')).toBeVisible();
   await page.getByRole('button',{name:'この写真を撮る'}).waitFor({state:'visible'});
   await page.evaluate(()=>{window.testStream=document.querySelector('video').srcObject;});
@@ -41,7 +41,7 @@ test('camera capture, photo-only fallback, save and stream release',async({page,
 test('preset pose is mirrored like the front camera, shows live guidance and rejects a frame without a person',async({page,context})=>{
   test.setTimeout(90000);
   await context.grantPermissions(['camera']);
-  await page.goto('/');await setWelcomeName(page, 'pose');await setHouseName(page, 'pose flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/');await setWelcomeName(page, 'pose');await setHouseName(page, 'pose flow');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'ハウスに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(0).click();await page.locator('[data-chore="trash"]').click();await page.getByRole('button',{name:/^ゴミ捨てる/}).click();await page.getByRole('button',{name:/サンタのポーズ/}).click();
   await expect(page.locator('.capture video')).toHaveCSS('transform', 'matrix(-1, 0, 0, 1, 0, 0)');
   await expect(page.locator('.capture-status')).toHaveText('顔と肩が入るように映ってね',{timeout:30000});
@@ -53,7 +53,7 @@ test('preset pose is mirrored like the front camera, shows live guidance and rej
 });
 test('いただきます is recorded with the meal and plays back from the album (#9 #33)',async({page,context})=>{
   await context.grantPermissions(['camera','microphone']);
-  await page.goto('/');await setWelcomeName(page, 'itadaki');await setHouseName(page, 'voice');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'おうちに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/');await setWelcomeName(page, 'itadaki');await setHouseName(page, 'voice');await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', {name:'ハウスに入る'}).click();await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(2).click();await page.locator('[data-chore="meal"]').click();await page.getByRole('button',{name:/^たべる/}).click();
   await page.getByRole('button',{name:'この写真を撮る'}).click();await page.getByRole('button',{name:'いただきますをする'}).click();
   // The fake mic hums nonstop: drive the loudness the page measures (a 0.6s voice, then quiet).

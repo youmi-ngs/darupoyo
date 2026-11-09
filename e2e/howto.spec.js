@@ -2,7 +2,7 @@ import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test('how-to opens automatically only on the first entry (#14)', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await context.newPage();
-  await page.goto('/'); await setWelcomeName(page, 'はじめて'); await setHouseName(page, 'howto'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.goto('/'); await setWelcomeName(page, 'はじめて'); await setHouseName(page, 'howto'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('#howto-page')).toBeVisible();
   await page.locator('.howto-card.is-active').getByRole('button', { name: '5ページ目へ' }).click();
@@ -17,7 +17,7 @@ test('how-to opens automatically only on the first entry (#14)', async ({ browse
 });
 test('how-to has five swipe cards on a small phone', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 375, height: 667 } }); const page = await context.newPage();
-  await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'pics'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'pics'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('#howto-page')).toBeVisible();
   await expect(page.locator('.howto-card')).toHaveCount(5);
   await expect(page.locator('.howto-illustration')).toHaveCount(4);

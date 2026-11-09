@@ -5,7 +5,7 @@ test.beforeEach(async ({ context }) => {
 });
 async function enter(page) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'new features');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 test('account deletion is confirmed, removes data and returns to onboarding', async ({ page }) => {
   await enter(page);
