@@ -49,7 +49,7 @@ test('menu, profile editing, gal and sound preferences survive reopening', async
 
 test('tutorial pages work with dots, keyboard and touch swipes', async ({ page }) => {
   await open(page, '#open-howto');
-  await expect(page.locator('.howto-card.is-active h3')).toHaveText('ハウス、ぶらっとしよ〜');
+  await expect(page.locator('.howto-card.is-active h3')).toHaveText('おうち、ぶらっとしよ〜');
   await page.screenshot({ animations: 'disabled', scale: 'css', path: 'test-results/settings-howto-1.png' });
   await page.locator('.howto-card.is-active').getByRole('button', { name: '2ページ目へ' }).click();
   await expect(page.locator('.howto-card.is-active h3')).toHaveText('できたら、記録しよ♡');

@@ -7,7 +7,7 @@ import { setupInstallGuide } from './install-guide.js';
 const $ = id => document.getElementById(id);
 const asset = name => `/settings/${name}.svg`;
 const steps = [
-  { title: 'ハウス、ぶらっとしよ〜', lines: ['左右にスワイプでお部屋を移動〜！', '今日できそうな家事、探してこ♡'], icon: '8f750', kind: 'walk' },
+  { title: 'おうち、ぶらっとしよ〜', lines: ['左右にスワイプでお部屋を移動〜！', '今日できそうな家事、探してこ♡'], icon: '8f750', kind: 'walk' },
   { title: 'できたら、記録しよ♡', lines: ['ゆれてる物をタップでスタート！', 'ポーズ・写真・音で記録しよ。', '家事やったの、えらすぎ〜♡'], icon: 'fdc42', sparkle: '33c2d', kind: 'record' },
   { title: 'みんなの「できた」見よ！', lines: ['け〜じばんで友達の記録をチェック！', 'みんながんばってて、まじえらい♡'], icon: 'a2f56', sparkle: '7fd34', kind: 'share' },
   { title: 'うちら、意外とやってる♡', lines: ['お部屋で今までの記録を見返せるよ。', '小さな「できた！」も立派じゃん♡'], icon: 'lookback', sparkle: '7fd34', kind: 'lookback' },
