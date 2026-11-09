@@ -57,7 +57,7 @@ test('caption and photo share one composer, photo removal preserves text, and bo
   await page.locator('.darupoyo-dialog input[data-file]').setInputFiles({name:'today.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')});
   await page.getByRole('button',{name:'きょーゆー'}).click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
   await expect(page.locator('#board-view')).toBeVisible();
-  await expect(page.locator('.pin-grid .pin-darupoyo img')).toHaveAttribute('src',/^blob:/);
+  await expect(page.locator('.pin-grid .pin-darupoyo .pin-photo > img')).toHaveAttribute('src',/^blob:/);
   await expect(page.locator('.pin-grid .pin-darupoyo')).toContainText('ひと休みの写真');
   expect((await state(page)).state.completed).toEqual({});
 });
