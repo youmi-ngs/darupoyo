@@ -111,14 +111,14 @@ export function setupSettingsUI() {
   $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
   $('share-invite').onclick = async () => {
     const button = $('share-invite'), status = $('invite-status');
-    button.disabled = true; status.hidden = false;
+    button.disabled = true; status.hidden = false; status.textContent = '招待リンクを準備中…';
     try {
       const house = client.house, code = await loadInvite();
       if (house !== client.house) return;
       const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({invite:code}).toString();
       if (navigator.share) { await navigator.share({title:'だるぽよのハウスへの招待',url:url.href}); status.textContent='招待リンクを共有したよ（7日間有効）'; }
       else { await copyInvite(button, '招待リンク', () => url.href)(); }
-    } catch(e) { status.textContent = e.name === 'AbortError' ? '' : e.message; }
+    } catch(e) { status.textContent = e.name === 'AbortError' ? '' : e.message; status.hidden = e.name === 'AbortError'; }
     finally { button.disabled = false; }
   };
 

@@ -21,6 +21,9 @@ test('first-entry guide can be skipped, replayed from how-to, and stays dismisse
   await expect(page.locator('#howto-page')).toBeHidden();
   await page.getByRole('button', { name: 'ごはんをタップしてみる' }).click();
   await expect(page.locator('.first-guide')).toHaveCount(0);
+  await expect(page.locator('.first-guide-next')).toContainText('けーじばんで見られるよ');
+  await page.getByRole('button', { name: 'わかった！ 案内おわり' }).click();
+  await expect(page.locator('.first-guide-next')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^たべる/ })).toBeVisible();
   await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.door')).toHaveCount(1);

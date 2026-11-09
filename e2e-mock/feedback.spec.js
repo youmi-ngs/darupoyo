@@ -33,6 +33,8 @@ test('30 visible characters, optional text, compact photo and board categories',
 test('name limits preserve old names, invite links and profile cancel leave settings open', async ({page}) => {
   await enter(page); await settings(page);
   await page.locator('#account-edit').click(); await page.locator('[name=display_name]').fill('あ'.repeat(13));
+  await expect(page.locator('#display_name-limit')).toHaveText('13 / 12文字　少し短くしてね');
+  await expect(page.locator('[name=display_name]')).toHaveAttribute('aria-invalid','true');
   await page.locator('#account-form [type=submit]').click(); await expect(page.locator('#toast')).toContainText('12文字');
   await page.locator('[name=display_name]').fill('あ'.repeat(12)); await page.locator('#account-form [type=submit]').click();
   await expect(page.locator('.account-row b')).toHaveText('あ'.repeat(12));
@@ -43,6 +45,10 @@ test('name limits preserve old names, invite links and profile cancel leave sett
   await page.evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async data=>window.sharedInvite=data});});
   await page.locator('#share-invite').click();
   expect(await page.evaluate(()=>window.sharedInvite.url)).toContain('#invite=');
+  await page.evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async()=>{throw new DOMException('cancel','AbortError');}});});
+  await page.locator('#share-invite').click();
+  await expect(page.locator('#invite-status')).toBeHidden();
+  await expect(page.locator('#share-invite')).toBeEnabled();
   const chooser=page.waitForEvent('filechooser'); await page.locator('#profile-photo').click(); await chooser;
   await page.locator('#social-card input').dispatchEvent('cancel'); await page.locator('#settings-title').click();
   await expect(page.locator('#settings')).toBeVisible();

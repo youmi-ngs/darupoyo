@@ -94,6 +94,10 @@ export function createWelcome() {
         const {card,status}=screen(title); const form=document.createElement('form'); card.insertBefore(form,status);
         const input=document.createElement('input'); input.placeholder=label==='あなたの名前'?'なまえ':label==='新しいハウスの名前'?'ハウスのなまえ':label;
         input.setAttribute('aria-label',label); input.required=true; input.maxLength=limit; input.value=value; input.enterKeyHint='done'; input.autocomplete=label==='あなたの名前'?'nickname':'off'; form.append(input); limitInput(input, limit);
+        if (label !== '招待コード') {
+          const hint = document.createElement('small'); hint.className = 'name-limit-hint'; hint.id = 'welcome-name-limit'; hint.textContent = limit + '文字まで';
+          input.setAttribute('aria-describedby', hint.id); form.append(hint);
+        }
         const b=action(card,confirm,()=>onSubmit(input.value.trim())); b.hidden=!input.value.trim();
         input.oninput=()=>{ b.hidden=!input.value.trim(); };
         form.onsubmit=e=>{e.preventDefault();if(input.value.trim())b.click();};

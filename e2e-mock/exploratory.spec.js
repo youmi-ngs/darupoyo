@@ -26,6 +26,16 @@ test('first guide leaves the highlighted furniture tappable on a small phone', a
   await page.locator('.guide-target').click({ timeout: 5000 });
   await expect(page.locator('#sheet')).toBeVisible();
   await expect(page.locator('.first-guide')).toHaveCount(0);
+  await expect(page.locator('.first-guide-next')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'わかった！ 案内おわり' })).toBeInViewport();
+  await page.screenshot({ path: 'test-results/guide-step-two.png', animations: 'disabled', scale: 'css' });
+  // The guide is optional: either choose now or finish reading without posting.
+  await page.getByRole('button', { name: /^だるぽよ/ }).click();
+  await expect(page.locator('.first-guide-next')).toHaveCount(0);
+  await expect(page.locator('#darupoyo-caption')).toHaveValue('');
+  await page.locator('.darupoyo-dialog [data-close]').click();
+  await page.locator('[data-chore=meal]').click();
+  await expect(page.locator('.first-guide-next')).toHaveCount(0);
 });
 async function openMenu(page, item) {
   await page.locator('#open-menu').click(); await page.locator(item).click();

@@ -13,8 +13,14 @@ dialog.sheet .capture .capture-frame canvas.composer-thumbnail:not([hidden]),dia
 .account-row>div,.house-name-row>b,.house-choice,.created-house-name,.mr-plate b,.pm-title,.log-head h2,#settings-members,.welcome-home { min-width:0;overflow-wrap:anywhere; }
 .door-plate { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .account-row b,#settings-house-name { overflow-wrap:anywhere; }
+.name-limit-hint { display:block;margin:0;text-align:right;font-size:12px;line-height:1.5;color:#796396; }
+.welcome-card .name-limit-hint { margin-top:6px; }
+.name-limit-hint.is-error { color:#a13f68; }
 .log-heading #log-title,.mr-plate b { display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden; }
 .invite-actions { display:flex;flex-wrap:wrap;gap:8px;margin-top:10px; }
+.invite-heading { margin-top:8px;padding-top:12px;border-top:1px solid #775b9d22; }
+.invite-heading h4 { margin:0;font-size:12px; }
+.invite-heading p { margin:4px 0 0;font-size:12px;line-height:1.6;color:#796396; }
 .invite-row { flex-wrap:wrap; }
 .pin-category { display:block;padding:5px 9px;border-radius:12px;background:#f0e7fa;color:#4b3469;font-size:12px;font-weight:bold;line-height:1.5; }
 .pin-darupoyo .pin-category { background:#ffe6f2; }
@@ -28,6 +34,12 @@ dialog.sheet .capture .capture-frame canvas.composer-thumbnail:not([hidden]),dia
 .first-guide-actions button { margin:0;min-height:44px;font-size:13px;padding:10px; }
 .first-guide-actions [data-try] { flex:1; }
 .first-guide-actions [data-skip] { flex:none; }
+.first-guide-progress { display:block;margin-bottom:4px;color:#796396;font-size:11px; }
+.first-guide-next { padding:12px;border:1px solid #e5d6f4;border-radius:16px;background:#fff7ff;color:#493166; }
+.first-guide-next small { display:block;font-size:12px;font-weight:700; }
+.first-guide-next p { margin:8px 0;font-size:13px;line-height:1.6; }
+.first-guide-next p span { white-space:nowrap;font-weight:700; }
+.first-guide-next button { min-height:36px;padding:8px 12px;border:0;border-radius:20px;background:#f5d6eb;color:inherit;font:inherit;font-size:12px; }
 @media(max-width:359px) { .first-guide { padding:16px;font-size:13px; } }
 .guide-target { filter:drop-shadow(0 0 12px #fff);outline:4px solid #f49ac7;outline-offset:5px;border-radius:20px; }
 

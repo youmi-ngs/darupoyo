@@ -15,7 +15,7 @@ test('だるぽよ alone can be shared, and its words never mention what was not
   await page.locator('.scene-dot').nth(2).click(); await page.locator('[data-chore="meal"]').click();
   await expect(page.locator('.darupoyo-choice small')).toHaveText('きょうはサボる');
   await page.getByRole('button', { name: /^だるぽよ/ }).click();
-  await expect(page.locator('#darupoyo-caption')).toHaveAttribute('placeholder', '今日はだるぽよ。いつかやる〜');
+  await expect(page.locator('#darupoyo-caption')).not.toHaveAttribute('placeholder');
   await expect(page.locator('.darupoyo-dialog')).not.toContainText('できなかった');
   const share = page.getByRole('button', { name: 'きょーゆー' });
   await expect(share).toBeEnabled();

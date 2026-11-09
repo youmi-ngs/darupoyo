@@ -686,8 +686,19 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     if (houseForm.hidden) houseForm.elements.house_name.value = dashboard.house.name;
   }
   function setupNameEditor(form, edit, row, field, current, endpoint, key) {
+    const input = form.elements[field], limit = field === 'display_name' ? 12 : 20;
+    const hint = document.createElement('p'); hint.className = 'name-limit-hint'; hint.id = field + '-limit';
+    input.setAttribute('aria-describedby', hint.id); input.closest('label').after(hint);
+    const updateHint = () => {
+      const unchanged = input.value.trim() === current(), count = textLength(input.value.trim());
+      const over = !unchanged && count > limit;
+      input.setAttribute('aria-invalid', String(over));
+      hint.classList.toggle('is-error', over);
+      hint.textContent = unchanged && count > limit ? '以前の名前は、そのまま使えるよ' : count + ' / ' + limit + '文字' + (over ? '　少し短くしてね' : '');
+    };
+    input.addEventListener('input', updateHint);
     const toggle = open => {
-      if (open) form.elements[field].value = current();
+      if (open) { form.elements[field].value = current(); updateHint(); }
       const hadFocus = form.contains(document.activeElement);
       form.hidden = !open; row.hidden = open;
       edit.setAttribute('aria-expanded', String(open));
@@ -700,7 +711,6 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       e.preventDefault();
       const value = form.elements[field].value.trim();
       if (!value) { toast('名前を入力してね'); return; }
-      const limit = field === 'display_name' ? 12 : 20;
       if (value !== current() && textLength(value) > limit) { toast(limit + '文字までで入力してね'); return; }
       const save = form.querySelector('[type=submit]');
       if (save.disabled) return;
