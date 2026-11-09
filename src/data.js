@@ -37,7 +37,8 @@ export const figSvg = (i) => '<svg viewBox="0 0 120 144" aria-hidden="true">' + 
 export const MEAL_SVG = '<svg viewBox="0 0 120 144" aria-hidden="true"><g stroke="#3B2560" stroke-width="4" fill="none" stroke-linecap="round"><ellipse cx="60" cy="96" rx="34" ry="12" fill="#FFFFFF"/><path d="M34 92q26-34 52 0" fill="#FFF4A8"/><path d="M92 58v44M98 58v44"/></g></svg>';
 
 // Gal pictures are cut out of the supplied character art (public/gals): <id>-full.png is the whole
-// body (transparent background), <id>-face.png is the head, used in round icons.
+// body (transparent background), <id>-face.png is the head, used in round icons. <id>-outfit-full.png and
+// <id>-outfit-face.png are masks of just the dress, painted in the resident's theme color (--outfit).
 export const GALS = {
   heisei: { name: '平成ギャル', tag: 'Y2K・あげぽよ', bg: '#FFF1D6',
     full: '/gals/heisei-full.png', face: '/gals/heisei-face.png',
@@ -57,7 +58,11 @@ export const GALS = {
     lines: { laundry_pose: '魔法使いかわちい〜♡ 洗濯できる子、姫的に満点', laundry_sound: 'バサバサの音、ちゃんと届いたよ♡ いい匂いの服で無敵', meal: 'いただきます聞こえた♡ ちゃんと食べる子、かわいすぎ', dryer: 'ドライヤーおつかれさま♡ 髪サラサラで今日も姫', trash_santa: 'ゴミのサンタさん、きらきら♡ 玄関もお城みたい', trash_thief: '泥棒ちゃん、ハートまで盗まれたかも…♡', original_new: '一番乗り♡ このポーズ、今日のトレンドにしちゃお', original_copy: 'まねっこ上手すぎ♡ おそろいでテンションあがる', cutout: '切り抜きかわちい〜♡ お部屋に飾りたくなっちゃう' } }
 };
 export const GAL_IDS = Object.keys(GALS);
-export const galFaceImg = (id) => '<img class="gal-face-img" src="' + (GALS[id] || GALS.reiwa).face + '" alt="" draggable="false">';
+const maskStyle = (url) => 'style="-webkit-mask-image:url(' + url + ');mask-image:url(' + url + ')"';
+// The dress layer over a picture: --outfit when the parent sets it, else the viewer's own color (--my-outfit).
+export const outfitLayer = (url, cls) => '<span class="' + cls + '" aria-hidden="true" ' + maskStyle(url) + '></span>';
+export const galFaceImg = (id) => { const gid = GALS[id] ? id : 'reiwa';
+  return '<img class="gal-face-img" src="' + GALS[gid].face + '" alt="" draggable="false">' + outfitLayer('/gals/' + gid + '-outfit-face.png', 'gal-outfit'); };
 export const HEX = { pink: '#FFB3DE', cyan: '#A8E6FF', lilac: '#D9C2FF', lime: '#E6F7A0' };
 export const ITEM_SVG = {
   laundry: '<path d="M20 6a4 4 0 1 1 4 4v3" fill="none"/><path d="M24 13L6 22h36z" fill="none"/><path d="M10 22l-4 6l6 3v15h24V31l6-3l-4-6z" fill="#A8E6FF"/>',

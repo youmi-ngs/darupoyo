@@ -914,7 +914,7 @@ dialog.log-modal, dialog.photo-modal { overflow: hidden; }
 
 
 /* ---------- gal AIs ---------- */
-.gal-face { width: 48px; height: 48px; flex: none; border-radius: 50%; border: 2px solid var(--ink); overflow: hidden; display: block; box-shadow: var(--soft-shadow); }
+.gal-face { position: relative; width: 48px; height: 48px; flex: none; border-radius: 50%; border: 2px solid var(--ink); overflow: hidden; display: block; box-shadow: var(--soft-shadow); }
 .gal-face svg, .gal-face-img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .verdict { align-items: flex-end; }
 .bubble .gal-name { display: block; font-size: 11px; font-weight: 900; color: var(--berry); margin-bottom: 2px; }
@@ -930,7 +930,8 @@ dialog.log-modal, dialog.photo-modal { overflow: hidden; }
 .gal-random { width: auto !important; height: 40px !important; border: 0 !important; box-shadow: none !important; display: flex !important; margin: 0 !important; }
 .gal-random i { width: 36px; height: 36px; margin-left: -10px; border-radius: 50%; border: 2px solid var(--ink); background: #FFF; overflow: hidden; }
 .gal-random i:first-child { margin-left: 0; }
-.gal-random i svg { width: 100%; height: 100%; transform: translateY(2px) scale(1.08); }
+.gal-random i { position: relative; }
+.gal-random i svg, .gal-random i img { width: 100%; height: 100%; display: block; object-fit: cover; }
 .drawer .gal-picker { margin-bottom: 4px; }
 
 
@@ -1043,6 +1044,10 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
 .resident-avatar { margin: 0; width: 92px; min-width: 0; flex: 0 1 92px; text-align: center; }
 .resident-character { width: 60px; height: 102px; position: relative; margin: auto; max-width: 100%; }
 .resident-art { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; user-select: none; }
+/* The dress, repainted in the resident's theme color through a mask cut from the same picture. */
+.resident-outfit, .gal-outfit { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: var(--outfit, var(--my-outfit, transparent)); -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.resident-outfit { -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: 50% 100%; mask-position: 50% 100%; }
+.gal-outfit { -webkit-mask-size: cover; mask-size: cover; -webkit-mask-position: center; mask-position: center; }
 .resident-prop { position: absolute; z-index: 3; top: 55px; left: 20px; font-size: 22px; }
 .resident-avatar figcaption { display: flex; flex-direction: column; padding: 3px; border-radius: 8px; background: #FFFDF1E8; font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
 .resident-avatar figcaption strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

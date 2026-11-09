@@ -1,7 +1,7 @@
 // A resident's gal, dressed in that resident's theme color. Used for the gals
 // standing in the house, the 「おかえり」 at the door, praise, and the picture
 // on けーじばん cards that have no photo.
-import { GALS, galFaceImg } from './data.js';
+import { GALS, galFaceImg, outfitLayer } from './data.js';
 import { THEMES } from './themes.js';
 
 const S = 'stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"';
@@ -17,16 +17,17 @@ export const PROPS = {
 
 export const outfitOf = theme => THEMES[theme]?.accent || THEMES.pink.accent;
 
-// Full-body gal (the cut-out picture) with an optional prop in her hands.
+// Full-body gal (the cut-out picture, dress in the theme color) with an optional prop in her hands.
 export function galCharacter(galId, theme, prop, className = '') {
   const gal = GALS[galId] || GALS.reiwa;
   return '<div class="resident-character ' + className + '" style="--avatar-color:' + outfitOf(theme) + ';--outfit:' + outfitOf(theme) + '">'
     + '<img class="resident-art" src="' + gal.full + '" alt="" draggable="false">'
+    + outfitLayer('/gals/' + (GALS[galId] ? galId : 'reiwa') + '-outfit-full.png', 'resident-outfit')
     + '<span class="resident-prop" aria-hidden="true">' + (PROPS[prop] || '') + '</span></div>';
 }
 
-// Round face icon cut from the same picture.
+// Round face icon cut from the same picture, dress in the theme color.
 export function galIcon(galId, theme) {
   const id = GALS[galId] ? galId : 'reiwa';
-  return '<span class="gal-face" style="background:' + GALS[id].bg + '">' + galFaceImg(id) + '</span>';
+  return '<span class="gal-face" style="background:' + GALS[id].bg + ';--outfit:' + outfitOf(theme) + '">' + galFaceImg(id) + '</span>';
 }
