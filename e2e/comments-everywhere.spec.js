@@ -14,7 +14,7 @@ test('うちらのなう and だるぽよ on けーじばん take comments, like
     await houseApi('/darupoyo', { request_id: crypto.randomUUID(), chore: 'meal' });
   });
   await page.locator('#open-board').click();
-  for (const [card, title, text] of [['.pin-grid .pin-moment', 'もちの今', 'かわいい！'], ['.pin-grid .pin-darupoyo', 'もちのごはん、だるぽよ', 'だるぽよえらい']]) {
+  for (const [card, title, text] of [['.pin-grid .pin-moment', 'もちのなう', 'かわいい！'], ['.pin-grid .pin-darupoyo', 'もちのごはん、だるぽよ', 'だるぽよえらい']]) {
     await page.locator(card).first().click();
     const slide = page.locator('.pin-viewer[open] .pin-viewer-slide').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
     await slide.getByLabel('コメントを書く').fill(text);

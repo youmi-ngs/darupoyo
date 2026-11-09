@@ -113,7 +113,7 @@ export function setupBoardView(ctx) {
   }
   function slide(card) {
     const box = document.createElement('div'); box.className = 'pin-viewer-slide';
-    const title = document.createElement('h2'); title.className = 'pm-title'; title.textContent = ctx.nameOf(card.who) + (card.type === 'moment' ? 'の今' : 'の' + (LABELS[card.chore] || '') + '、だるぽよ');
+    const title = document.createElement('h2'); title.className = 'pm-title'; title.textContent = ctx.nameOf(card.who) + (card.type === 'moment' ? 'のなう' : 'の' + (LABELS[card.chore] || '') + '、だるぽよ');
     const time = document.createElement('p'); time.className = 'pm-meta';
     time.textContent = new Intl.DateTimeFormat('ja-JP', { timeZone: dashboard?.timezone || 'Asia/Tokyo', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(card.at));
     const text = document.createElement('p'); text.className = 'pin-viewer-text'; text.textContent = card.text;
