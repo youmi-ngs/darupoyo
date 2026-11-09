@@ -33,6 +33,7 @@ export function setupMoments() {
     <p class="now-caption" hidden></p>
     <div class="now-praise" hidden></div>
     <button type="button" class="now-share" disabled>みせちゃう</button>
+    <p class="now-ai-note">ギャルのひとことは、Google の Gemini が写真を見て書くよ</p>
     <button type="button" class="now-board" hidden>け〜じばんをちぇけらする</button>
     <p class="now-status" role="status" aria-live="polite"></p>`;
   document.body.append(dialog);
@@ -44,7 +45,7 @@ export function setupMoments() {
   // Before sending: camera, word and みせちゃう. After: the photo, the word, the gal's line and けーじばん.
   const setSent = sent => {
     lead.textContent = sent ? 'そ〜しんできたよん' : '今のうちら撮ろ〜';
-    field.hidden = share.hidden = sent; toBoard.hidden = !sent;
+    field.hidden = share.hidden = sent; toBoard.hidden = !sent; $('.now-ai-note').hidden = sent;
     if (sent) retake.hidden = true;
     if (!sent) { dialog.querySelector('.now-frame .done-burst')?.remove(); sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); dialog.classList.remove('is-sent'); }
   };
