@@ -46,6 +46,8 @@
 
 /* ---------- ベランダ: clothes hang in your color once you have done laundry ---------- */
 .scene[data-scene="balcony"] .sv-rail { height: 18%; }
+/* the pole hangs lower: about 80 viewBox units (the clothes length), scaled like the rod offset min(4vw, 19px) = 14 units */
+.sv-balcony { --pole-drop: calc(min(4vw, 19px) * 5.7); }
 .hung-clothes { display: none; }
 .sv-balcony:has(.laundry-basket.is-mine) .hung-clothes { display: inline; }
 .laundry-basket.is-mine .basket-pile { display: none; }
@@ -117,11 +119,11 @@ dialog.pin-viewer .pin-photo .resident-character { transform: scale(1.6); }
 
 /* Balcony: the pole stands still on two posts, and a bird keeps it company. */
 .plan.is-swaying .balcony-pole { animation: none; }
-.pole-post { position: absolute; z-index: 0; top: calc(16% + min(4vw, 19px) - 4px); bottom: calc(var(--fl) - 8px); width: 11px; border: 2.5px solid var(--ink); border-radius: 5px 5px 0 0; background: linear-gradient(90deg, #FFFFFF 0 40%, #E9DDFF 40%); }
+.pole-post { position: absolute; z-index: 0; top: calc(16% + var(--pole-drop, 0px) + min(4vw, 19px) - 4px); bottom: calc(var(--fl) - 8px); width: 11px; border: 2.5px solid var(--ink); border-radius: 5px 5px 0 0; background: linear-gradient(90deg, #FFFFFF 0 40%, #E9DDFF 40%); }
 .pole-post.left { left: calc(8% - 5px); }
 .pole-post.right { right: calc(8% - 5px); }
 .pole-post::after { content: ""; position: absolute; left: -11px; right: -11px; bottom: 0; height: 9px; border: 2.5px solid var(--ink); border-radius: 6px 6px 0 0; background: #D9C2FF; }
-.pole-bird { position: absolute; z-index: 2; left: calc(4% + 92% * 82 / 320); width: calc(92% * 54 / 320); top: calc(16% + min(4vw, 19px) + 1px); transform: translateY(-100%); padding: 0; border: 0; background: none; cursor: pointer; }
+.pole-bird { position: absolute; z-index: 2; left: calc(4% + 92% * 82 / 320); width: calc(92% * 54 / 320); top: calc(16% + var(--pole-drop, 0px) + min(4vw, 19px) + 1px); transform: translateY(-100%); padding: 0; border: 0; background: none; cursor: pointer; }
 .pole-bird svg { display: block; width: 100%; transform-origin: 50% 100%; animation: bird-hop 5s ease-in-out infinite; }
 .pole-bird.is-talking svg { animation: bird-chirp .5s ease-out 2; }
 @keyframes bird-chirp { 0%, 100% { transform: none; } 40% { transform: translateY(-6px) rotate(-8deg); } }

@@ -100,13 +100,33 @@
           <svg class="balcony-weather" viewBox="0 0 320 220" preserveAspectRatio="none" aria-hidden="true"><g class="balcony-clouds" fill="#C8CDDF"><path vector-effect="non-scaling-stroke" d="M20 60q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/><path vector-effect="non-scaling-stroke" d="M190 40q-10-24 15-26q8-25 30-10q25-10 32 14q25 5 10 22z"/></g><path vector-effect="non-scaling-stroke" class="balcony-rain" d="M30 85l-8 18m46-12l-8 18m46-24l-8 18m110-40l-8 18m46-12l-8 18m46-24l-8 18M55 145l-8 18m70-12l-8 18m105-37l-8 18m65-7l-8 18" fill="none" stroke="#9ABED8" stroke-width="3" stroke-linecap="round"/></svg>
           <span class="sv-rail" aria-hidden="true"></span>
           <span class="pole-post left" aria-hidden="true"></span><span class="pole-post right" aria-hidden="true"></span>
-          <svg class="sv-obj balcony-pole" style="left:4%;top:16%;width:92%;overflow:visible" viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
+          <svg class="sv-obj balcony-pole" style="left:4%;top:calc(16% + var(--pole-drop, 0px));width:92%;overflow:visible" viewBox="0 0 320 130" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round">
             <path vector-effect="non-scaling-stroke" d="M6 14h308" stroke-width="4"/><path vector-effect="non-scaling-stroke" d="M14 6v20M306 6v20" stroke-width="3"/>
-            <g class="hung-clothes"><path vector-effect="non-scaling-stroke" d="M60 14l-15 12h30zM160 14l-15 12h30zM260 14l-15 12h30z" fill="#FFFDF6" stroke-width="2"/>
-              <path vector-effect="non-scaling-stroke" d="M49 25q11 11 22 0l17 9-7 20-12-5 2 44q-22 5-43 0l3-44-11 5-7-20z" fill="var(--my-outfit, #A8E6FF)"/>
-              <path vector-effect="non-scaling-stroke" d="M138 27q22 4 44 0l2 65q-10 5-22 1-12 5-25 0z" fill="var(--my-outfit, #FFB3DE)"/>
-              <path vector-effect="non-scaling-stroke" d="M237 27q23 4 46 0l-5 73q-9 4-18 0l-1-43-4 43q-9 4-18 0z" fill="var(--my-outfit, #E6F7A0)"/>
-              <path vector-effect="non-scaling-stroke" d="M140 38h40M239 37h41" fill="none" stroke-width="1.5" opacity=".5"/></g>
+            <g class="hung-clothes">
+              <!-- traced from the design image: puff-sleeve T-shirt, socks, wide pants on white hangers; clothes use the resident's theme color -->
+              <g transform="translate(-6.40 -5.00) scale(0.2)" stroke-linejoin="round" stroke-linecap="round">
+                <path vector-effect="non-scaling-stroke" stroke-width="3" d="M290 188C245 195 192 215 181 247C176 272 198 300 214 298C228 312 250 314 262 292L222 425C215 455 260 478 355 478C450 478 495 455 487 425L450 292C462 314 484 312 498 298C514 300 536 272 531 247C520 215 468 195 425 188C400 205 315 205 290 188Z" fill="var(--my-outfit, #A8E6FF)"/>
+                <path vector-effect="non-scaling-stroke" stroke-width="7" fill="none" d="M357 152V134C357 122 375 120 375 106C375 94 363 88 353 90C345 92 341 100 343 108M357 152L287 179Q277 184 287 188H427Q437 184 427 179Z"/>
+                <path vector-effect="non-scaling-stroke" stroke="#FFFDF6" stroke-width="3.5" fill="none" d="M357 152V134C357 122 375 120 375 106C375 94 363 88 353 90C345 92 341 100 343 108M357 152L287 179Q277 184 287 188H427Q437 184 427 179Z"/>
+              </g>
+              <g>
+                <g transform="translate(127.58 27.32) scale(0.0440)" stroke-linejoin="round" stroke-linecap="round">
+                  <path vector-effect="non-scaling-stroke" stroke-width="3" d="M412 120L616 120Q630 120 630 136L632 480C632 550 625 585 591 617L467 733A105 105 0 0 1 325 579L385 523C405 503 412 470 412 420L394 150Q392 120 412 120Z" fill="var(--my-outfit, #FFB3DE)"/>
+                </g>
+                <g transform="translate(147.18 27.32) scale(0.0440)" stroke-linejoin="round" stroke-linecap="round">
+                  <path vector-effect="non-scaling-stroke" stroke-width="3" d="M412 120L616 120Q630 120 630 136L632 480C632 550 625 585 591 617L467 733A105 105 0 0 1 325 579L385 523C405 503 412 470 412 420L394 150Q392 120 412 120Z" fill="var(--my-outfit, #FFB3DE)"/>
+                </g>
+                <g transform="translate(-8.60 -5.00) scale(0.2)" stroke-linejoin="round" stroke-linecap="round">
+                  <path vector-effect="non-scaling-stroke" stroke-width="7" fill="none" d="M843 152V134C843 122 861 120 861 106C861 94 849 88 839 90C831 92 827 100 829 108M843 152L773 179Q763 184 773 188H913Q923 184 913 179Z"/>
+                  <path vector-effect="non-scaling-stroke" stroke="#FFFDF6" stroke-width="3.5" fill="none" d="M843 152V134C843 122 861 120 861 106C861 94 849 88 839 90C831 92 827 100 829 108M843 152L773 179Q763 184 773 188H913Q923 184 913 179Z"/>
+                </g>
+              </g>
+              <g transform="translate(-8.60 -5.00) scale(0.2)" stroke-linejoin="round" stroke-linecap="round">
+                <path vector-effect="non-scaling-stroke" stroke-width="3" d="M1250 190H1386C1394 215 1418 255 1436 330C1454 405 1462 440 1456 462C1448 488 1415 496 1385 494C1352 492 1334 480 1331 460L1325 330C1323 314 1313 314 1311 330L1305 460C1302 480 1284 492 1251 494C1221 496 1188 488 1180 462C1174 440 1182 405 1200 330C1218 255 1242 215 1250 190Z" fill="var(--my-outfit, #E6F7A0)"/>
+                <path vector-effect="non-scaling-stroke" stroke-width="7" fill="none" d="M1318 152V134C1318 122 1336 120 1336 106C1336 94 1324 88 1314 90C1306 92 1302 100 1304 108M1318 152L1248 179Q1238 184 1248 188H1388Q1398 184 1388 179Z"/>
+                <path vector-effect="non-scaling-stroke" stroke="#FFFDF6" stroke-width="3.5" fill="none" d="M1318 152V134C1318 122 1336 120 1336 106C1336 94 1324 88 1314 90C1306 92 1302 100 1304 108M1318 152L1248 179Q1238 184 1248 188H1388Q1398 184 1388 179Z"/>
+              </g>
+            </g>
           </g></svg>
           <button class="pole-bird critter" type="button" aria-label="小鳥に話しかける"><svg viewBox="82 -19 54 34" aria-hidden="true"><g stroke="#3B2560" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"><path vector-effect="non-scaling-stroke" d="M98 0q-12-2-14 6q8 2 14-2z" fill="#A8E6FF"/>
               <ellipse vector-effect="non-scaling-stroke" cx="110" cy="0" rx="14" ry="11" fill="#A8E6FF"/><circle vector-effect="non-scaling-stroke" cx="120" cy="-9" r="7.5" fill="#A8E6FF"/>
