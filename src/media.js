@@ -57,6 +57,12 @@ function decide(frame, button, signal, again) {
   });
 }
 // Draws a chosen library photo (EXIF rotation applied by the browser). Photos are cut to the 5:6 frame.
+// A left-right flipped copy, to save a pose shot the way the mirrored preview showed it.
+function flipped(source) {
+  const out = document.createElement('canvas'); out.width = source.width; out.height = source.height;
+  const c = out.getContext('2d'); c.setTransform(-1, 0, 0, 1, out.width, 0); c.drawImage(source, 0, 0);
+  return out;
+}
 async function drawPicked(file, canvas, ctx, crop5to6) {
   if (file.size > 25 * 1024 * 1024) throw new Error('25MB以下の写真を選んでね');
   const url = URL.createObjectURL(file), image = new Image();
@@ -146,13 +152,12 @@ export async function capture(root, chore, choice, reference, signal) {
     let landmarker, segmenter, segmenterReady, stopPreview = () => {};
     const canvas = document.createElement('canvas'); canvas.hidden = true; live.append(canvas);
     const note = document.createElement('p'); note.className = 'capture-note'; note.hidden = !!stream; note.textContent = 'カメラを使えないので、左下からライブラリの写真をえらんでね'; live.append(note);
-    // Mirror the preview. Pose scoring keeps raw pixels/landmarks; a selfie is saved as the
-    // person saw it in the preview (#161), so it does not come out flipped.
+    // The front camera is shown like a mirror, before and after the shot, and the photo is saved
+    // as it was seen (#161), so it never comes out flipped. Pose scoring keeps raw pixels/landmarks.
     let mirrored = false;
     const setMirror = () => {
       const facing = stream?.getVideoTracks()[0]?.getSettings().facingMode;
-      // Poses are shown as the camera sees them, before and after the shot, like the saved photo.
-      mirrored = isPhoto && (facing === 'user' || (chore !== 'meal' && facing !== 'environment'));
+      mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
       video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
     };
     setMirror();
@@ -271,7 +276,7 @@ export async function capture(root, chore, choice, reference, signal) {
         go.disabled = false;
         if (!await decide(live, go, signal, 'もう1回撮る')) continue;
         check(signal); stopCamera();
-        const encodeAt = performance.now(), blob = await blobOf(canvas); timing('cutout-encode', encodeAt);
+        const encodeAt = performance.now(), blob = await blobOf(canvas.classList.contains('is-mirrored') ? flipped(canvas) : canvas); timing('cutout-encode', encodeAt);
         const evidence = { method: 'pose', blob, kind: 'cutout', caption: word.value(), landmarks: landmarks.map(({ x,y,z,visibility }) => ({ x,y,z,visibility })), pose_name: choice.title, result: { score } };
         if (choice.mode === 'original-copy' && reference) { evidence.reference_post_id = reference.post_id; evidence.similarity = poseSimilarity(landmarks, reference.landmarks); }
         return evidence;
