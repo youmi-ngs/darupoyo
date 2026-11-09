@@ -250,3 +250,8 @@ dialog.install-guide[open] { animation:chore-dialog-in .24s ease-out; }
 .refined-button.welcome-home { background:#e6dbff; border-color:#6a559040; }
 .refined-button.welcome-join { background:#ffdbf0d9; }
 .refined-button.welcome-create { background:#fdfbfe; }
+
+/* ログイン画面の同意の一文 */
+.welcome-legal { margin:12px 0 0; max-width:296px; font-size:11px; line-height:18px; color:#6a5590; text-align:center; }
+.welcome-legal a { color:#a32862; }
+#install-card #install-app[hidden] { display:none; }

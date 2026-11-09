@@ -59,12 +59,25 @@ test('native install is user-triggered, dismissible, and hidden after installati
   expect(await page.evaluate(()=>window.prompts)).toBe(2);
   await page.evaluate(()=>window.dispatchEvent(new Event('appinstalled')));
   await expect(guide).not.toBeVisible();
-  await expect(page.locator('#install-card')).toBeHidden();
+  await expect(page.locator('#install-card')).toContainText('もうホーム画面に追加できてるよ');
+  await expect(page.locator('#install-app')).toBeHidden();
 });
-test('the home-screen app does not ask to be added again', async ({page}) => {
+test('the home-screen app keeps the card, but says it is already added (#177)', async ({page}) => {
   await page.addInitScript(()=>Object.defineProperty(navigator,'standalone',{get:()=>true}));
-  await howto(page); await expect(page.locator('#install-card')).toBeHidden();
-  await expect(page.locator('.howto-card:visible')).toHaveCount(4);
-  await expect(page.locator('#howto-track')).toHaveAttribute('aria-label', /全4ページ/);
-  await expect(page.locator('.howto-card.is-active [data-page="4"]')).toBeHidden();
+  await howto(page);
+  await expect(page.locator('.howto-card')).toHaveCount(5);
+  await expect(page.locator('#howto-track')).toHaveAttribute('aria-label', /全5ページ/);
+  await expect(page.locator('#install-card')).toContainText('もうホーム画面に追加できてるよ');
+  await expect(page.locator('#install-app')).toBeHidden();
+});
+test('the terms and privacy policy are linked from マイページ and the sign-in screen, and say 18+', async ({page}) => {
+  await page.goto('/privacy.html');
+  await expect(page.getByRole('heading', { name: 'プライバシーポリシー', level: 1 })).toBeVisible();
+  await expect(page.locator('main')).toContainText('18歳以上');
+  await page.goto('/terms.html');
+  await expect(page.getByRole('heading', { name: '利用規約', level: 1 })).toBeVisible();
+  await expect(page.locator('a[href="/privacy.html"]').first()).toBeVisible();
+  await page.goto('/');
+  await expect(page.locator('#settings .legal-links a[href="/terms.html"]')).toHaveCount(1);
+  await expect(page.locator('#settings .legal-links a[href="/privacy.html"]')).toHaveCount(1);
 });
