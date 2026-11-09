@@ -43,7 +43,7 @@ test('trash asks for a pose only after starting; composer can cancel without pos
   await page.locator('[data-chore=trash]').click();
   await page.getByRole('button', { name: /^だるぽよ/ }).click();
   await page.getByLabel('ひとこと（任意・30文字まで）').fill('おやすみ');
-  await expect(page.locator('[data-count]')).toHaveText('4 / 140');
+  await expect(page.locator('[data-count]')).toHaveText('4 / 30');
   await page.evaluate(() => {
     const get = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = async options => { window.photoStream = await get(options); return window.photoStream; };
