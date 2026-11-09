@@ -255,3 +255,8 @@ dialog.install-guide[open] { animation:chore-dialog-in .24s ease-out; }
 .welcome-legal { margin:12px 0 0; max-width:296px; font-size:11px; line-height:18px; color:#6a5590; text-align:center; }
 .welcome-legal a { color:#a32862; }
 #install-card #install-app[hidden] { display:none; }
+/* Sign-in: the button stays in the middle and the logo sits well above it; the consent line
+   hangs under the button without pushing it up into the logo. */
+.refined-welcome[data-screen=login] .welcome-logo { top:calc(50% - 196px); animation-name:welcome-logo-rise-far; }
+@keyframes welcome-logo-rise-far { from { top:calc(50% - 51px); } to { top:calc(50% - 196px); } }
+.refined-welcome[data-screen=login] .welcome-legal { position:absolute; top:calc(50% + 44px); left:50%; width:296px; max-width:calc(100% - 32px); margin:0; transform:translateX(-50%); }
