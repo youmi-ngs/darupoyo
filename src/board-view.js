@@ -91,7 +91,7 @@ export function setupBoardView(ctx) {
       ctx.openPost(list.map(c => c.post), list.findIndex(c => c.id === card.id));
       return;
     }
-    // みんなの今 and だるぽよ cards open here; swipe (or ←→) moves through them in board order.
+    // うちらのなう and だるぽよ cards open here; swipe (or ←→) moves through them in board order.
     const list = cards().filter(c => c.type !== 'post'), start = Math.max(0, list.findIndex(c => c.id === card.id));
     viewer.replaceChildren();
     const close = document.createElement('button'); close.type = 'button'; close.className = 'sheet-close pm-close'; close.setAttribute('aria-label', '閉じる'); close.textContent = '×'; close.onclick = () => viewer.close();
