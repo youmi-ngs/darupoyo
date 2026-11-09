@@ -25,7 +25,8 @@ test('だるぽよ alone can be shared, and its words never mention what was not
   await page.getByRole('button', { name: 'けーじばんを見る', exact: true }).click();
   await expect(page.locator('#board-view')).toBeVisible();
   await expect(page.locator('.pin-grid .pin-darupoyo')).toHaveCount(1);
-  await expect(page.locator('.pin-grid .pin-darupoyo')).toContainText('ごはん、だるぽよ');
+  await expect(page.locator('.pin-grid .pin-darupoyo .pin-category')).toHaveText('ごはん · だるぽよ');
+  await expect(page.locator('.pin-grid .pin-darupoyo .pin-text:visible')).toHaveCount(0);
 });
 
 test('a share in progress shows a spinner on its button (#144)', async ({ page }) => {
