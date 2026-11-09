@@ -10,7 +10,7 @@ const steps = [
   { title: 'おうち、ぶらっとしよ〜', lines: ['左右にスワイプでお部屋を移動〜！', '今日できそうな家事、探してこ♡'], icon: '8f750', kind: 'walk' },
   { title: 'できたら、記録しよ♡', lines: ['ゆれてる物をタップでスタート！', 'ポーズ・写真・音で記録しよ。', '家事やったの、えらすぎ〜♡'], icon: 'fdc42', sparkle: '33c2d', kind: 'record' },
   { title: 'みんなの「できた」見よ！', lines: ['け〜じばんで友達の記録をチェック！', 'みんながんばってて、まじえらい♡'], icon: 'a2f56', sparkle: '7fd34', kind: 'share' },
-  { title: 'うちら、意外とやってる♡', lines: ['お部屋で今までの記録を見返せるよ。', '小さな「できた！」も立派じゃん♡'], icon: '34158', sparkle: '7fd34', kind: 'lookback' },
+  { title: 'うちら、意外とやってる♡', lines: ['お部屋で今までの記録を見返せるよ。', '小さな「できた！」も立派じゃん♡'], icon: 'lookback', sparkle: '7fd34', kind: 'lookback' },
 ];
 
 export function setupSettingsUI() {
@@ -99,7 +99,7 @@ export function setupSettingsUI() {
   $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
 
   const track = $('howto-track');
-  const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['だるぽよを、ワンタップで開こ♡','いつでもすぐ、おうちへ。']}];
+  const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['ホーム画面に追加すると、','通知がとどくよ♡']}];
   guideSteps.forEach((step, i) => {
     const card = document.createElement('article'); card.className = 'howto-card'; card.setAttribute('aria-label', `${i + 1} / ${guideSteps.length}：${step.title}`);
     card.innerHTML = `<div class="howto-art ${step.kind}" aria-hidden="true">${step.icon ? `<img class="howto-illustration" src="${asset(step.icon)}" alt="">` : ''}${step.sparkle ? `<img class="howto-sparkle" src="${asset(step.sparkle)}" alt="">` : ''}</div><h3>${step.title}</h3><p>${step.lines.join('<br>')}</p><div class="howto-pagination" aria-label="ページ選択"></div>`;

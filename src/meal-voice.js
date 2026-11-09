@@ -7,7 +7,9 @@ const LIMIT_MS = 10000, TICK_MS = 50, AUTO_RETRIES = 3;
 
 export function recordMealVoice(box, phrase, signal, verify) {
   const panel = document.createElement('section'); panel.className = 'meal-voice';
-  panel.innerHTML = `<h3 class="meal-voice-heading"></h3><p role="status" aria-live="polite"></p>
+  panel.innerHTML = `<h3 class="meal-voice-heading"></h3>
+    <div class="meal-voice-heard" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="28"/><path d="M19 33l9 9 17-19"/></svg></div>
+    <p role="status" aria-live="polite"></p>
     <button type="button" class="btn btn-main meal-voice-toggle">マイクをオンにする</button>
     <button type="button" class="btn btn-sub meal-voice-next"></button>
     <details class="meal-voice-privacy"><summary>音声の取り扱い</summary><p>マイクをオンにしている間だけ、最大10秒録音します。言い終わると、「いただきます」と言えているかを Google の Gemini が自動で確認します。確認できた声は、ハウスの住人が再生できます。</p></details>`;
@@ -55,7 +57,7 @@ export function recordMealVoice(box, phrase, signal, verify) {
           checked = result; blob = recorded; release();
           toggle.disabled = true; toggle.textContent = '聞こえた！';
           show('success', '「' + phrase + '」聞こえた！'); // #130: say so, then move on
-          setTimeout(() => settle(), 900); return;
+          setTimeout(() => settle(), 1500); return; // long enough to see the check (#174)
         }
         if (++misses >= AUTO_RETRIES) { fail('「' + phrase + '」が聞き取れなかったよ。もう一回やってみてね'); return; }
         listen(current, '「' + phrase + '」が聞き取れなかったよ。もう一回言ってね');

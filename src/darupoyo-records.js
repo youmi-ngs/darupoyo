@@ -1,5 +1,6 @@
 import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
+import { doneActionsHTML } from './celebrate.js';
 import { api, client, refresh } from './api.js';
 import { blobOf, photoCrop } from './camera.js';
 import { takePhoto } from './photo-camera.js';
@@ -35,7 +36,7 @@ export function setupDarupoyoRecords() {
   const retry = el('button','記録を読み直す','btn'); retry.type='button'; retry.hidden=true;
   feed.append(status,list,more,retry); // records are shown as cards on けーじばん (board-view.js)
   let cameraController;
-  let dashboard, signature='', generation=0, nextCursor=null, composer=0, busy=false, previewUrl;
+  let dashboard, signature='', generation=0, nextCursor=null, composer=0, busy=false, previewUrl, goTo='board';
   const urls = new Set();
   const observer = new IntersectionObserver(entries => entries.forEach(entry => {
     if (!entry.isIntersecting) return;
@@ -46,7 +47,7 @@ export function setupDarupoyoRecords() {
   dialog.addEventListener('cancel', e => { if (busy) e.preventDefault(); });
   dialog.addEventListener('close', () => {
     composer++; cameraController?.abort(); discardPreview();
-    if (dialog.classList.contains('is-success')) window.dispatchEvent(new Event('darupoyo:open-board'));
+    if (dialog.classList.contains('is-success')) window.dispatchEvent(new Event(goTo === 'entry' ? 'darupoyo:go-entry' : 'darupoyo:open-board'));
   });
 
   function appendRecords(items, house, version) {
@@ -91,7 +92,7 @@ export function setupDarupoyoRecords() {
     cameraController?.abort();
     const house=client.house, version=++composer; busy=false; discardPreview();
     let photo=null, photoVersion=0, preparing=false, submission=null;
-    dialog.classList.remove('is-success');
+    dialog.classList.remove('is-success'); goTo = 'board';
     dialog.innerHTML='<header class="refined-header"><h2>だるぽよ</h2><button type="button" class="refined-close" data-close aria-label="閉じる"><img src="/refined/edfe8.svg" alt=""></button></header><p class="refined-description">きょうはゆるっと。ひとこと残そ〜♡</p><div class="composer-field"><label for="darupoyo-caption">ひとこと（任意）</label><div class="composer-input"><textarea id="darupoyo-caption" aria-label="ひとこと（任意・140文字まで）" maxlength="140" rows="3"></textarea><div class="composer-attachment" data-photo hidden><img class="darupoyo-preview" alt="共有する写真の確認"><button type="button" class="composer-remove" data-remove aria-label="写真を外す"><img src="/refined/edfe8.svg" alt=""></button></div><div class="composer-toolbar"><div class="composer-photos"><button type="button" data-camera aria-label="写真を撮る"><img src="/refined/f677c.svg" alt=""></button><button type="button" data-library aria-label="ライブラリから選ぶ"><img src="/refined/18d84.svg" alt=""></button></div><span data-count>0 / 140</span></div><input type="file" accept="image/*" aria-label="写真を選ぶ" data-file hidden></div></div><p role="status"></p><button type="button" class="refined-button" data-save>きょーゆー</button>';
     const file=dialog.querySelector('[data-file]'), camera=dialog.querySelector('[data-camera]'), library=dialog.querySelector('[data-library]'), caption=dialog.querySelector('textarea'), preview=dialog.querySelector('.darupoyo-preview'), attachment=dialog.querySelector('[data-photo]'), remove=dialog.querySelector('[data-remove]'), save=dialog.querySelector('[data-save]'), close=dialog.querySelector('[data-close]'), notice=dialog.querySelector('[role=status]');
     library.onclick=()=>file.click();
@@ -128,9 +129,10 @@ export function setupDarupoyoRecords() {
           return scopedApi(house,'/darupoyo',submission);
         });
         if(version!==composer) return;
-        discardPreview(); dialog.classList.add('is-success'); dialog.innerHTML='<div class="record-celebration" aria-hidden="true"><span class="record-confetti"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><img class="refined-success-art" src="/refined/3759b.svg" alt=""></div><h2>だるぽよ、<br>記録かんりょ〜</h2><p>きょうのあんたも、超かわいいよん♡</p><button type="button" class="refined-button">けーじばんを見る</button>';
-        dialog.querySelector('button').onclick=()=>dialog.close();
-        dialog.querySelector('button').focus({preventScroll:true});
+        discardPreview(); dialog.classList.add('is-success'); dialog.innerHTML='<div class="record-celebration" aria-hidden="true"><span class="record-confetti"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><img class="refined-success-art" src="/refined/3759b.svg" alt=""></div><h2>だるぽよ、<br>記録かんりょ〜</h2><p>きょうのあんたも、超かわいいよん♡</p>'+doneActionsHTML('けーじばんを見る');
+        // #176: けーじばん or the entrance (closing with Esc still goes to けーじばん).
+        dialog.querySelectorAll('[data-done]').forEach(button=>{ button.onclick=()=>{ goTo=button.dataset.done; dialog.close(); }; });
+        dialog.querySelector('[data-done]').focus({preventScroll:true});
         window.dispatchEvent(new CustomEvent('darupoyo:recorded',{detail:{houseId:house,record}}));
         signature=''; void refresh().catch(()=>{}); if(feed.isConnected) void load();
       }catch(e){ if(version===composer) { setBusy(save,false); notice.textContent=e.message+' 同じ内容で再試行できます。'; save.textContent='共有を再試行'; save.disabled=close.disabled=false; } }

@@ -19,7 +19,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   const code = await page.locator('#settings-invite').textContent();
   await page.locator('#settings-close').click();
   const context = await browser.newContext({ viewport: {width:390,height:844} }); const friend = await context.newPage();
-  await friend.goto('/'); await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);  await friend.getByRole('button', {name:'招待に参加する'}).click();
+  await friend.goto('/'); await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);  await friend.getByRole('button', {name:'招待に参加する'}).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.doors .door')).toHaveCount(2);
   await page.locator('.scene-dot').nth(4).click();
@@ -101,7 +101,8 @@ test('switch between houses from the menu', async ({ page }) => {
   await expect(page.locator('.account-row small')).toContainText('ふたつめ');
   await page.locator('#settings-close').click();
   await switchHouse();
-  await page.getByRole('button', { name: 'ひとつめに入る' }).click();
+  await page.getByRole('button', { name: 'すでに入居済みの家に帰る' }).click();
+  await page.getByRole('button', { name: 'ひとつめに帰る' }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await expect(page.locator('.account-row small')).toContainText('ひとつめ');

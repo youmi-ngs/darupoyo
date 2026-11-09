@@ -247,3 +247,9 @@ dialog.install-guide[open] { animation:chore-dialog-in .24s ease-out; }
 .install-guide .install-device:not([hidden]) { animation:install-panel-in .18s ease-out; }
 @keyframes install-panel-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
 @media(prefers-reduced-motion:reduce) { .install-device-button { transition:none; } .install-guide .install-device:not([hidden]) { animation:none; } }
+
+/* #181: やっほ〜 has three choices that look different: go home (purple), move in with a
+   friend (pink), build a new house (white). */
+.refined-button.welcome-home { background:#e6dbff; border-color:#6a559040; }
+.refined-button.welcome-join { background:#ffdbf0d9; }
+.refined-button.welcome-create { background:#fdfbfe; }

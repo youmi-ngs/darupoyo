@@ -27,6 +27,7 @@
   --pop: 0 6px 18px rgba(155, 120, 210, .28);
 }
 html, body { height: 100%; }
+html, body, button, a, label, input, [role=button] { touch-action: manipulation; } /* no double-tap zoom (#170) */
 body {
   background: linear-gradient(180deg, #C9B6FF 0%, #F0B8EA 8%, #FFB8DC 13%, #FFD3C2 17%, #C9B6FF 17.2%, #B9A6F5 100%);
   background-color: #D9C2FF;
@@ -994,11 +995,13 @@ body[data-weather="rain"] .window-rain { display: initial; }
 body[data-daylight="night"] .window-sun { fill: #FFFCE3; }
 body[data-daylight] .scene[data-scene="balcony"], body[data-daylight] .sv-balcony { --sv-wall: var(--outdoor-sky); }
 body[data-daylight="night"] .sv-sun { background: #FFFCE3; box-shadow: 0 0 24px #fff9; }
-.plan.is-swaying .sv-obj, .plan.is-swaying .sv-hit, .plan.is-swaying .sv-fridge {
+/* #180: only things with an action (chores, うちらのなう) sway when you swipe;
+   plain furniture stays put. */
+.plan.is-swaying .sv-hit {
   transform-origin: 50% 100%; animation: furniture-sway .65s ease-out;
 }
 @keyframes furniture-sway { 0% { rotate: 0deg; } 30% { rotate: var(--sway); } 65% { rotate: calc(var(--sway) * -.4); } 100% { rotate: 0deg; } }
-@media (prefers-reduced-motion: reduce) { .plan.is-swaying .sv-obj, .plan.is-swaying .sv-hit, .plan.is-swaying .sv-fridge { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .plan.is-swaying .sv-hit { animation: none; } }
 
 body[data-weather="snow"] .window-rain { display: initial; stroke: white; stroke-width: 4; stroke-dasharray: 1 5; }
 

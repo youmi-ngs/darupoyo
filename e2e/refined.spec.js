@@ -13,13 +13,13 @@ test('welcome keeps drafts on back, validates invitations and submits explicitly
   await setHouseName(page, '入力途中のおうち');
   expect(creates).toBe(0);
   await page.getByRole('button', { name: 'もどる', exact: true }).click();
-  await page.getByRole('button', { name: '友達のハウスに入る', exact: true }).click();
+  await page.getByRole('button', { name: '友達の家に住む', exact: true }).click();
   await page.getByLabel('招待コード').fill('INVALID');
   await page.getByLabel('招待コード').press('Enter');
   await expect(page.locator('.onboarding [role=status]')).toBeVisible();
   await expect(page.getByRole('button', { name: '招待に参加する' })).toBeEnabled();
   await page.getByRole('button', { name: 'もどる', exact: true }).click();
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click();
+  await page.getByRole('button', { name: '新しく家をつくる', exact: true }).click();
   await expect(page.getByLabel('新しいハウスの名前')).toHaveValue('入力途中のおうち');
   await page.getByLabel('新しいハウスの名前').press('Enter');
   await expect(page.getByRole('heading', { name: '新しくつくったよ！' })).toBeVisible();

@@ -1,6 +1,9 @@
 import './input-mode.js';
+import './no-zoom.js';
 import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
+import { celebrationHTML, burst, doneActionsHTML } from './celebrate.js';
+import { lockSwipeAxis } from './swipe-axis.js';
 import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
@@ -381,7 +384,12 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     onClosing: () => { window.__toScene = sceneIndexOf('entry'); $('house-view').hidden = false; window.__goScene?.(); },
     onClose: () => { window.__toScene = sceneIndexOf('entry'); showHouse(); } });
   $('open-board').addEventListener('click', () => boardView.open());
-  window.addEventListener('darupoyo:open-board', () => boardView.open());
+  lockSwipeAxis($('pm-track')); // #179: the enlarged photo view swipes one way at a time
+  // After a record, the resident picks where to go (#176).
+  const goBoard = () => { showHouse(); boardView.open(); };
+  const goEntry = () => { window.__toScene = sceneIndexOf('entry'); showHouse(); };
+  window.addEventListener('darupoyo:open-board', goBoard);
+  window.addEventListener('darupoyo:go-entry', goEntry);
 
   function openRoom(who) {
     const mine = state.posts.filter((p) => p.who === who);
@@ -459,7 +467,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     sheetBody.append(choice,p); if(!sheet.open) sheet.showModal(); $('sheet-close').focus();
   }
   sheet.addEventListener('close',()=>sheet.classList.remove('refined-modal','pose-picker'));
-  let captureController, recordedChore = false;
+  let captureController;
   // When the camera or mic cannot be used, ask for access in plain words.
   function deviceMessage(e, id) {
     const device = id === 'dryer' ? 'マイク' : 'カメラ';
@@ -503,12 +511,11 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
         if (!word.disabled) { body.caption = word.value.trim(); word.disabled = true; }
         try {
           const result = await whileSending(sheetBody, () => sendRecord(body, blob, kind, voice));
-          recordedChore = true;
-          sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="finish">けーじばんを見る</button>';
+          sheetBody.innerHTML = celebrationHTML() + '<h2 class="sheet-title" id="sheet-title">記録できた！</h2><div class="verdict">' + galIcon(gal) + '<p class="bubble"><span class="gal-text"></span></p></div>' + doneActionsHTML('けーじばんを見る');
 
           sheetBody.querySelector('.gal-text').textContent = result.post.praise.text;
           sfx.clear(); setTimeout(() => galVoice(gal, result.post.praise.text), 550);
-          $('finish').onclick = () => { sheet.close(); toast('部屋に飾った。電気ついたね'); };
+          wireDone();
         } catch (e) { toast(e.message); setBusy(button, false); button.disabled = false; if ($('redo')) $('redo').disabled = false; }
         finally { $('sheet-close').disabled = false; }
       };
@@ -546,16 +553,16 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     $('post').onclick = () => send($('post'));
   }
   function photoTaskDone(id, c, gal, post, blob) {
-    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text">記録できたよん。今日もえらい！</p><img class="done-photo" alt="記録した写真"><p class="done-caption"></p><div class="verdict done-verdict"><p class="bubble"><span class="gal-text"></span></p></div><button class="btn btn-main" id="to-board">け〜じばんをちぇけらする</button>';
+    sheetBody.innerHTML = '<h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text">記録できたよん。今日もえらい！</p><div class="done-photo-wrap"><img class="done-photo" alt="記録した写真"></div><p class="done-caption"></p><div class="verdict done-verdict"><p class="bubble"><span class="gal-text"></span></p></div>' + doneActionsHTML();
     $('sheet-title').textContent = id === 'meal' ? 'きょうのごはん' : c.title;
     const photo = sheetBody.querySelector('.done-photo');
-    if (blob) { const url = URL.createObjectURL(blob); photo.src = url; sheet.addEventListener('close', () => URL.revokeObjectURL(url), { once: true }); } else photo.remove();
+    if (blob) { const url = URL.createObjectURL(blob); photo.src = url; sheet.addEventListener('close', () => URL.revokeObjectURL(url), { once: true }); burst(photo.parentElement); }
+    else photo.parentElement.outerHTML = celebrationHTML();
     const word = sheetBody.querySelector('.done-caption'); word.textContent = post.caption || ''; word.hidden = !post.caption;
     sheetBody.querySelector('.done-verdict').insertAdjacentHTML('afterbegin', galIcon(gal));
     sheetBody.querySelector('.gal-text').textContent = post.praise.text;
     sfx.clear(); setTimeout(() => galVoice(gal, post.praise.text), 550);
-    $('to-board').onclick = () => { sheet.close(); showHouse(); $('open-board').click(); };
-    $('to-board').focus();
+    wireDone();
   }
   // 録音した「いただきます」を再生するボタン（#9）。src() は再生する音の URL を返す。
   const voiceUrls = new Map();
@@ -600,9 +607,13 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   sheet.addEventListener('cancel', e => { if ($('sheet-close').disabled) e.preventDefault(); });
   sheet.addEventListener('close', () => {
     captureController?.abort();
-    if (recordedChore) { recordedChore=false; boardView.open(); }
   });
   $('sheet-close').addEventListener('click', () => sheet.close());
+  // けーじばん or the entrance, from any done screen (#176).
+  function wireDone() {
+    sheetBody.querySelectorAll('[data-done]').forEach(button => { button.onclick = () => { sheet.close(); (button.dataset.done === 'board' ? goBoard : goEntry)(); }; });
+    sheetBody.querySelector('[data-done]')?.focus();
+  }
   sheet.addEventListener('click', (e) => { if (e.target === sheet && !$('sheet-close').disabled) sheet.close(); });
 
   let toastTimer = null;

@@ -1,7 +1,7 @@
 import { confirmMealVoice } from './meal-voice.js';
 import { blobOf, check, countdown, openCamera, photoCrop, timing } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
-import { createPoseLandmarker, hasFullBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
+import { createPoseLandmarker, hasUpperBody, poseSimilarity, presetScore, PRESET_PASS } from './pose.js';
 import { createSegmenter, cutout } from './segment.js';
 import { sfx } from './sfx.js';
 
@@ -101,10 +101,10 @@ function livePreview(video, landmarker, choice, reference, status, resources) {
     last = now;
     const result = landmarker.detectForVideo(video, videoTime()), landmarks = result.landmarks[0];
     result.close();
-    if (!hasFullBody(landmarks)) status.textContent = '全身が入るように、少し離れてね';
+    if (!hasUpperBody(landmarks)) status.textContent = '顔と肩が入るように映ってね';
     else if (choice.preset) status.textContent = choice.title + ' ' + presetScore(choice.preset, landmarks) + '%';
     else if (choice.mode === 'original-copy' && reference?.landmarks) status.textContent = 'まねっこ度 ' + poseSimilarity(landmarks, reference.landmarks) + '%';
-    else status.textContent = '全身OK。好きなポーズで撮ってね';
+    else status.textContent = 'OK！好きなポーズで撮ってね';
   };
   frame = requestAnimationFrame(loop);
   const stop = () => cancelAnimationFrame(frame);
@@ -128,7 +128,7 @@ export async function capture(root, chore, choice, reference, signal) {
     const video = document.createElement('video'); video.autoplay = true; video.muted = true; video.playsInline = true;
     const count = document.createElement('span'); count.className = 'capture-count'; count.setAttribute('aria-hidden', 'true'); count.hidden = true;
     live.append(video, count); box.append(live);
-    const liveText = chore === 'selfie' ? '今のじぶんを、ハウスのみんなに。' : chore === 'meal' ? '美味しそう！' : '全身が入るように、少し離れてね！';
+    const liveText = chore === 'selfie' ? '今のじぶんを、ハウスのみんなに。' : chore === 'meal' ? '美味しそう！' : '上半身が入ればOKだよ！';
     status.textContent = liveText;
     if (reference?.image && choice.mode === 'original-copy') { const img = document.createElement('img'); img.src = reference.image; img.alt = '今日のお手本'; img.style.maxHeight = '150px'; box.append(img); }
     // #98: ポーズ判定のモデル読み込みを、カメラの許可・起動と同時に始める（以前はカメラ起動後に順番に待っていた）。
@@ -151,7 +151,8 @@ export async function capture(root, chore, choice, reference, signal) {
     let mirrored = false;
     const setMirror = () => {
       const facing = stream?.getVideoTracks()[0]?.getSettings().facingMode;
-      mirrored = facing === 'user' || (chore !== 'meal' && facing !== 'environment');
+      // Poses are shown as the camera sees them, before and after the shot, like the saved photo.
+      mirrored = isPhoto && (facing === 'user' || (chore !== 'meal' && facing !== 'environment'));
       video.classList.toggle('is-mirrored', mirrored); canvas.classList.toggle('is-mirrored', mirrored && chore !== 'selfie');
     };
     setMirror();
@@ -249,17 +250,13 @@ export async function capture(root, chore, choice, reference, signal) {
       const result = landmarker.detectForVideo(canvas, videoTime());
       try {
         const landmarks = result.landmarks[0];
-        if (!hasFullBody(landmarks)) {
-          status.textContent = '全身を見つけられませんでした。明るい場所で少し離れて撮ってね';
+        // #173: no person, no post. Otherwise any score can be sent.
+        if (!hasUpperBody(landmarks)) {
+          status.textContent = '人が見つからなかったよ〜。顔と肩が入るように、明るいとこで撮ってね';
           await decide(live, null, signal, 'もう1回撮る');
           continue;
         }
         const score = choice.preset ? presetScore(choice.preset, landmarks) : null;
-        if (score !== null && score < PRESET_PASS) {
-          status.textContent = choice.title + 'に見えなかったかも（' + score + '%）。もう一度撮ってね';
-          await decide(live, null, signal, 'もう1回撮る');
-          continue;
-        }
         if (!segmenter) { segmenter = await segmenterReady; check(signal); }
         const kept = cutout(segmenter, canvas, ctx);
         timing('pose-and-cutout', processAt);
@@ -268,7 +265,9 @@ export async function capture(root, chore, choice, reference, signal) {
           await decide(live, null, signal, 'もう1回撮る');
           continue;
         }
-        status.textContent = (score !== null ? choice.title + ' ' + score + '%！' : 'いい感じ！') + ' プレゼントを届けよ♡';
+        status.textContent = score === null ? 'いい感じ！ プレゼントを届けよ♡'
+          : score >= PRESET_PASS ? choice.title + ' ' + score + '%！ プレゼントを届けよ♡'
+          : choice.title + ' ' + score + '%…ま、いっか！このまま届けてもOKだよん';
         go.disabled = false;
         if (!await decide(live, go, signal, 'もう1回撮る')) continue;
         check(signal); stopCamera();

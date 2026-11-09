@@ -64,3 +64,12 @@ test('countdown stops when aborted',async()=>{
   await assert.rejects(running,{name:'AbortError'});
   assert.deepEqual(shown,[5]);
 });
+
+// #173: the camera often only sees the top half. Hips, knees and ankles out of the picture.
+const upperOnly = landmarks => landmarks.map((p, i) => i >= 23 && i <= 28 ? { ...p, visibility: 0 } : p);
+test('garbage poses are judged from the upper body alone',()=>{
+  assert.ok(presetScore('santa', upperOnly(santa)) >= PRESET_PASS);
+  assert.ok(presetScore('thief', upperOnly(thief)) >= PRESET_PASS);
+  assert.ok(presetScore('santa', upperOnly(standing)) < PRESET_PASS);
+  assert.ok(presetScore('thief', upperOnly(standing)) < PRESET_PASS);
+});

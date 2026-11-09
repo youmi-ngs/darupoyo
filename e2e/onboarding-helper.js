@@ -7,6 +7,6 @@ export async function setWelcomeName(page, name) {
   }
 }
 export async function setHouseName(page, name) {
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click();
+  await page.getByRole('button', { name: '新しく家をつくる', exact: true }).click();
   await page.getByLabel('新しいハウスの名前').fill(name);
 }

@@ -63,3 +63,14 @@
 .post-caption input::placeholder{color:#b3abbd;opacity:1}
 .post-caption input:disabled{opacity:.7}
 .pm-caption{margin:6px 0 0;font-size:14px;line-height:1.6;color:#3b2560;overflow-wrap:anywhere}
+
+/* #174: a check pops in when いただきます is heard. */
+.meal-voice-heard{display:none;width:72px;height:72px;margin:0 auto 8px}
+.meal-voice[data-state="success"] .meal-voice-heard{display:block;animation:heard-pop .45s cubic-bezier(.2,.8,.3,1.3) both}
+.meal-voice-heard svg{width:100%;height:100%;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.meal-voice-heard circle{fill:#d8f5df;stroke:#2f8a4e;stroke-width:3.5}
+.meal-voice-heard path{stroke:#2f8a4e;stroke-width:6;stroke-dasharray:44;stroke-dashoffset:44}
+.meal-voice[data-state="success"] .meal-voice-heard path{animation:heard-draw .4s .25s ease-out forwards}
+@keyframes heard-pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes heard-draw{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.meal-voice-heard,.meal-voice-heard path{animation:none!important;stroke-dashoffset:0}}

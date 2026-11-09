@@ -97,12 +97,20 @@ export function createWelcome() {
         // Keep the initial screen's empty-input composition. A tap or Tab starts editing.
         return input;
       };
-      const create=()=>formScreen('ハウスをつくる','新しいハウスの名前',houseName,60,'ハウスをつくる',async value=>{await submit(false,value,name);}, value=>{houseName=value;choose('back');});
-      const join=()=>formScreen('友達のハウスに入る','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
+      const create=()=>formScreen('新しく家をつくる','新しいハウスの名前',houseName,60,'ハウスをつくる',async value=>{await submit(false,value,name);}, value=>{houseName=value;choose('back');});
+      const join=()=>formScreen('友達の家に住む','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
+      // #181: the houses you already live in sit one step further in, under 帰る.
+      const homes=()=>{
+        const {card}=screen('どのおうちに帰る？','card');
+        items.forEach(h=>action(card,h.name+'に帰る',()=>enter(h.id)).classList.add('welcome-home'));
+        action(card,'もどる',()=>choose('back'),true).classList.add('welcome-back');
+      };
+      // Three choices, each its own colour (#181).
       const choose=(direction='forward')=>{
         const {card}=screen('やっほ〜','card',direction);
-        items.forEach(h=>action(card,h.name+'に入る',()=>enter(h.id)));
-        action(card,'友達のハウスに入る',join); action(card,'ハウスをつくる',create,true);
+        if(items.length) action(card,'すでに入居済みの家に帰る',homes).classList.add('welcome-home');
+        action(card,'友達の家に住む',join).classList.add('welcome-join');
+        action(card,'新しく家をつくる',create,true).classList.add('welcome-create');
       };
       if(askName || !name) formScreen('なまえおしえて〜','あなたの名前',name,40,'次へ',value=>{name=value;saveName(value);invite?join():choose();});
       else invite?join():choose();

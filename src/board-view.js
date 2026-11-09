@@ -4,6 +4,7 @@
 import { client, houseApi } from './api.js';
 import { galCharacter } from './gal-figure.js';
 import { momentPraise } from './moment-praise.js';
+import { lockSwipeAxis } from './swipe-axis.js';
 
 const LABELS = { laundry: '洗濯', meal: 'ごはん', dryer: 'ドライヤー', garbage: 'ゴミ捨て', trash: 'ゴミ捨て' };
 const PROP = { laundry: 'laundry', meal: 'meal', dryer: 'dryer', garbage: 'trash', trash: 'trash' };
@@ -96,6 +97,7 @@ export function setupBoardView(ctx) {
     const count = document.createElement('span'); count.className = 'pm-count pin-viewer-count'; count.hidden = list.length < 2;
     const track = document.createElement('div'); track.className = 'pin-viewer-track';
     track.tabIndex = 0; track.setAttribute('role', 'region'); track.setAttribute('aria-label', 'けーじばんの写真・左右にスワイプで移動');
+    lockSwipeAxis(track);
     list.forEach(item => track.append(slide(item)));
     viewer.append(close, count, track);
     const at = () => Math.round(track.scrollLeft / Math.max(1, track.clientWidth));

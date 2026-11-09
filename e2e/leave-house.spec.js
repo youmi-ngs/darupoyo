@@ -28,7 +28,7 @@ test('with others in the house you can move out, and the house stays for them', 
   await dialog.getByRole('button', { name: '退去する' }).click();
   // back to the start, with no house of your own any more
   await expect(page.locator('.onboarding h2')).toHaveText('やっほ〜');
-  await expect(page.getByRole('button', { name: 'たいきょに入る', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'すでに入居済みの家に帰る', exact: true })).toHaveCount(0);
   const left = await page.evaluate(async ([bob, house]) => (await (await fetch(`/api/houses/${house}/dashboard`, { headers: { Authorization: bob } })).json()).house.member_ids.length, [bob, house]);
   expect(left).toBe(1);
 });

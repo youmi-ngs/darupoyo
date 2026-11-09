@@ -86,3 +86,22 @@ dialog.sheet .capture .capture-frame, dialog.now-dialog .now-frame {
 /* The gal's line on うちらのなう / けーじばん: her face and a bubble (Figma 261:793). */
 .moment-praise.verdict { display: flex; align-items: flex-end; gap: 10px; margin: 0; padding: 0; border: 0; background: none; }
 .moment-praise .bubble { flex: 1; margin: 0; padding: 12px 16px; border: 2px solid #3b2560; border-radius: 20px 20px 20px 6px; background: white; font-size: 15px; font-weight: 700; line-height: 24px; color: #3b2560; text-align: left; }
+
+/* #175 / #176: done screens celebrate, then offer けーじばん or the entrance. */
+.done-actions { display: grid; gap: 10px; }
+dialog.sheet .record-celebration { align-self: center; margin: 4px auto -4px; }
+.done-photo-wrap { position: relative; width: min(100%, 302px); margin: 0 auto; }
+.done-photo-wrap .done-photo { width: 100% !important; animation: done-photo-in .5s cubic-bezier(.2, .8, .3, 1.2) both; }
+.done-burst { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.done-burst .record-confetti i { top: 50%; left: 50%; }
+.done-badge { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid #fff; border-radius: 50%; background: #7d4fa3; box-shadow: 0 6px 14px -4px #3b256066; animation: done-badge-in .45s .2s cubic-bezier(.2, .8, .3, 1.4) both; }
+.done-badge svg { width: 28px; height: 28px; fill: none; stroke: #fff; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 48; stroke-dashoffset: 48; animation: done-check .35s .5s ease-out forwards; }
+@keyframes done-photo-in { from { transform: scale(.9); opacity: .4; } to { transform: none; opacity: 1; } }
+@keyframes done-badge-in { from { transform: scale(0) rotate(-30deg); } to { transform: none; } }
+@keyframes done-check { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .done-photo-wrap .done-photo, .done-badge, .done-badge svg { animation: none !important; stroke-dashoffset: 0; } .done-burst .record-confetti { display: none; } }
+
+/* #171: the だるぽよ done card is centred and framed like the other windows. */
+dialog.darupoyo-dialog.is-success { border: 1px solid #ffffffbf !important; box-shadow: 0 12px 32px -8px #2b1a451f !important; }
+dialog.darupoyo-dialog.is-success h2 { padding-right: 0; min-height: 0; text-align: center; }
+dialog.darupoyo-dialog.is-success .done-actions { align-self: stretch; }

@@ -36,7 +36,7 @@ test('a friend clearing a chore lights their room on my screen via Firestore', a
   await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
   await friend.goto('/');
   await friend.reload();
-  await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);
+  await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);
 
   await friend.getByRole('button', { name: '招待に参加する' }).click();
   await expect(friend.locator('.onboarding')).toHaveCount(0);
