@@ -197,7 +197,7 @@ body[data-weather] .weather-credit { display: block; }
   100% { opacity:1; transform:translateY(0) scale(1) rotate(0); }
 }
 @media(prefers-reduced-motion:reduce) { .room-view:not([hidden]) { animation:none; } }
-/* Swipe between みんなの今 / だるぽよ cards in the けーじばん viewer. */
+/* Swipe between うちらのなう / だるぽよ cards in the けーじばん viewer. */
 dialog.pin-viewer { overflow-x: hidden; }
 .pin-viewer-track { display: flex; margin: 0 -16px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .pin-viewer-track::-webkit-scrollbar { display: none; }
