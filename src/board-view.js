@@ -83,7 +83,8 @@ export function setupBoardView(ctx) {
       const category = document.createElement('span'); category.className = 'pin-category';
       category.textContent = card.type === 'moment' ? 'うちらのなう' : (LABELS[card.chore] || '') + (card.type === 'darupoyo' ? ' · だるぽよ' : ' · やったよ');
       const author = document.createElement('span'); author.className = 'pin-author'; author.textContent = ctx.nameOf(card.who);
-      el.append(category, author, text);
+      el.append(category, author);
+      if (!text.hidden) el.append(text);
       el.setAttribute('aria-label', ctx.nameOf(card.who) + '：' + card.text);
       el.addEventListener('click', () => openCard(card));
     }

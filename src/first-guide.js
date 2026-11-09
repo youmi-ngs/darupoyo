@@ -8,7 +8,7 @@ export function setupFirstGuide(goToLiving) {
     goToLiving(); target = document.querySelector('[data-chore="meal"]');
     target.classList.add('guide-target'); target.addEventListener('click', close, {once:true});
     panel = document.createElement('section'); panel.className = 'first-guide'; panel.setAttribute('aria-label', 'はじめての操作案内');
-    panel.innerHTML = '<p><b>ゆれてるところをタップ！</b><br>ごはんやドライヤーから記録できるよ。<br>今日はだるぽよ、でもおけ♡</p><button type="button" data-try>ごはんをタップしてみる</button><button type="button" data-skip>スキップ</button>';
+    panel.innerHTML = '<p><b>ゆれてるところをタップ！</b><br>ごはんやドライヤー、記録しよ♡<br>今日はだるぽよ、でもおけ♡</p><div class="first-guide-actions"><button type="button" data-try>ごはんをタップしてみる</button><button type="button" data-skip>スキップ</button></div>';
     panel.querySelector('[data-try]').onclick = () => target.click(); panel.querySelector('[data-skip]').onclick = close;
     document.body.append(panel);
   };

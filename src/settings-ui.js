@@ -15,6 +15,14 @@ const steps = [
 
 export function setupSettingsUI() {
   const trigger = $('open-menu'), quick = $('utility-menu');
+  let ignoreMenuPointerUntil = 0;
+  trigger.addEventListener('click', e => {
+    // With reduced motion the × disappears immediately; the second tap of a
+    // double-tap must not hit the menu button underneath it. Keyboard stays usable.
+    if (e.detail > 1 && performance.now() < ignoreMenuPointerUntil) {
+      e.preventDefault(); e.stopImmediatePropagation(); trigger.focus();
+    }
+  }, true);
   const placeMenu = () => {
     const r = trigger.getBoundingClientRect();
     quick.style.top = `${r.bottom + 10}px`;
@@ -65,7 +73,7 @@ export function setupSettingsUI() {
           fade = page.animate([{opacity:getComputedStyle(page).opacity},{opacity:0}], {duration:220,easing:'ease-in',fill:'forwards'});
           await fade.finished.catch(() => {});
         }
-        if (page.open) page.close();
+        if (page.open) { ignoreMenuPointerUntil = performance.now() + 250; page.close(); }
       } finally { fade?.cancel(); page.classList.remove('is-closing'); closing = false; }
     };
     page.querySelector('.drawer-close').addEventListener('click', e => {

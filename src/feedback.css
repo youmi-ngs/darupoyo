@@ -13,6 +13,7 @@ dialog.sheet .capture .capture-frame canvas.composer-thumbnail:not([hidden]),dia
 .account-row>div,.house-name-row>b,.house-choice,.created-house-name,.mr-plate b,.pm-title,.log-head h2,#settings-members,.welcome-home { min-width:0;overflow-wrap:anywhere; }
 .door-plate { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
 .account-row b,#settings-house-name { overflow-wrap:anywhere; }
+.log-heading #log-title,.mr-plate b { display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden; }
 .invite-actions { display:flex;flex-wrap:wrap;gap:8px;margin-top:10px; }
 .invite-row { flex-wrap:wrap; }
 .pin-category { display:block;padding:5px 9px;border-radius:12px;background:#f0e7fa;color:#4b3469;font-size:12px;font-weight:bold;line-height:1.5; }
@@ -23,6 +24,11 @@ dialog.sheet .capture .capture-frame canvas.composer-thumbnail:not([hidden]),dia
 .first-guide { position:fixed;inset:auto 16px 24px;z-index:80;max-width:350px;margin:auto;padding:20px;border:1px solid #e5d6f4;border-radius:24px;background:#fff7ff;box-shadow:0 12px 40px #49316644;color:#493166; }
 .first-guide p { margin:0 0 12px; }
 .first-guide button { margin:4px;padding:10px 14px;border:0;border-radius:20px;background:#f5d6eb;color:inherit;font:inherit; }
+.first-guide-actions { display:flex;gap:8px; }
+.first-guide-actions button { margin:0;min-height:44px;font-size:13px;padding:10px; }
+.first-guide-actions [data-try] { flex:1; }
+.first-guide-actions [data-skip] { flex:none; }
+@media(max-width:359px) { .first-guide { padding:16px;font-size:13px; } }
 .guide-target { filter:drop-shadow(0 0 12px #fff);outline:4px solid #f49ac7;outline-offset:5px;border-radius:20px; }
 
 @media (max-width:540px) { .pin-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
