@@ -11,7 +11,7 @@ test('joining by invite shows who you will live with, creating a house does not 
   const code = await page.locator('#settings-invite').textContent();
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } }); const friend = await context.newPage();
   await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await friend.goto('/'); await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);  await friend.getByRole('button', { name: '招待に参加する' }).click();
+  await friend.goto('/'); await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);  await friend.getByRole('button', { name: '招待に参加する' }).click();
   await expect(friend.getByRole('heading', { name: 'まりんと一緒に住む！' })).toBeVisible();
   await expect(friend.locator('.move-in .sheet-text')).toContainText('温玉');
   await friend.getByRole('button', { name: 'おじゃまします！' }).click();

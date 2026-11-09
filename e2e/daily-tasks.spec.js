@@ -17,7 +17,7 @@ test('darupoyo shares text, preserves completion state and survives reload',asyn
   const token=await page.evaluate(async()=>{ const {houseApi}=await import('/src/api.js'); return (await houseApi('/invites',{})).token; });
   const context=await browser.newContext(); const friend=await context.newPage();
   await friend.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
-  await friend.goto(page.url()); await setWelcomeName(friend, '友だち'); await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click();  await friend.getByLabel('招待コード').fill(token);
+  await friend.goto(page.url()); await setWelcomeName(friend, '友だち'); await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click();  await friend.getByLabel('招待コード').fill(token);
   await friend.getByRole('button',{name:'招待に参加する'}).click(); await friend.getByRole('button',{name:'おじゃまします！'}).click();
   await compose(page);
   await expect(page.getByRole('button',{name:'きょーゆー'})).toBeEnabled(); // #142: 「だるぽよ」 alone can be shared

@@ -3,6 +3,7 @@ import './no-zoom.js';
 import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
 import { celebrationHTML, burst, doneActionsHTML } from './celebrate.js';
+import { lockSwipeAxis } from './swipe-axis.js';
 import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
@@ -383,6 +384,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     onClosing: () => { window.__toScene = sceneIndexOf('entry'); $('house-view').hidden = false; window.__goScene?.(); },
     onClose: () => { window.__toScene = sceneIndexOf('entry'); showHouse(); } });
   $('open-board').addEventListener('click', () => boardView.open());
+  lockSwipeAxis($('pm-track')); // #179: the enlarged photo view swipes one way at a time
   // After a record, the resident picks where to go (#176).
   const goBoard = () => { showHouse(); boardView.open(); };
   const goEntry = () => { window.__toScene = sceneIndexOf('entry'); showHouse(); };

@@ -19,7 +19,7 @@ test('menu keeps exactly three actions and the copied invite code joins the hous
   expect(code).toBe(await page.locator('#settings-invite').textContent());
   const context=await browser.newContext();const friend=await context.newPage();await friend.goto(page.url());
   await setWelcomeName(friend, '招待されたマブ');
-  await friend.getByRole('button',{name:'友達のハウスに入る',exact:true}).click();
+  await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click();
   await friend.getByLabel('招待コード').fill(code);
   await friend.getByRole('button',{name:'招待に参加する'}).click();
   await expect(friend.getByRole('button',{name:'おじゃまします！'})).toBeVisible();await context.close();
