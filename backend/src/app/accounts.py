@@ -28,7 +28,7 @@ def remove_from_house(store, media, uid, house_id, empty):
         for path, value in store.scan(root + '/' + collection):
             if empty or value.get('user_id') == uid or value.get(field) in removed:
                 store.atomic(lambda tx, path=path: tx.delete(path))
-    for collection in ('posts', 'moments', 'days'):
+    for collection in ('posts', 'moments', 'darupoyo_records', 'days'):
         for path, _ in store.scan(root + '/' + collection):
             def scrub(tx):
                 value = tx.get(path)
@@ -50,7 +50,8 @@ def remove_from_house(store, media, uid, house_id, empty):
                     value.get('reactions', {}).pop(uid, None)
                     if 'comments' in value:
                         value['comments'] = [c for c in value['comments'] if c['user_id'] != uid]
-                    value['sync_with'] = [m for m in value.get('sync_with', []) if m != uid]
+                    if 'sync_with' in value or collection != 'darupoyo_records':
+                        value['sync_with'] = [m for m in value.get('sync_with', []) if m != uid]
                     # A copied pose remains the other user's own photo.
                     if value.get('pose_template_post_id') and (value['pose_template_post_id'] in removed_posts or not tx.get(root + '/posts/' + value['pose_template_post_id'])):
                         value['pose_template_post_id'] = None

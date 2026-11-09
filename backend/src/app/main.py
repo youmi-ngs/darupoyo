@@ -355,6 +355,19 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         post_id_ok(post_id)
         return social.delete_comment(app.state.store, uid, str(house_id), post_id, str(comment_id))
 
+    # うちらのなう and だるぽよ take comments the same way as chore posts.
+    for kind, collection in (("moments", "moments"), ("darupoyo", "darupoyo_records")):
+        def add(house_id: UUID, record_id: str, body: Comment, uid=Depends(current_user), collection=collection):
+            post_id_ok(record_id)
+            return social.add_comment(app.state.store, uid, str(house_id), record_id, body, app.state.domain.clock, collection)
+
+        def remove(house_id: UUID, record_id: str, comment_id: UUID, uid=Depends(current_user), collection=collection):
+            post_id_ok(record_id)
+            return social.delete_comment(app.state.store, uid, str(house_id), record_id, str(comment_id), collection)
+
+        app.post(f"/api/houses/{{house_id}}/{kind}/{{record_id}}/comments", status_code=201)(add)
+        app.delete(f"/api/houses/{{house_id}}/{kind}/{{record_id}}/comments/{{comment_id}}")(remove)
+
     @app.put("/api/houses/{house_id}/avatar")
     def avatar(house_id: UUID, body: Avatar, uid=Depends(current_user)):
         return social.set_avatar(app.state.store, app.state.media, uid, str(house_id), str(body.media_id))

@@ -378,6 +378,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   });
   // けーじばん: opens from the board in the entrance, ← goes back there.
   const boardView = setupBoardView({ nameOf, iconOf, themeOf, galOf: memberGal, toast,
+    comments: (record, base) => commentsBlock(record, { me: ME, nameOf, dotOf, toast, base }),
     openPost: (posts, index) => openPhotos(posts.map(p => ({ p, day: p.day === dashboard.state.day ? '今日' : dayLabel(offOf(p.day)) })), index),
     onClosing: () => { window.__toScene = sceneIndexOf('entry'); $('house-view').hidden = false; window.__goScene?.(); },
     onClose: () => { window.__toScene = sceneIndexOf('entry'); showHouse(); } });
