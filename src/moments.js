@@ -1,4 +1,4 @@
-// うちらのなう (Figma 207:914): the みんなの今 button opens a camera card. Take a selfie (or pick
+// うちらのなう (Figma 207:914): the うちらのなう button opens a camera card. Take a selfie (or pick
 // one), add a word, and みせちゃう shares it with the house. The card then shows what was sent
 // and the gal's word on it (Figma 207:958), with a way to けーじばん.
 import { setBusy } from './busy.js';
