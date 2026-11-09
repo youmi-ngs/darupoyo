@@ -87,12 +87,15 @@
 button.pin-card { cursor: pointer; }
 .pin-magnet { position: absolute; z-index: 1; top: -18px; left: 50%; width: 40px; height: 40px; transform: translateX(-50%); box-shadow: 0 2px 3px rgba(0, 0, 0, .25); }
 .pin-photo { display: block; aspect-ratio: 5 / 6; overflow: hidden; border: 1.5px solid var(--ink); background: linear-gradient(180deg, #FFF7FC, #F2EAFF); }
-.pin-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Real photos fill the frame; a drawn gal (inside .resident-character) keeps her own fit so the dress color lines up. */
+.pin-photo > img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pin-photo.is-loading { background: repeating-linear-gradient(45deg, #F6EEFF 0 8px, #FFFFFF 8px 16px); }
 .pin-photo.is-drawing { display: grid; place-items: center; }
 .pin-photo .resident-character { transform: scale(.82); transform-origin: center; }
 .pin-darupoyo .pin-photo.is-drawing { background: linear-gradient(180deg, #EEE9F7, #DCD5EC); }
 .pin-darupoyo .pin-photo .resident-character { transform: scale(.82) rotate(-12deg); }
+/* The sleepy Z floats beside the head, not on the dress. */
+.resident-prop.prop-darupoyo { bottom: auto; top: calc(100cqh - var(--art-h) - 6px); left: auto; right: -16px; }
 .pin-text { font-size: 10.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 dialog.pin-viewer { margin: auto; inset: 0; width: min(380px, calc(100% - 32px)); max-height: 86vh; overflow-y: auto; padding: 18px 16px 16px; border: 2.5px solid var(--ink); border-radius: 22px; background: #FFFFFF; color: var(--ink); box-shadow: var(--pop); }
 dialog.pin-viewer::backdrop { background: rgba(59, 37, 96, .45); }
