@@ -148,8 +148,8 @@ test('diners sit on the existing chairs, stay centered and fit a six-person hous
   const layout = await page.locator('.meal-seats').evaluate(group => {
     const box = group.getBoundingClientRect();
     return [...group.children].map(figure => {
-      const b=figure.getBoundingClientRect(), head=figure.querySelector('.resident-face').getBoundingClientRect(), body=figure.querySelector('.resident-body').getBoundingClientRect();
-      return { x:(b.x+b.width/2-box.x)/box.width, seatY:(b.y+75-box.y)/box.height, centered:Math.abs(head.x+head.width/2-body.x-body.width/2), left:b.x,right:b.right };
+      const b=figure.getBoundingClientRect(), art=figure.querySelector('.resident-art').getBoundingClientRect();
+      return { x:(b.x+b.width/2-box.x)/box.width, seatY:(b.y+75-box.y)/box.height, centered:Math.abs(art.x+art.width/2-b.x-b.width/2), left:b.x,right:b.right };
     });
   });
   expect(layout[0].x).toBeCloseTo(25/180, 2);

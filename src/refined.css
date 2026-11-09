@@ -75,10 +75,7 @@ dialog.darupoyo-dialog.refined-modal[open] { display:flex; flex-direction:column
 .settings-page .gal-card .gal-heading { min-height:0; gap:8px; }
 .settings-page .gal-card .gal-heading small { font-size:11px; line-height:16px; }
 .settings-page .settings-gal-face { position:relative; width:48px; height:48px; border-width:1.6px; border-radius:24px; box-shadow:.8px 2.4px 6.4px #6e50a038; }
-.settings-gal-face img { position:absolute; top:11.16px; left:6.1px; transform:none; }
-[data-gal=reiwa] .settings-gal-face img { left:6.28px; top:11.17px; }
-[data-gal=kuro] .settings-gal-face img { left:4.6px; top:10.4px; }
-[data-gal=hime] .settings-gal-face img { left:1.2px; top:2.5px; }
+.settings-gal-face img { position:absolute; inset:0; }
 @media(max-width:359px) { dialog.refined-modal,.welcome-card { padding:20px; } .sheet.refined-modal .sheet-title { font-size:19px; } .refined-pose b { font-size:13px; } .settings-page .gal-card .gal-heading { flex-wrap:wrap; gap:0 8px; } }
 @media(prefers-reduced-motion:reduce) { .refined-button[aria-busy=true]::after { animation:none; } }
 
