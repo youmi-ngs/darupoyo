@@ -95,7 +95,7 @@ button.pin-card { cursor: pointer; }
 .pin-darupoyo .pin-photo.is-drawing { background: linear-gradient(180deg, #EEE9F7, #DCD5EC); }
 .pin-darupoyo .pin-photo .resident-character { transform: scale(.82) rotate(-12deg); }
 /* The sleepy Z floats beside the head, not on the dress. */
-.pin-darupoyo .pin-photo .resident-prop { top: -6px; left: auto; right: -16px; }
+.resident-prop.prop-darupoyo { bottom: auto; top: calc(100cqh - var(--art-h) - 6px); left: auto; right: -16px; }
 .pin-text { font-size: 10.5px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 dialog.pin-viewer { margin: auto; inset: 0; width: min(380px, calc(100% - 32px)); max-height: 86vh; overflow-y: auto; padding: 18px 16px 16px; border: 2.5px solid var(--ink); border-radius: 22px; background: #FFFFFF; color: var(--ink); box-shadow: var(--pop); }
 dialog.pin-viewer::backdrop { background: rgba(59, 37, 96, .45); }

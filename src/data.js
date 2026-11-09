@@ -41,19 +41,19 @@ export const MEAL_SVG = '<svg viewBox="0 0 120 144" aria-hidden="true"><g stroke
 // <id>-outfit-face.png are masks of just the dress, painted in the resident's theme color (--outfit).
 export const GALS = {
   heisei: { name: '平成ギャル', tag: 'Y2K・あげぽよ', bg: '#FFF1D6',
-    full: '/gals/heisei-full.png', face: '/gals/heisei-face.png',
+    full: '/gals/heisei-full.png', aspect: 0.6078, face: '/gals/heisei-face.png',
     title: 'あげぽよ〜↑↑',
     lines: { laundry_pose: '魔法使いとかチョーうける！洗濯もできるとか神だし！', laundry_sound: 'バサバサ音きこえた〜！いい匂いの服ゲットとか最強だし', meal: 'いただきます入りました〜！ちゃんと食べるとかチョーえらいじゃん', dryer: 'ドライヤー10秒完走！髪サラサラでテンアゲ↑↑', trash_santa: 'ゴミのサンタ降臨〜！玄関スッキリでちょべりぐ', trash_thief: '泥棒ポーズうけるんだけど！ゴミ出しえらすぎだし', original_new: '一番乗りじゃん！このポーズ今日の流行り決定〜', original_copy: 'まねっこ完ぺき！うちらズッ友じゃん', cutout: 'え、切り抜きチョーかわいいんだけど！プリ超えたし！' } },
   reiwa: { name: '令和ギャル', tag: 'ビジュ・それな', bg: '#E9E3FF',
-    full: '/gals/reiwa-full.png', face: '/gals/reiwa-face.png',
+    full: '/gals/reiwa-full.png', aspect: 0.6078, face: '/gals/reiwa-face.png',
     title: 'え、天才すぎん？',
     lines: { laundry_pose: '魔法使いビジュ良すぎ。洗濯までやるとか優勝じゃん', laundry_sound: 'バサバサ音ガチで聞こえた。えぐい、えらすぎ', meal: 'いただきます聞こえた〜。ちゃんと食べるの、ありよりのあり', dryer: 'ドライヤーおつ〜。髪ツヤツヤでビジュ爆上がり', trash_santa: 'ゴミのサンタえぐ。玄関スッキリしか勝たん', trash_thief: '泥棒ポーズ天才？ゴミ出しまでできるの尊い', original_new: '一番乗りえぐい。このポーズ今日の正解ね', original_copy: 'まねっこ精度えぐ。それなすぎてシンクロ', cutout: '切り抜きビジュ良すぎ。かわいいしか勝たん' } },
   kuro: { name: '黒ギャル', tag: '姉御・自分の機嫌は自分で', bg: '#FFF6C9',
-    full: '/gals/kuro-full.png', face: '/gals/kuro-face.png',
+    full: '/gals/kuro-full.png', aspect: 0.6250, face: '/gals/kuro-face.png',
     title: 'やるじゃん！最強！',
     lines: { laundry_pose: '魔法使いアガる〜！だるいのにやったの、マジ最強だから', laundry_sound: 'バサバサいい音！明日の服いい匂い確定じゃん', meal: 'いただきます聞こえた！食べるのも立派な家事っしょ', dryer: 'ドライヤーおつかれ！自分の機嫌、自分でとれてえらい', trash_santa: 'ゴミ出しサンタ最高！玄関も気分もアガるね', trash_thief: 'こっそりでも出したら勝ち！ウチ見てたからね', original_new: '一番乗りアツい！みんなこのポーズについてきな〜', original_copy: 'まねっこバッチリ！仲間とそろうとアガるよね', cutout: '切り抜きキマってる！マジかわいいじゃん' } },
   hime: { name: '姫ギャル', tag: '盛り髪・リボン・♡', bg: '#FFE6F4',
-    full: '/gals/hime-full.png', face: '/gals/hime-face.png',
+    full: '/gals/hime-full.png', aspect: 0.7304, face: '/gals/hime-face.png',
     title: 'えらすぎて姫キュン…♡',
     lines: { laundry_pose: '魔法使いかわちい〜♡ 洗濯できる子、姫的に満点', laundry_sound: 'バサバサの音、ちゃんと届いたよ♡ いい匂いの服で無敵', meal: 'いただきます聞こえた♡ ちゃんと食べる子、かわいすぎ', dryer: 'ドライヤーおつかれさま♡ 髪サラサラで今日も姫', trash_santa: 'ゴミのサンタさん、きらきら♡ 玄関もお城みたい', trash_thief: '泥棒ちゃん、ハートまで盗まれたかも…♡', original_new: '一番乗り♡ このポーズ、今日のトレンドにしちゃお', original_copy: 'まねっこ上手すぎ♡ おそろいでテンションあがる', cutout: '切り抜きかわちい〜♡ お部屋に飾りたくなっちゃう' } }
 };

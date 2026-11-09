@@ -1045,17 +1045,19 @@ body:has(dialog[open]) .utility-actions, body:has(#house-view[hidden]) .utility-
 .sv-board .board-panel { max-width: 520px; margin: auto; }
 .resident-activities { position: absolute; left: 4%; right: 4%; bottom: 4%; display: flex; justify-content: center; gap: 4px; z-index: 2; pointer-events: none; }
 .resident-avatar { margin: 0; width: 92px; min-width: 0; flex: 0 1 92px; text-align: center; }
-.resident-character { width: 60px; height: 102px; position: relative; margin: auto; max-width: 100%; }
+.resident-character { width: 60px; height: 102px; position: relative; margin: auto; max-width: 100%; container-type: size;
+  /* Height the picture is actually drawn at (it is fitted inside the box), so props sit on the same spot of every gal. */
+  --art-h: min(100cqh, 100cqw / var(--art-aspect, .6)); }
 .resident-art { display: block; width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; user-select: none; }
 /* The dress, repainted in the resident's theme color through a mask cut from the same picture. */
 .resident-outfit, .gal-outfit { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: var(--outfit, var(--my-outfit, transparent)); -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
 .resident-outfit { -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: 50% 100%; mask-position: 50% 100%; }
 .gal-outfit { -webkit-mask-size: cover; mask-size: cover; -webkit-mask-position: center; mask-position: center; }
-.resident-prop { position: absolute; z-index: 3; top: 55px; left: 20px; font-size: 22px; }
+.resident-prop { position: absolute; z-index: 3; bottom: calc(var(--art-h) * .12); left: 20px; font-size: 22px; }
 .resident-avatar figcaption { display: flex; flex-direction: column; padding: 3px; border-radius: 8px; background: #FFFDF1E8; font-size: 10px; line-height: 1.35; overflow-wrap: anywhere; }
 .resident-avatar figcaption strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .resident-avatar.is-satisfied .right { transform: rotate(-65deg); }
-.resident-avatar.is-satisfied .resident-prop { top: 53px; color: #D154A2; }
+.resident-avatar.is-satisfied .resident-prop { bottom: calc(var(--art-h) * .14); color: #D154A2; }
 /* Keep the hand-drawn laundry still at rest; only scene changes sway it. */
 .sv-laundry, .sv-laundry svg { animation: none; }
 
