@@ -337,7 +337,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     renderPaint();
     box.querySelector('.mr-plate b').textContent = (nameOf(who) + (who === ME ? '（自分）' : '')) + 'の部屋';
     box.querySelector('.mr-plate span').textContent = lit ? (mine.length ? '電気ついてる・今日' + mine.length + '個クリア' : '電気ついてる・だるぽよ共有済み') : 'まだ真っ暗';
-    box.querySelector('.mr-dark p').textContent = who === ME ? 'まだ真っ暗…家事を1つやるか、だるぽよを共有すると電気がつくよ' : nameOf(who) + 'はまだ寝てるっぽい…';
+    box.querySelector('.mr-dark p').textContent = who === ME ? 'まだ真っ暗…家事を1つやるか、\nだるぽよを共有すると電気がつくよ' : nameOf(who) + 'はまだ寝てるっぽい…';
     box.querySelector('.mr-album').addEventListener('click', () => openLog(who));
     if (window.__tapMark) window.__tapMark(box.querySelector('.mr-album'));
     const fr = box.querySelector('.mr-frames');

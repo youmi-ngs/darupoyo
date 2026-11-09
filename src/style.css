@@ -841,7 +841,7 @@ dialog.log-modal, dialog.photo-modal { overflow: hidden; }
 .myroom.is-lit::after { left: 0; right: 0; z-index: -1; background: radial-gradient(circle 340px at calc(9% + 48px) 262px, rgba(255, 250, 225, .95), rgba(255, 246, 205, .45) 45%, transparent 80%); }
 .myroom.is-lit .mr-bulb { fill: #FFFDF2; filter: drop-shadow(0 0 8px rgba(255, 252, 235, 1)); }
 .myroom .mr-dark { padding-top: 0 !important; }
-.myroom .mr-dark p { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--rf) + 110px); white-space: nowrap; }
+.myroom .mr-dark p { position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--rf) + 110px); width: max-content; max-width: calc(min(100vw, 430px) - 32px); white-space: pre-line; text-align: center; text-wrap: balance; line-height: 1.5; border-radius: 18px; }
 
 
 /* room color picker */
