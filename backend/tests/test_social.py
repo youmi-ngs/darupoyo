@@ -190,3 +190,43 @@ def test_each_resident_gets_a_color_nobody_else_in_the_house_uses():
         c.put(f"/api/houses/{h}/profile", headers=auth("carol"), json={"display_name": "キャロル"})
         members = c.get(f"/api/houses/{h}/dashboard", headers=auth()).json()["house"]["members"]
         assert members["alice"]["theme"] == "pink" and members["carol"]["theme"] not in ("pink", "cocoa")
+
+
+def test_moments_and_darupoyo_take_comments_like_chore_posts():
+    with TestClient(create_app(LOCAL)) as c:
+        h = house(c)
+        join(c, h)
+        moment = c.post(f"/api/houses/{h}/moments", headers=auth(),
+                        json={"request_id": str(uuid4()), "media_id": upload(c, h, "selfie"), "caption": "おは"}).json()
+        record = c.post(f"/api/houses/{h}/darupoyo", headers=auth(),
+                        json={"request_id": str(uuid4()), "chore": "meal"}).json()["record"]
+        for kind, rid, listing in (("moments", moment["id"], "moments"), ("darupoyo", record["id"], "darupoyo")):
+            base = f"/api/houses/{h}/{kind}/{rid}/comments"
+            body = {"request_id": str(uuid4()), "text": " えらい！ "}
+            first = c.post(base, headers=auth("bob"), json=body)
+            assert first.status_code == 201
+            assert [x["text"] for x in first.json()["comments"]] == ["えらい！"]
+            assert len(c.post(base, headers=auth("bob"), json=body).json()["comments"]) == 1
+            assert c.post(base, headers=auth("outsider"), json={"request_id": str(uuid4()), "text": "x"}).status_code == 404
+            assert c.post(f"/api/houses/{h}/{kind}/nope/comments", headers=auth("bob"), json=body).status_code == 422
+            # the comment rides along in the listing
+            assert c.get(f"/api/houses/{h}/{listing}", headers=auth()).json()["items"][0]["comments"][0]["user_id"] == "bob"
+            assert c.delete(f"{base}/{body['request_id']}", headers=auth()).status_code == 404
+            assert c.delete(f"{base}/{body['request_id']}", headers=auth("bob")).json()["comments"] == []
+
+
+def test_account_deletion_removes_comments_on_moments_and_darupoyo():
+    with TestClient(create_app(LOCAL)) as c:
+        h = house(c)
+        join(c, h)
+        store = c.app.state.store
+        moment = c.post(f"/api/houses/{h}/moments", headers=auth(),
+                        json={"request_id": str(uuid4()), "media_id": upload(c, h, "selfie"), "caption": ""}).json()
+        record = c.post(f"/api/houses/{h}/darupoyo", headers=auth(),
+                        json={"request_id": str(uuid4()), "chore": "meal"}).json()["record"]
+        c.post(f"/api/houses/{h}/moments/{moment['id']}/comments", headers=auth("bob"), json={"request_id": str(uuid4()), "text": "bob"})
+        c.post(f"/api/houses/{h}/darupoyo/{record['id']}/comments", headers=auth("bob"), json={"request_id": str(uuid4()), "text": "bob"})
+        assert c.delete("/api/me", headers=auth("bob")).status_code == 204
+        assert store.get(f"houses/{h}/moments/{moment['id']}")["comments"] == []
+        kept = store.get(f"houses/{h}/darupoyo_records/{record['id']}")
+        assert kept["comments"] == [] and "sync_with" not in kept

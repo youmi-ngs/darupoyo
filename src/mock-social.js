@@ -5,9 +5,11 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), { status
 const fail = (status, detail) => json({ detail }, status);
 
 export function socialRoute({ db, uid, houseId, house, rest, method, body, save, readMedia, dropMedia, searchParams }) {
-  const comments = rest.match(/^\/posts\/([^/]+)\/comments(?:\/([^/]+))?$/);
+  // Chore posts, うちらのなう and だるぽよ take comments the same way.
+  const comments = rest.match(/^\/(posts|moments|darupoyo)\/([^/]+)\/comments(?:\/([^/]+))?$/)?.slice(1);
   if (comments) {
-    const post = db.posts[comments[1]];
+    const table = { posts: db.posts, moments: db.moments, darupoyo: db.darupoyo_records || {} }[comments.shift()];
+    const post = table[comments[0]];
     if (!post || post.house_id !== houseId) return fail(404, 'Post not found');
     const list = post.comments ||= [];
     if (method === 'POST') {
@@ -20,8 +22,8 @@ export function socialRoute({ db, uid, houseId, house, rest, method, body, save,
       save(db); return json(post, 201);
     }
     if (method === 'DELETE') {
-      if (!list.some(c => c.id === comments[2] && c.user_id === uid)) return fail(404, 'Own comment not found');
-      post.comments = list.filter(c => c.id !== comments[2]); save(db); return json(post);
+      if (!list.some(c => c.id === comments[1] && c.user_id === uid)) return fail(404, 'Own comment not found');
+      post.comments = list.filter(c => c.id !== comments[1]); save(db); return json(post);
     }
   }
   if (rest === '/avatar') {
@@ -59,7 +61,7 @@ export function socialRoute({ db, uid, houseId, house, rest, method, body, save,
   return null;
 }
 
-// Account deletion: drop the user's comments on everyone else's posts.
+// Account deletion: drop the user's comments on everyone else's posts, うちらのなう and だるぽよ.
 export function scrubSocial(db, uid) {
-  for (const post of Object.values(db.posts)) if (post.comments) post.comments = post.comments.filter(c => c.user_id !== uid);
+  for (const post of [db.posts, db.moments, db.darupoyo_records].flatMap(t => Object.values(t || {}))) if (post.comments) post.comments = post.comments.filter(c => c.user_id !== uid);
 }

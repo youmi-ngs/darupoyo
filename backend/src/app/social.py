@@ -28,8 +28,13 @@ def _now():
     return datetime.now(UTC)
 
 
-def add_comment(store, uid, house_id, post_id, body, clock=_now):
-    path = f"houses/{house_id}/posts/{post_id}"
+# Comments live on the record itself: chore posts, うちらのなう and だるぽよ alike.
+COMMENTABLE = ("posts", "moments", "darupoyo_records")
+
+
+def add_comment(store, uid, house_id, post_id, body, clock=_now, collection="posts"):
+    assert collection in COMMENTABLE
+    path = f"houses/{house_id}/{collection}/{post_id}"
     text = body.text.strip()
     comment_id = str(body.request_id)
 
@@ -53,8 +58,9 @@ def add_comment(store, uid, house_id, post_id, body, clock=_now):
     return store.atomic(run)
 
 
-def delete_comment(store, uid, house_id, post_id, comment_id):
-    path = f"houses/{house_id}/posts/{post_id}"
+def delete_comment(store, uid, house_id, post_id, comment_id, collection="posts"):
+    assert collection in COMMENTABLE
+    path = f"houses/{house_id}/{collection}/{post_id}"
 
     def run(tx):
         require_member(tx, house_id, uid)
