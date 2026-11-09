@@ -10,7 +10,8 @@ const LABELS = { laundry: '洗濯', meal: 'ごはん', dryer: 'ドライヤー',
 const PROP = { laundry: 'laundry', meal: 'meal', dryer: 'dryer', garbage: 'trash', trash: 'trash' };
 const MAX_PAGES = 20;
 
-// ctx = { nameOf, iconOf(uid) → element, themeOf(uid), galOf(uid, fallback), openPost(posts, index), toast }
+// ctx = { nameOf, iconOf(uid) → element, themeOf(uid), galOf(uid, fallback), openPost(posts, index), toast,
+//         comments(record, base) → comment section }
 export function setupBoardView(ctx) {
   const view = document.getElementById('board-view'), grid = view.querySelector('.pin-grid'), status = view.querySelector('.pin-status');
   const mini = document.getElementById('entry-board-grid');
@@ -51,8 +52,8 @@ export function setupBoardView(ctx) {
   function cards() {
     return [
       ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.caption || p.praise?.text || '', post: p })),
-      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || '今のじぶん📷', caption: m.caption, praise: m.praise })),
-      ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ' })),
+      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || '今のじぶん📷', caption: m.caption, praise: m.praise, record: m })),
+      ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ', record: r })),
     ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
   function picture(card) {
@@ -121,6 +122,8 @@ export function setupBoardView(ctx) {
       text.textContent = card.caption || ''; text.hidden = !card.caption;
       const praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
     }
+    // Housemates can comment on うちらのなう and だるぽよ too, like on chore records.
+    if (card.record && ctx.comments) box.append(ctx.comments(card.record, card.type === 'moment' ? '/moments' : '/darupoyo'));
     return box;
   }
   function render() {

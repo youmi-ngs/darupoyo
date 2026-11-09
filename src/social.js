@@ -14,8 +14,10 @@ export function residentDot(member, name, color, className = 'who-dot') {
 }
 
 // ---------- comments ----------
-// ctx = { me, nameOf, dotOf(uid), toast }
+// ctx = { me, nameOf, dotOf(uid), toast, base? }. base is where the record lives:
+// '/posts' (chores, the default), '/moments' (うちらのなう) or '/darupoyo'.
 export function commentsBlock(post, ctx) {
+  const base = (ctx.base || '/posts') + '/' + post.id + '/comments';
   const box = document.createElement('section'); box.className = 'comments'; box.setAttribute('aria-label', 'コメント');
   const list = document.createElement('ul'); list.className = 'comment-list';
   const form = document.createElement('form'); form.className = 'comment-form';
@@ -30,7 +32,7 @@ export function commentsBlock(post, ctx) {
       li.append(ctx.dotOf(c.user_id), body);
       if (c.user_id === ctx.me) {
         const x = document.createElement('button'); x.type = 'button'; x.className = 'comment-delete'; x.textContent = '×'; x.setAttribute('aria-label', '自分のコメントを消す');
-        x.onclick = async () => { x.disabled = true; try { post.comments = (await houseApi('/posts/' + post.id + '/comments/' + c.id, undefined, 'DELETE')).comments; draw(); void refresh(); } catch (e) { x.disabled = false; ctx.toast(e.message); } };
+        x.onclick = async () => { x.disabled = true; try { post.comments = (await houseApi(base + '/' + c.id, undefined, 'DELETE')).comments; draw(); void refresh(); } catch (e) { x.disabled = false; ctx.toast(e.message); } };
         li.append(x);
       }
       list.append(li);
@@ -44,7 +46,7 @@ export function commentsBlock(post, ctx) {
     if (pending?.text !== text) pending = { text, id: crypto.randomUUID() };
     setBusy(send, true, '送信中…');
     try {
-      post.comments = (await houseApi('/posts/' + post.id + '/comments', { request_id: pending.id, text })).comments;
+      post.comments = (await houseApi(base, { request_id: pending.id, text })).comments;
       pending = null; input.value = ''; draw(); void refresh();
     } catch (err) { ctx.toast(err.message); } finally { setBusy(send, false); send.disabled = false; }
   };

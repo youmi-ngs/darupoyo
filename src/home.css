@@ -206,3 +206,6 @@ dialog.pin-viewer { overflow-x: hidden; }
 /* The enlarged view of a record without a photo shows the gal doing it, like the small card. */
 .pm-photo .shot.pin-photo.is-drawing { position: relative; border: 0; }
 .pm-photo .shot.pin-photo.is-drawing .resident-character { transform: scale(1.6); }
+/* With comments under it, the picture shrinks a little so the comment box shows without scrolling. */
+dialog.pin-viewer .pin-viewer-slide > .pin-photo { width: min(100%, 44dvh); margin-inline: auto; }
+dialog.pin-viewer .comments { margin-top: 12px; }
