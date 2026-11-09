@@ -22,7 +22,7 @@ import { galCharacter, galIcon as dressedGalIcon, outfitOf } from './gal-figure.
 import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
 import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
-import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data.js';
+import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } from './data.js';
 (() => {
   setupSettingsUI();
   let ME = '', RESIDENTS = [], dashboard = null, THEME_OF = {};
@@ -193,12 +193,10 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
   const galIcon = (g, who = ME) => dressedGalIcon(g, themeOf(who));
   function renderGalPicker(chosenId) {
     const box = $('gal-picker'); if (!box) return; box.replaceChildren();
-    const faces = { heisei: 'e1819', reiwa: 'a8e4c', kuro: '36c33', hime: 'b1680' };
-    const mini = { heisei: 'd83de', kuro: '36255', hime: '2be8e', reiwa: '4fc4e' };
     const mk = (id) => {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'gal-card' + (galPref === id ? ' is-on' : ''); b.setAttribute('aria-pressed', galPref === id ? 'true' : 'false');
-      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + ['heisei', 'kuro', 'hime', 'reiwa'].map(g => '<i class="mini-' + g + '"><img src="/settings/' + mini[g] + '.svg" alt=""></i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
-      else { b.dataset.gal = id; b.innerHTML = '<span class="settings-gal-face" style="background:' + GALS[id].bg + '"><img src="/refined/' + faces[id] + '.svg" alt=""></span><span class="gal-copy"><span class="gal-heading"><b>' + GALS[id].name + '</b><small></small></span><em></em></span>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + ({ heisei:'あげぽよ〜↑↑', reiwa:'え、天才すぎん？', kuro:'やるじゃん！最強！', hime:'えらすぎるキュン♡' })[id] + '」'; }
+      if (id === 'random') { b.innerHTML = '<span class="gal-face gal-random">' + ['heisei', 'kuro', 'hime', 'reiwa'].map(g => '<i class="mini-' + g + '">' + galFaceImg(g) + '</i>').join('') + '</span><b>ノリで</b><small>毎回ちがうギャルがほめる</small>'; }
+      else { b.dataset.gal = id; b.innerHTML = '<span class="settings-gal-face" style="background:' + GALS[id].bg + '">' + galFaceImg(id) + '</span><span class="gal-copy"><span class="gal-heading"><b>' + GALS[id].name + '</b><small></small></span><em></em></span>'; b.setAttribute('aria-label', GALS[id].name); b.querySelector('small').textContent = GALS[id].tag; b.querySelector('em').textContent = '「' + ({ heisei:'あげぽよ〜↑↑', reiwa:'え、天才すぎん？', kuro:'やるじゃん！最強！', hime:'えらすぎるキュン♡' })[id] + '」'; }
       if (galPref === id) {
         const badge = document.createElement('span'); badge.className = 'gal-selected-badge'; badge.textContent = '✓ 選択中'; badge.setAttribute('aria-hidden','true'); b.append(badge);
       }
@@ -209,7 +207,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG } from './data
     box.append(mk('random'));
     GAL_IDS.forEach((g) => box.append(mk(g)));
     const cur = $('gal-current');
-    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + GALS[g].svg + '</i>').join('') + '</span><small>ノリで</small>' : galIcon(galPref);
+    if (cur) cur.innerHTML = galPref === 'random' ? '<span class="gal-face gal-random">' + GAL_IDS.map((g) => '<i>' + galFaceImg(g) + '</i>').join('') + '</span><small>ノリで</small>' : galIcon(galPref);
     if (cur) cur.setAttribute('aria-label', galPref === 'random' ? 'ノリで' : GALS[galPref].name);
   }
 
