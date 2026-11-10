@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { setWelcomeName, setHouseName } from '../e2e/onboarding-helper.js';
 
 async function enter(page, guide = false) {
-  if (!guide) await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1'));
+  if (!guide) await page.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/'); await setWelcomeName(page,'もち'); await setHouseName(page,'確認ハウス');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
   await page.getByRole('button',{name:'ハウスに入る',exact:true}).click();
@@ -16,9 +16,9 @@ test('30 visible characters, optional text, compact photo and board categories',
   const composer=page.locator('.darupoyo-dialog'), input=composer.locator('textarea');
   await expect(composer).toContainText('ま、そんな日もあるっしょ〜♡');
   await expect(composer).toContainText('かかなくてもおけ♡');
-  await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(31));
-  await expect(composer.locator('[data-save]')).toBeDisabled();
-  await expect(composer.locator('[data-count]')).toContainText('あと1文字減らしてね');
+  await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(30));
+  await expect(composer.locator('[data-save]')).toBeEnabled();
+  await expect(composer.locator('[data-count]')).toHaveText('30 / 30');
   await input.fill('👨‍👩‍👧‍👦'.repeat(30));
   await expect(composer.locator('[data-count]')).toHaveText('30 / 30');
   const buffer=Buffer.from(await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=600;return c.toDataURL().split(',')[1];}),'base64');
@@ -36,11 +36,15 @@ test('30 visible characters, optional text, compact photo and board categories',
 test('name limits preserve old names, invite links and profile cancel leave settings open', async ({page}) => {
   await enter(page); await settings(page);
   await page.locator('#account-edit').click(); await page.locator('[name=display_name]').fill('あ'.repeat(13));
-  await expect(page.locator('#display_name-limit')).toHaveText('13 / 12文字　少し短くしてね');
-  await expect(page.locator('[name=display_name]')).toHaveAttribute('aria-invalid','true');
-  await page.locator('#account-form [type=submit]').click(); await expect(page.locator('#toast')).toContainText('12文字');
+  await expect(page.locator('[name=display_name]')).toHaveValue('あ'.repeat(12));
+  await expect(page.locator('#display_name-limit')).toHaveText('12 / 12文字');
+  await expect(page.locator('[name=display_name]')).toHaveAttribute('aria-invalid','false');
   await page.locator('[name=display_name]').fill('あ'.repeat(12)); await page.locator('#account-form [type=submit]').click();
   await expect(page.locator('.account-row b')).toHaveText('あ'.repeat(12));
+  await page.locator('#house-edit').click();
+  await page.locator('[name=house_name]').fill('家'.repeat(21));
+  await expect(page.locator('[name=house_name]')).toHaveValue('家'.repeat(20));
+  await page.locator('#house-form .account-cancel').click();
   await page.evaluate(async()=>{const {client}=await import('/src/api.js');const db=JSON.parse(localStorage.getItem('darupoyo-mock'));db.houses[client.house].members[client.uid].display_name='長い名前'.repeat(15);localStorage.setItem('darupoyo-mock',JSON.stringify(db));});
   await page.reload(); await settings(page); await expect(page.locator('.account-row b')).toHaveText('長い名前'.repeat(15));
   await page.locator('#account-edit').click(); await page.locator('#account-form [type=submit]').click();
@@ -79,8 +83,8 @@ test('notification target switches houses and opens the exact record', async({pa
     const {record}=await api('/houses/'+house.id+'/darupoyo',{request_id:crypto.randomUUID(),chore:'dryer',caption:'通知対象'});
     return {house:house.id,post:record.id,oldHouse:client.house};
   });
+  await settings(page);
   await page.goto('/#'+new URLSearchParams({house:target.house,post:target.post,kind:'darupoyo'}));
-  await page.reload();
   await expect(page.locator('.pin-viewer')).toBeVisible();
   await expect(page.locator('.pin-viewer')).toContainText('通知対象');
   expect(await page.evaluate(async()=>(await import('/src/api.js')).client.house)).toBe(target.house);
@@ -126,7 +130,6 @@ for (const kind of ['darupoyo', 'post']) test(`notification ${kind} opens before
     };
   });
   await page.goto('/#' + new URLSearchParams(target));
-  await page.reload();
   if (kind === 'darupoyo') {
     await expect(page.locator('.pin-viewer')).toBeVisible({ timeout: 5000 });
     await expect(page.locator('.pin-viewer')).toContainText('待たずに開く記録');

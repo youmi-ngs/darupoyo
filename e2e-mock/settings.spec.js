@@ -2,7 +2,7 @@ import { setWelcomeName, setHouseName } from '../e2e/onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await page.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/');
   await setWelcomeName(page, 'のぶぽよ');
   await setHouseName(page, 'おんたまハウス');

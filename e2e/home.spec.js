@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))); });
 async function enter(page) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'home');
   await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
@@ -17,6 +17,8 @@ const fill = page => page.evaluate(async () => {
 
 test('the order is 外, 玄関, リビング, 洗面所, ベランダ, みんなの部屋; dots move between them and the bar is gone', async ({ page }) => {
   await enter(page);
+  await page.reload();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.scene-dot')).toHaveCount(6);
   const labels = await page.locator('#plan > .scene').evaluateAll(n => n.map(s => s.getAttribute('aria-label')));
   expect(labels).toEqual(['外', '玄関', 'リビング', '洗面所', 'ベランダ', 'みんなの部屋']);

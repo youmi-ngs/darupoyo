@@ -1,7 +1,7 @@
 import './feedback.css';
 import { setupFirstGuide } from './first-guide.js';
 import { captionCounter } from './composer-ui.js';
-import { textLength } from './text-limits.js';
+import { textLength, limitInput } from './text-limits.js';
 import './input-mode.js';
 import './no-zoom.js';
 import { setBusy } from './busy.js';
@@ -412,6 +412,11 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   const goEntry = () => { window.__toScene = sceneIndexOf('entry'); showHouse(); };
   window.addEventListener('darupoyo:open-board', goBoard);
   window.addEventListener('darupoyo:go-entry', goEntry);
+  // Also handle notifications delivered by an older installed service worker.
+  window.addEventListener('hashchange', () => {
+    const target = new URLSearchParams(location.hash.slice(1));
+    if (target.get('house') && target.get('post')) location.reload();
+  });
   window.addEventListener('darupoyo:entered', async () => {
     const params = new URLSearchParams(location.hash.slice(1));
     if (!params.get('post')) return;
@@ -697,11 +702,12 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   // 招待で入居したときに、誰と住むのかを見せる
   window.addEventListener('darupoyo:joined', () => {
     const others = RESIDENTS.filter(r => r.who !== ME).map(r => nameOf(r.who));
-    if (!others.length) return;
+    if (!others.length) { window.dispatchEvent(new Event('darupoyo:guide-ready')); return; }
     const names = others.length > 3 ? others.slice(0, 3).join('、') + 'たち' : others.join('、');
     sheetBody.innerHTML = '<div class="move-in"><h2 class="sheet-title" id="sheet-title"></h2><p class="sheet-text"></p><button class="btn btn-main" type="button" id="move-in-ok">おじゃまします！</button></div>';
     sheetBody.querySelector('.sheet-title').textContent = names + 'と一緒に住む！';
     sheetBody.querySelector('.sheet-text').textContent = '今日から「' + dashboard.house.name + '」の住人だよ。自分の部屋もできたよ。';
+    sheet.addEventListener('close', () => window.dispatchEvent(new Event('darupoyo:guide-ready')), { once: true });
     $('move-in-ok').onclick = () => sheet.close();
     sheet.showModal(); $('move-in-ok').focus();
   });
@@ -722,6 +728,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       hint.classList.toggle('is-error', over);
       hint.textContent = unchanged && count > limit ? '以前の名前は、そのまま使えるよ' : count + ' / ' + limit + '文字' + (over ? '　少し短くしてね' : '');
     };
+    limitInput(input, limit);
     input.addEventListener('input', updateHint);
     const toggle = open => {
       if (open) { form.elements[field].value = current(); updateHint(); }

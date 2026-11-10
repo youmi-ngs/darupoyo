@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 test('each section keeps its own draft and a failed save can be retried', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await page.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/');
   await setWelcomeName(page, 'もち');
   await setHouseName(page, '温玉');

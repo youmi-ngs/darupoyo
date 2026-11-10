@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))); });
 async function enter(page, house) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, house);
   await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
@@ -18,7 +18,8 @@ test('your own chore record: edit its words (the gal answers again) and delete i
   const field = slide.getByLabel('ひとこと（30文字まで）');
   await expect(field).toHaveValue('かわいた');
   await field.fill('あ'.repeat(31));
-  await expect(slide.getByRole('button', { name: '保存' })).toBeDisabled();
+  await expect(field).toHaveValue('あ'.repeat(30));
+  await expect(slide.getByRole('button', { name: '保存' })).toBeEnabled();
   await field.fill('サラサラになった');
   const saved = page.waitForResponse(r => r.request().method() === 'PATCH' && /\/posts\//.test(r.url()));
   await slide.getByRole('button', { name: '保存' }).click();

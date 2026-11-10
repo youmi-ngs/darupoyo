@@ -22,6 +22,10 @@ class HouseCreate(Model):
     display_name: UserName = Field(min_length=1, pattern=r"\S")
 
 
+class InvitePreview(Model):
+    token: str = Field(min_length=8, max_length=200)
+
+
 class Join(Model):
     # Short code (8 chars, any case, optional hyphen) or an older long link token.
     token: str = Field(min_length=8, max_length=200)

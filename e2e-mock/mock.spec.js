@@ -2,7 +2,7 @@ import { setWelcomeName, setHouseName } from '../e2e/onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 import { playRhythm, stillCamera } from '../e2e/rhythm-helper.js';
 test.beforeEach(async ({ context }) => {
-  await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
 });
 
 test('two tabs share the mock house and see each other clear chores', async ({ page, context }) => {
@@ -20,7 +20,7 @@ test('two tabs share the mock house and see each other clear chores', async ({ p
 
   await stillCamera(context);
   const friend = await context.newPage();
-  await friend.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await friend.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await friend.goto('/'); await setWelcomeName(friend, 'ともだち'); await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click(); await friend.getByLabel('招待コード').fill(code);
 
   await friend.getByRole('button', { name: '招待に参加する' }).click();

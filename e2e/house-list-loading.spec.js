@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 
 test('house choices are ready on opening even while membership refresh is pending', async ({page}) => {
-  await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1'));
+  await page.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/'); await setWelcomeName(page,'ぽよ'); await setHouseName(page,'すぐ見えるハウス');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
   await page.getByRole('button',{name:'ハウスに入る'}).click();

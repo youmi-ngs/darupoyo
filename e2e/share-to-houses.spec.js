@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))); });
 async function newHouse(page, name, first = false) {
   if (!first) { await page.locator('#open-menu').click(); await page.locator('#menu-house').click(); await page.locator('#house-add').click(); }
   else await setWelcomeName(page, 'もち');

@@ -1,7 +1,7 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async({context,page})=>{
-  await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
+  await context.addInitScript(()=>['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.route('**/api/weather',route=>route.fulfill({json:{kind:'rain',source:'google'}}));
 });
 async function enter(page) {

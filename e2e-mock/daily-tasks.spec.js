@@ -1,7 +1,7 @@
 import { setWelcomeName, setHouseName } from '../e2e/onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test('mock darupoyo shares, retries, persists and is removed with the account',async({page})=>{
-  await page.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
+  await page.addInitScript(()=>['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'mock');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button',{name:/^だるぽよ/}).click();

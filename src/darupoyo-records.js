@@ -100,7 +100,7 @@ export function setupDarupoyoRecords() {
     const file=dialog.querySelector('[data-file]'), camera=dialog.querySelector('[data-camera]'), library=dialog.querySelector('[data-library]'), caption=dialog.querySelector('textarea'), preview=dialog.querySelector('.darupoyo-preview'), attachment=dialog.querySelector('[data-photo]'), remove=dialog.querySelector('[data-remove]'), save=dialog.querySelector('[data-save]'), close=dialog.querySelector('[data-close]'), notice=dialog.querySelector('[role=status]');
     photoPreview(preview);
     const audience=audienceChip(); save.before(audience.el); // 共有範囲
-    const inputState = limitInput(caption, 30, dialog.querySelector("[data-count]"), {preserveOverflow:true});
+    const inputState = limitInput(caption, 30, dialog.querySelector("[data-count]"));
     caption.after(dialog.querySelector("[data-count]"));
     library.onclick=()=>file.click();
     const valid=()=>{ save.disabled=busy || preparing || inputState.isComposing() || textLength(caption.value)>30; };

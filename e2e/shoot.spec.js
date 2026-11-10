@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))); });
 
 test('each place starts its chore from the furniture: trash cans, table, vanity and basket', async ({ page }) => {
   await page.goto('/');

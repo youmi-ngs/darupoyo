@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test.beforeEach(async({context})=>{await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));});
+test.beforeEach(async({context})=>{await context.addInitScript(()=>['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));});
 test('pose camera timer counts down and a failed pose can be retaken without leaving the camera (#10 #13)',async({page,context})=>{
   test.setTimeout(90000);
   await context.grantPermissions(['camera']);

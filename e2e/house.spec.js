@@ -1,7 +1,7 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 import { playRhythm, stillCamera } from './rhythm-helper.js';
-test.beforeEach(async({context})=>{await context.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));});
+test.beforeEach(async({context})=>{await context.addInitScript(()=>['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));});
 
 test('create, invite, sync, rhythm, private meal, persistence and room theme', async ({ page, browser }) => {
   await stillCamera(page.context());
