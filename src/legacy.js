@@ -14,7 +14,7 @@ import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
 import { setupCritters } from './critters.js';
 import { startAmbience } from './ambience.js';
-import { client, start, houseApi, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
+import { client, start, houseApi, loadImage, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
 import { capture } from './media.js';
 import { renderActivities, roomGal, nextReturn } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
@@ -150,6 +150,13 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       sl.innerHTML = '<div class="pm-photo"></div><h2 class="pm-title"></h2><p class="pm-meta"></p><div class="verdict"><span class="gal-slot"></span><p class="bubble"><span class="gal-text"></span></p></div><p class="pm-get"><span class="tl-get"></span> をゲット</p>';
       // No photo (sound, rhythm): the poster's gal doing the chore, as on the small けーじばん card.
       sl.querySelector('.pm-photo').append(p.image ? shotEl(p) : galShot(p));
+      if (!p.image && p.media_id && !p.foreign) {
+        const photo = sl.querySelector('.pm-photo');
+        photo.textContent = '写真を読み込み中…';
+        void loadImage(p.media_id).then(image => {
+          if (image && photo.isConnected) photo.replaceChildren(shotEl({ ...p, image }));
+        }, () => { if (photo.isConnected) photo.textContent = '写真を読み込めなかったよ'; });
+      }
       sl.querySelector('.pm-title').textContent = nameOf(p.who) + 'の' + TASKS[p.task].label;
       sl.querySelector('.pm-meta').textContent = (day || '今日') + ' ' + p.time + '　' + ({ pose: 'ポーズ', photo: '写真', sound: '音', rhythm: 'リズム' })[p.kind] + 'でクリア';
       const pg = galOf(p);
@@ -398,7 +405,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     if (!params.get('post')) return;
     if (params.get('house') !== client.house) { toast('通知のハウスに参加していないため、投稿を開けないよ'); return; }
     history.replaceState(null, '', location.pathname + location.search);
-    try { await refresh(); showHouse(); await boardView.openNotification(params.get('post'), params.get('kind') || 'post'); }
+    try { showHouse(); await boardView.openNotification(params.get('post'), params.get('kind') || 'post'); }
     catch { toast('投稿を読み込めなかったよ。もう一度試してね'); }
   });
 

@@ -26,12 +26,12 @@ export function setupBoardView(ctx) {
   };
   const lazy = new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { lazy.unobserve(e.target); e.target.load?.(); } }));
 
-  async function all(path) {
+  async function all(path, targetId) {
     const items = []; let cursor = null;
     for (let page = 0; page < MAX_PAGES; page++) {
       const result = await houseApi(path + (cursor ? '?before=' + encodeURIComponent(cursor) : ''));
       items.push(...result.items); cursor = result.next_cursor;
-      if (!cursor) break;
+      if (!cursor || (targetId && items.some(item => item.id === targetId))) break;
     }
     return items;
   }
@@ -141,13 +141,13 @@ export function setupBoardView(ctx) {
 
   let exitAnimation = null, closeVersion = 0;
   view.querySelector('.board-back').addEventListener('click', () => close());
-  function open() {
+  function open({ load = true } = {}) {
     closeVersion++; exitAnimation?.cancel(); exitAnimation = null;
     view.inert = false; document.getElementById('house-view').inert = false;
     document.body.classList.add('no-scroll');
     ['house-view', 'room-view'].forEach(id => { document.getElementById(id).hidden = true; });
     view.hidden = false; view.scrollTop = 0; view.querySelector('.board-back').focus();
-    void loadExtra();
+    if (load) void loadExtra();
   }
   async function close() {
     if (view.hidden || exitAnimation) return;
@@ -172,8 +172,21 @@ export function setupBoardView(ctx) {
   return {
     open, close,
     async openNotification(id, kind) {
-      open(); await loadExtra();
-      const card = cards().find(c => c.id === id && c.type === kind);
+      open({ load: false });
+      const house = client.house, version = closeVersion;
+      const find = () => cards().find(c => c.id === id && c.type === kind);
+      let card = find();
+      if (!card && (kind === 'moment' || kind === 'darupoyo')) {
+        status.textContent = '通知の記録を開いているよ…';
+        status.setAttribute('role', 'status');
+        const key = kind === 'moment' ? 'moments' : 'darupoyo';
+        // Fetch only the relevant record list, stopping at the target page.
+        // Neither unrelated lists nor historical photo downloads block the detail.
+        const records = await all('/' + key, id);
+        if (house !== client.house || version !== closeVersion || view.hidden) return;
+        extra[key] = records; render(); card = find();
+      }
+      if (house !== client.house || version !== closeVersion || view.hidden) return;
       if (card) openCard(card); else ctx.toast("この投稿は見つからないか、削除されているよ");
     },
     update(data, allPosts) {

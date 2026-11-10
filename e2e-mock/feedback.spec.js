@@ -103,3 +103,38 @@ test('today pose displays the uploaded template after refresh; sound frame is an
   await page.locator('.door.is-me').click();
   await expect(page.locator('.mr-frame .is-drawing .resident-character')).toHaveCount(1);
 });
+
+
+for (const kind of ['darupoyo', 'post']) test(`notification ${kind} opens before historical photo downloads finish`, async ({ page }) => {
+  await enter(page);
+  const target = await page.evaluate(async kind => {
+    const { houseApi, client } = await import('/src/api.js');
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 20;
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const { id } = await houseApi('/media?kind=cutout', blob);
+    const completion = await houseApi('/completions', { request_id: crypto.randomUUID(), chore: 'garbage', method: 'pose', media_id: id,
+      landmarks: Array.from({ length: 33 }, () => ({ x: .5, y: .5, z: 0, visibility: 1 })) });
+    const { record } = await houseApi('/darupoyo', { request_id: crypto.randomUUID(), chore: 'meal', caption: '待たずに開く記録' });
+    return { house: client.house, post: kind === 'post' ? completion.post.id : record.id, kind };
+  }, kind);
+  await page.addInitScript(() => {
+    const original = Response.prototype.blob;
+    Response.prototype.blob = async function () {
+      window.photoDownloadPending = true;
+      await new Promise(resolve => { window.releasePhotoDownload = resolve; });
+      return original.call(this);
+    };
+  });
+  await page.goto('/#' + new URLSearchParams(target));
+  await page.reload();
+  if (kind === 'darupoyo') {
+    await expect(page.locator('.pin-viewer')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.pin-viewer')).toContainText('待たずに開く記録');
+  } else {
+    await expect(page.locator('#photo-modal')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#photo-modal')).toContainText('写真を読み込み中');
+    await page.evaluate(() => window.releasePhotoDownload());
+    await expect(page.locator('#photo-modal .pm-photo img')).toBeVisible();
+  }
+  expect(await page.evaluate(() => window.photoDownloadPending)).toBe(true);
+});
