@@ -12,6 +12,8 @@ class DarupoyoRecord(Model):
     chore: Chore
     caption: Caption = ""
     media_id: UUID | None = None
+    # 共有範囲: my other houses that get this record too.
+    share_to: list[UUID] = Field(default_factory=list, max_length=10)
 
     @model_validator(mode="after")
     def tidy(self):
@@ -59,7 +61,16 @@ def share(domain, uid, house_id, body):
 def register_darupoyo_routes(app, current_user):
     @app.post('/api/houses/{house_id}/darupoyo', status_code=201)
     def create_record(house_id: UUID, body: DarupoyoRecord, uid=Depends(current_user)):
-        return share(app.state.domain, uid, str(house_id), body)
+        from .sharing import fan_out, targets
+        house = str(house_id)
+        targets(app.state.store, uid, house, body.share_to)  # check before anything is saved
+        result = share(app.state.domain, uid, house, body)
+
+        def copy(other, media_ids):
+            return share(app.state.domain, uid, other, body.model_copy(update={**media_ids, "share_to": []}))["record"]
+
+        result["record"] = fan_out(app, uid, house, "darupoyo_records", result["record"], body, copy)
+        return result
 
     @app.get('/api/houses/{house_id}/darupoyo')
     def records(

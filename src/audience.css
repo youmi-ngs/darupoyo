@@ -1,0 +1,21 @@
+/* 共有範囲 pill and its sheet */
+.audience-chip { align-self: center; display: inline-flex; align-items: center; gap: 6px; max-width: 100%; min-height: 40px; padding: 6px 14px 6px 12px;
+  border: 1px solid #775b9d40; border-radius: 999px; background: #ffffffe6; color: #3b2560; box-shadow: 0 2px 8px -4px #3b256040;
+  font: 700 14px/20px var(--font-ui, inherit); cursor: pointer; }
+.audience-chip svg { flex: none; color: #b05a8f; }
+.audience-chip-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.audience-chip-more { flex: none; color: #6a5590; font-size: 18px; line-height: 1; }
+.audience-chip:active { transform: scale(.97); }
+dialog.audience-sheet { width: min(340px, calc(100% - 32px)); margin: auto; inset: 0; padding: 22px 20px 18px; border: 1px solid #ffffffbf; border-radius: 24px;
+  background: linear-gradient(97deg, #fff5fcfa, #f2edfff7); color: #3b2560; box-shadow: 0 12px 32px -8px #2b1a451f; font-family: var(--font-ui, inherit); }
+dialog.audience-sheet::backdrop { background: #3b256059; }
+.audience-sheet h2 { margin: 0 0 10px; font-size: 20px; }
+.audience-list { margin: 0; padding: 0; list-style: none; }
+.audience-list label { display: flex; align-items: center; gap: 10px; min-height: 48px; font-size: 16px; font-weight: 700; }
+.audience-list input { width: 22px; height: 22px; accent-color: #e86aa6; flex: none; }
+.audience-list span { min-width: 0; overflow-wrap: anywhere; }
+.audience-list small { margin-left: auto; padding: 2px 8px; border-radius: 999px; background: #ede2ff; color: #6a4590; font-size: 11px; white-space: nowrap; }
+.audience-list li + li { border-top: 1px solid #775b9d1f; }
+.audience-note { margin: 8px 0 14px; font-size: 12px; line-height: 18px; color: #6a5590; }
+.audience-done { width: 100%; min-height: 52px; border: 0; border-radius: 999px; background: #ffdbf0; color: #3b2560; font: 700 16px/24px var(--font-ui, inherit); }
+.audience-chip[hidden] { display: none; }

@@ -162,6 +162,9 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 | DELETE | /api/houses/{id}/posts/{postId}/comments/{commentId} | 自分のコメントだけ消せる |
 | POST / DELETE | /api/houses/{id}/moments/{momentId}/comments(/{commentId}) | うちらのなうへのコメント。決まりは投稿のコメントと同じ |
 | POST / DELETE | /api/houses/{id}/darupoyo/{recordId}/comments(/{commentId}) | だるぽよへのコメント。決まりは投稿のコメントと同じ |
+| PATCH | /api/houses/{id}/{posts\|moments\|darupoyo}/{recordId} | 自分の投稿のひとことだけを編集 `{caption}`（30文字まで）。変わったら `edited_at` を付け、家事・うちらのなうはギャルのひとこと（`praise`）を新しい文で書き直す（うちらのなうは写真も見る） |
+| DELETE | /api/houses/{id}/{posts\|moments\|darupoyo}/{recordId} | 自分の投稿を削除。写真・音声も消し、その日の記録（部屋の電気・完了・お手本ポーズ・だるぽよ共有）から外す。同じ request_id の再送で消えた投稿は戻らない |
+| 共有範囲 | `POST /completions`・`/moments`・`/darupoyo` | `share_to: [house_id, ...]`（任意・10件まで）で、自分が住んでいるほかのハウスにも同じ投稿を作る。写真・音声はハウスごとにコピー、ギャルのひとことは同じものを使い、それぞれのハウスに通知する。各投稿の `shared_copies: {house_id: record_id}` でつながり、編集・削除は全部に反映。自分のハウス以外を指定すると 422（何も保存しない） |
 | POST | /api/houses/{id}/media?kind=avatar | プロフィール写真（JPEGに再エンコード） |
 | PUT / DELETE | /api/houses/{id}/avatar | `{media_id}` でこのハウスでのプロフィール写真を設定 / 外す。前の写真のファイルは消す |
 | PUT | /api/houses/{id}/history-sharing | `{enabled}`。オンにしたハウスの住人だけが、本人の別ハウスでの記録を見られる |

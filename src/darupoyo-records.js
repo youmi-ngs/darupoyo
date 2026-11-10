@@ -3,6 +3,7 @@ import { limitInput, textLength } from './text-limits.js';
 import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
 import { doneActionsHTML } from './celebrate.js';
+import { audienceChip } from './audience.js';
 import { api, client, refresh } from './api.js';
 import { blobOf, photoCrop } from './camera.js';
 import { takePhoto } from './photo-camera.js';
@@ -98,6 +99,7 @@ export function setupDarupoyoRecords() {
     dialog.innerHTML='<header class="refined-header"><h2>だるぽよ</h2><button type="button" class="refined-close" data-close aria-label="閉じる"><img src="/refined/edfe8.svg" alt=""></button></header><p class="refined-description">ま、そんな日もあるっしょ〜♡</p><div class="composer-field"><label for="darupoyo-caption">ひとこと（かかなくてもおけ♡）</label><div class="composer-input"><textarea id="darupoyo-caption" aria-label="ひとこと（任意・30文字まで）" maxlength="30" rows="3"></textarea><div class="composer-attachment" data-photo hidden><img class="darupoyo-preview" alt="共有する写真の確認"><button type="button" class="composer-remove" data-remove aria-label="写真を外す"><img src="/refined/edfe8.svg" alt=""></button></div><div class="composer-toolbar"><div class="composer-photos"><button type="button" data-camera aria-label="写真を撮る"><img src="/refined/f677c.svg" alt=""></button><button type="button" data-library aria-label="ライブラリから選ぶ"><img src="/refined/18d84.svg" alt=""></button></div><span data-count>0 / 30</span></div><input type="file" accept="image/*" aria-label="写真を選ぶ" data-file hidden></div></div><p role="status"></p><button type="button" class="refined-button" data-save>きょーゆー</button>';
     const file=dialog.querySelector('[data-file]'), camera=dialog.querySelector('[data-camera]'), library=dialog.querySelector('[data-library]'), caption=dialog.querySelector('textarea'), preview=dialog.querySelector('.darupoyo-preview'), attachment=dialog.querySelector('[data-photo]'), remove=dialog.querySelector('[data-remove]'), save=dialog.querySelector('[data-save]'), close=dialog.querySelector('[data-close]'), notice=dialog.querySelector('[role=status]');
     photoPreview(preview);
+    const audience=audienceChip(); save.before(audience.el); // 共有範囲
     const inputState = limitInput(caption, 30, dialog.querySelector("[data-count]"), {preserveOverflow:true});
     caption.after(dialog.querySelector("[data-count]"));
     library.onclick=()=>file.click();
@@ -129,7 +131,7 @@ export function setupDarupoyoRecords() {
     save.onclick=async()=>{
       if(busy || preparing || inputState.isComposing() || client.house!==house) return;
       if(textLength(caption.value)>30) { caption.reportValidity(); caption.focus(); valid(); return; }
-      submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim()};
+      submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim(),share_to:audience.shareTo()};
       busy=true; [file,camera,library,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent=''; setBusy(save,true,'共有しています…');
       try {
         const {record}=await whileSending(dialog, async()=>{ // そ〜しんちゅ〜
