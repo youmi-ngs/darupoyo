@@ -11,7 +11,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
   await page.goto('/');
   await setWelcomeName(page, 'もち');
   await setHouseName(page, '温玉テスト');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact:true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact:true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
@@ -59,7 +59,7 @@ test('create, invite, sync, rhythm, private meal, persistence and room theme', a
 
 test('without camera permission a meal photo can come from the library, and nothing is recorded by itself (#117)', async ({ page }) => {
   await page.addInitScript(()=>{ navigator.mediaDevices.getUserMedia = async()=>{throw new DOMException('Denied','NotAllowedError');}; });
-  await page.goto('/'); await setWelcomeName(page, 'camera'); await setHouseName(page, 'permission'); await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'camera'); await setHouseName(page, 'permission'); await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button',{name:/^たべる/}).click();
   await expect(page.locator('.capture-status')).toContainText('カメラを使えないので');
   await expect(page.locator('.capture-library')).toBeVisible();
@@ -69,7 +69,7 @@ test('without camera permission a meal photo can come from the library, and noth
 });
 test('missing camera explains it for laundry', async ({ page }) => {
   await page.addInitScript(()=>{ navigator.mediaDevices.getUserMedia = async()=>{throw new DOMException('none','NotFoundError');}; });
-  await page.goto('/'); await setWelcomeName(page, 'nocam'); await setHouseName(page, 'no device'); await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'nocam'); await setHouseName(page, 'no device'); await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="laundry"]').click(); await page.getByRole('button',{name:/^干す/}).click();
   await expect(page.locator('#toast')).toHaveText('カメラが見つかりません');
   await expect(page.getByRole('button',{name:/^干す/})).toBeVisible();
@@ -80,7 +80,7 @@ test('switch between houses from the menu', async ({ page }) => {
   const create = async name => {
     await setWelcomeName(page, 'もち');
     await setHouseName(page, name);
-    await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+    await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
     await expect(page.locator('.onboarding')).toHaveCount(0);
   };
   const switchHouse = async () => {
@@ -115,7 +115,7 @@ test('rename yourself and the house from settings', async ({ page }) => {
   await page.goto('/');
   await setWelcomeName(page, 'もち');
   await setHouseName(page, '温玉');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   const howto = page.locator('#howto-page[open] #howto-close');
   if (await howto.count()) await howto.click();

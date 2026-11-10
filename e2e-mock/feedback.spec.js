@@ -5,7 +5,7 @@ async function enter(page, guide = false) {
   if (!guide) await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1'));
   await page.goto('/'); await setWelcomeName(page,'もち'); await setHouseName(page,'確認ハウス');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
-  await page.getByRole('button',{name:'おうちに入る',exact:true}).click();
+  await page.getByRole('button',{name:'ハウスに入る',exact:true}).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 async function settings(page) {

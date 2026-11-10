@@ -4,7 +4,7 @@ async function howto(page) {
   await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1'));
   await page.goto('/'); await setWelcomeName(page,'ぽよ'); await setHouseName(page,'追加の案内');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
-  await page.getByRole('button',{name:'おうちに入る'}).click();
+  await page.getByRole('button',{name:'ハウスに入る'}).click();
   await page.locator('#open-menu').click(); await page.locator('#open-howto').click();
   await expect(page.locator('#settings #install-card')).toHaveCount(0);
 }

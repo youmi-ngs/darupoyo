@@ -2,7 +2,7 @@ import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test('first-entry guide can be skipped, replayed from how-to, and stays dismissed on reload', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await context.newPage();
-  await page.goto('/'); await setWelcomeName(page, 'はじめて'); await setHouseName(page, 'howto'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.goto('/'); await setWelcomeName(page, 'はじめて'); await setHouseName(page, 'howto'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.first-guide')).toBeVisible();
   await page.getByRole('button', { name: 'スキップ', exact: true }).click();
@@ -33,7 +33,7 @@ test('first-entry guide can be skipped, replayed from how-to, and stays dismisse
 });
 test('how-to has five swipe cards on a small phone', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 375, height: 667 } }); const page = await context.newPage();
-  await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'pics'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'pics'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.first-guide')).toBeVisible();
   await page.getByRole('button', { name: 'スキップ', exact: true }).click();
   await expect(page.locator('.first-guide')).toHaveCount(0);

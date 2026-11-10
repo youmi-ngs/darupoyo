@@ -3,20 +3,20 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page, house) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, house);
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 
 test('やっほ〜 offers three different-looking choices, and 帰る lists your houses (#181)', async ({ page }) => {
   await page.goto('/'); await setWelcomeName(page, 'もち');
   // a newcomer has no house to go back to
   await expect(page.getByRole('button', { name: 'すでに入居済みの家に帰る' })).toHaveCount(0);
-  await setHouseName(page, 'おんたま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await setHouseName(page, 'おんたま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await page.locator('#open-menu').click(); await page.locator('#menu-house').click(); await page.locator('#house-add').click();
   const home = page.getByRole('button', { name: 'すでに入居済みの家に帰る' }), join = page.getByRole('button', { name: '友達の家に住む' }), make = page.getByRole('button', { name: '新しく家をつくる' });
   const colours = await Promise.all([home, join, make].map(b => b.evaluate(el => getComputedStyle(el).backgroundColor)));
   expect(new Set(colours).size).toBe(3);
   await home.click();
-  await expect(page.locator('.onboarding h2')).toHaveText('どのおうちに帰る？');
+  await expect(page.locator('.onboarding h2')).toHaveText('どのハウスに帰る？');
   await page.getByRole('button', { name: 'もどる' }).click();
   await expect(page.locator('.onboarding h2')).toHaveText('やっほ〜');
   await home.click(); await page.getByRole('button', { name: 'おんたまに帰る' }).click();

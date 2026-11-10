@@ -5,7 +5,7 @@ test('house choices are ready on opening even while membership refresh is pendin
   await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1'));
   await page.goto('/'); await setWelcomeName(page,'ぽよ'); await setHouseName(page,'すぐ見えるハウス');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
-  await page.getByRole('button',{name:'おうちに入る'}).click();
+  await page.getByRole('button',{name:'ハウスに入る'}).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   for (const reload of [false, true]) {
     if (reload) { await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0); }

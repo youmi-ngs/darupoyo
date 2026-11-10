@@ -2,7 +2,7 @@ import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test('the うちらのなう button opens うちらのなう: take, retake, add a word and みせちゃう (Figma 207:914)', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await setWelcomeName(page, 'カメラ'); await setHouseName(page, '近況'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'カメラ'); await setHouseName(page, '近況'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   const now = page.getByRole('dialog', { name: 'うちらのなう' });
   await expect(now).toBeVisible();
@@ -45,7 +45,7 @@ test('the うちらのなう button opens うちらのなう: take, retake, add 
 
 test('without a camera, a photo from the library can be shown', async ({ page, context }) => {
   await context.addInitScript(() => { localStorage.setItem('darupoyo-howto-seen', '1'); navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('denied', 'NotAllowedError'); }; });
-  await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'ら'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'ら'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   const now = page.getByRole('dialog', { name: 'うちらのなう' });
   await expect(now.getByText('カメラを使えないので、左下からライブラリの写真をえらんでね')).toBeVisible();
@@ -59,7 +59,7 @@ test('without a camera, a photo from the library can be shown', async ({ page, c
 
 test('the gal line shows on the けーじばん card of a selfie too (#158)', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'いま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'いま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
     const { houseApi } = await import('/src/api.js');
     await houseApi('/profile', { gal: 'hime' }, 'PUT');
@@ -94,7 +94,7 @@ const twoCameras = () => {
 };
 async function openSelfie(page) {
   await page.addInitScript(twoCameras); await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await setWelcomeName(page, 'かがみ'); await setHouseName(page, 'いま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'かがみ'); await setHouseName(page, 'いま'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(1).click(); await page.locator('[data-open-moments]').click();
   await expect(page.locator('.now-dialog video')).toBeVisible();
 }
@@ -138,7 +138,7 @@ test('on a short phone screen the shutter and みせちゃう are visible withou
 
 test('in the けーじばん viewer, うちらのなう posts can be swiped through', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'すわいぷ'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'すわいぷ'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
     const { houseApi } = await import('/src/api.js');
     for (const caption of ['ひとつめ', 'ふたつめ', 'みっつめ']) {
@@ -171,7 +171,7 @@ test('in the けーじばん viewer, うちらのなう posts can be swiped thro
 
 test('うちらのなう opens from the camera on the wall shelf under けーじばん; the hallway keeps only the residents, centered', async ({ page, context }) => {
   await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
-  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'げんかん'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'げんかん'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   const table = page.locator('[data-scene="entry"] .now-table');
   await expect(table).toBeVisible();
   // under the board, on the floor, swaying with a blue glow like an action that is not a chore

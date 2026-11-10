@@ -6,7 +6,7 @@ async function enter(page, guide = false) {
   await page.goto('/'); await setWelcomeName(page, 'ながいおなまえだよねー');
   await setHouseName(page, 'みんなのとってもたのしいハウスだよ');
   await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click();
-  await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 

@@ -4,7 +4,7 @@ test.beforeEach(async ({ context }) => { await context.addInitScript(() => local
 
 test('うちらのなう and だるぽよ on けーじばん take comments, like chore records', async ({ page }) => {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'comments');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
     const { houseApi } = await import('/src/api.js');
     const c = document.createElement('canvas'); c.width = 60; c.height = 60; c.getContext('2d').fillRect(0, 0, 60, 60);

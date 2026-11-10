@@ -38,7 +38,7 @@ test('Google sign-in with memory storage keeps team polling and logout working',
   await expect(page.getByLabel('あなたの名前')).toHaveValue('Tester');
   await page.getByRole('button',{name:'次へ',exact:true}).click();
   await setHouseName(page, 'Google team test');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   const initial = dashboards;
   await expect.poll(() => dashboards, { timeout: 6000 }).toBeGreaterThan(initial);

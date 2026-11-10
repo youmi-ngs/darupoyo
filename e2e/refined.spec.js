@@ -24,14 +24,14 @@ test('welcome keeps drafts on back, validates invitations and submits explicitly
   await page.getByLabel('新しいハウスの名前').press('Enter');
   await expect(page.getByRole('heading', { name: '新しくつくったよ！' })).toBeVisible();
   await expect(page.locator('.created-house-name')).toHaveText('入力途中のおうち');
-  await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   expect(creates).toBe(1);
 });
 
 test('trash asks for a pose only after starting; composer can cancel without posting', async ({ page }) => {
   await page.goto('/'); await setWelcomeName(page, 'ぽよ'); await setHouseName(page, 'refined');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').first().click();
   await page.locator('[data-chore=trash]').click();
@@ -65,7 +65,7 @@ test('trash asks for a pose only after starting; composer can cancel without pos
 
 async function openComposer(page) {
   await page.goto('/'); await setWelcomeName(page, 'カメラ'); await setHouseName(page, 'だるぽよ写真');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(2).click();
   await page.locator('[data-chore=meal]').click();

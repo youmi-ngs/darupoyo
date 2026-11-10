@@ -6,7 +6,7 @@ test.beforeEach(async ({ context }) => { await context.addInitScript(() => local
 async function openLaundry(page, name) {
   await page.goto('/');
   await setWelcomeName(page, name); await setHouseName(page, 'laundry');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(4).click();
   await page.locator('[data-chore="laundry"]').click();

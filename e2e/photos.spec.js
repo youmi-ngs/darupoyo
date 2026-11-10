@@ -5,7 +5,7 @@ test.beforeEach(async ({ context }) => {
 });
 async function enter(page, name = 'もち', houseName = 'photos') {
   await page.goto('/'); await setWelcomeName(page, name); await setHouseName(page, houseName);
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 // A meal photo record made through the API, then shown by a refresh.
 const mealPost = page => page.evaluate(async () => {

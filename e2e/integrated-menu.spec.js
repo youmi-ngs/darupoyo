@@ -3,7 +3,7 @@ import {test,expect} from '@playwright/test';
 async function enter(page) {
   await page.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
   await page.goto('/');await setWelcomeName(page, '統合');await setHouseName(page, 'みんなのおうち');
-  await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 test('menu keeps exactly three actions and the copied invite code joins the house',async({page,browser})=>{
   await enter(page);
