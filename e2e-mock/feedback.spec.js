@@ -16,7 +16,10 @@ test('30 visible characters, optional text, compact photo and board categories',
   const composer=page.locator('.darupoyo-dialog'), input=composer.locator('textarea');
   await expect(composer).toContainText('ま、そんな日もあるっしょ〜♡');
   await expect(composer).toContainText('かかなくてもおけ♡');
-  await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(30));
+  await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(31));
+  await expect(composer.locator('[data-save]')).toBeDisabled();
+  await expect(composer.locator('[data-count]')).toContainText('あと1文字減らしてね');
+  await input.fill('👨‍👩‍👧‍👦'.repeat(30));
   await expect(composer.locator('[data-count]')).toHaveText('30 / 30');
   const buffer=Buffer.from(await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=600;return c.toDataURL().split(',')[1];}),'base64');
   await composer.locator('[data-file]').setInputFiles({name:'photo.png',mimeType:'image/png',buffer});
@@ -44,7 +47,7 @@ test('name limits preserve old names, invite links and profile cancel leave sett
   await expect(page.locator('.account-row b')).toHaveText('長い名前'.repeat(15));
   await page.evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async data=>window.sharedInvite=data});});
   await page.locator('#share-invite').click();
-  expect(await page.evaluate(()=>window.sharedInvite.url)).toContain('#invite=');
+  expect(await page.evaluate(()=>window.sharedInvite.url)).toContain('?invite=');
   await page.evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async()=>{throw new DOMException('cancel','AbortError');}});});
   await page.locator('#share-invite').click();
   await expect(page.locator('#invite-status')).toBeHidden();
@@ -99,4 +102,39 @@ test('today pose displays the uploaded template after refresh; sound frame is an
   await page.reload(); await expect(page.locator('#pose-shot img')).toHaveCount(1);
   await page.locator('.door.is-me').click();
   await expect(page.locator('.mr-frame .is-drawing .resident-character')).toHaveCount(1);
+});
+
+
+for (const kind of ['darupoyo', 'post']) test(`notification ${kind} opens before historical photo downloads finish`, async ({ page }) => {
+  await enter(page);
+  const target = await page.evaluate(async kind => {
+    const { houseApi, client } = await import('/src/api.js');
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = 20;
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    const { id } = await houseApi('/media?kind=cutout', blob);
+    const completion = await houseApi('/completions', { request_id: crypto.randomUUID(), chore: 'garbage', method: 'pose', media_id: id,
+      landmarks: Array.from({ length: 33 }, () => ({ x: .5, y: .5, z: 0, visibility: 1 })) });
+    const { record } = await houseApi('/darupoyo', { request_id: crypto.randomUUID(), chore: 'meal', caption: '待たずに開く記録' });
+    return { house: client.house, post: kind === 'post' ? completion.post.id : record.id, kind };
+  }, kind);
+  await page.addInitScript(() => {
+    const original = Response.prototype.blob;
+    Response.prototype.blob = async function () {
+      window.photoDownloadPending = true;
+      await new Promise(resolve => { window.releasePhotoDownload = resolve; });
+      return original.call(this);
+    };
+  });
+  await page.goto('/#' + new URLSearchParams(target));
+  await page.reload();
+  if (kind === 'darupoyo') {
+    await expect(page.locator('.pin-viewer')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.pin-viewer')).toContainText('待たずに開く記録');
+  } else {
+    await expect(page.locator('#photo-modal')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#photo-modal')).toContainText('写真を読み込み中');
+    await page.evaluate(() => window.releasePhotoDownload());
+    await expect(page.locator('#photo-modal .pm-photo img')).toBeVisible();
+  }
+  expect(await page.evaluate(() => window.photoDownloadPending)).toBe(true);
 });

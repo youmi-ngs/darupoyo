@@ -100,19 +100,21 @@ export function setupDarupoyoRecords() {
     const file=dialog.querySelector('[data-file]'), camera=dialog.querySelector('[data-camera]'), library=dialog.querySelector('[data-library]'), caption=dialog.querySelector('textarea'), preview=dialog.querySelector('.darupoyo-preview'), attachment=dialog.querySelector('[data-photo]'), remove=dialog.querySelector('[data-remove]'), save=dialog.querySelector('[data-save]'), close=dialog.querySelector('[data-close]'), notice=dialog.querySelector('[role=status]');
     photoPreview(preview);
     const audience=audienceChip(); save.before(audience.el); // 共有範囲
-    limitInput(caption, 30, dialog.querySelector("[data-count]"));
+    const inputState = limitInput(caption, 30, dialog.querySelector("[data-count]"), {preserveOverflow:true});
     caption.after(dialog.querySelector("[data-count]"));
     library.onclick=()=>file.click();
-    const valid=()=>{ save.disabled=busy || preparing; };
-    caption.oninput=()=>{ dialog.querySelector('[data-count]').textContent=textLength(caption.value)+' / 30'; valid(); }; close.onclick=()=>{ if(!busy) dialog.close(); };
-    remove.onclick=()=>{ photoVersion++; photo=null; preparing=false; file.value=''; discardPreview(); attachment.hidden=true; preview.removeAttribute('src'); notice.textContent=''; valid(); };
+    const valid=()=>{ save.disabled=busy || preparing || inputState.isComposing() || textLength(caption.value)>30; };
+    caption.oninput=()=>{ submission=null; notice.textContent=''; save.textContent='きょーゆー'; valid(); };
+    caption.addEventListener('compositionstart',valid); caption.addEventListener('compositionend',valid);
+    close.onclick=()=>{ if(!busy) dialog.close(); };
+    remove.onclick=()=>{ submission=null; photoVersion++; photo=null; preparing=false; file.value=''; discardPreview(); attachment.hidden=true; preview.removeAttribute('src'); notice.textContent=''; valid(); };
     const onPhoto=async(event)=>{
       const chosen=event.target.files[0]; if(!chosen) return;
       const revision=++photoVersion; preparing=true; notice.textContent='写真を準備中…'; valid();
       try {
         const prepared=await preparePhoto(chosen);
         if(version!==composer || revision!==photoVersion) return;
-        photo=prepared; discardPreview(); previewUrl=URL.createObjectURL(photo); preview.src=previewUrl; attachment.hidden=false; notice.textContent='';
+        submission=null; photo=prepared; discardPreview(); previewUrl=URL.createObjectURL(photo); preview.src=previewUrl; attachment.hidden=false; notice.textContent='';
       }catch(e){ if(version===composer && revision===photoVersion) notice.textContent=e.message; }
       finally{ if(version===composer && revision===photoVersion) { preparing=false; valid(); } }
     };
@@ -127,7 +129,8 @@ export function setupDarupoyoRecords() {
       finally { if(version===composer) { camera.disabled=false; camera.focus(); } }
     };
     save.onclick=async()=>{
-      if(busy || preparing || client.house!==house) return;
+      if(busy || preparing || inputState.isComposing() || client.house!==house) return;
+      if(textLength(caption.value)>30) { caption.reportValidity(); caption.focus(); valid(); return; }
       submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim(),share_to:audience.shareTo()};
       busy=true; [file,camera,library,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent=''; setBusy(save,true,'共有しています…');
       try {
@@ -142,8 +145,8 @@ export function setupDarupoyoRecords() {
         dialog.querySelector('[data-done]').focus({preventScroll:true});
         window.dispatchEvent(new CustomEvent('darupoyo:recorded',{detail:{houseId:house,record}}));
         signature=''; void refresh().catch(()=>{}); if(feed.isConnected) void load();
-      }catch(e){ if(version===composer) { setBusy(save,false); notice.textContent=e.message+' 同じ内容で再試行できます。'; save.textContent='共有を再試行'; save.disabled=close.disabled=false; } }
-      finally{ busy=false; }
+      }catch(e){ if(version===composer) { setBusy(save,false); notice.textContent=e.message+' 内容を直すか、同じ内容で再試行できます。'; save.textContent='共有を再試行'; [file,camera,library,caption,remove,close].forEach(n=>n.disabled=false); } }
+      finally{ busy=false; if(version===composer && save.isConnected) valid(); }
     };
     dialog.showModal(); close.focus();
   }

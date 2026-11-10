@@ -69,7 +69,7 @@ test('a lost save response can retry the same record without duplication',async(
   });
   await page.getByRole('button',{name:'きょーゆー'}).click();
   await expect(page.getByRole('button',{name:'共有を再試行'})).toBeEnabled();
-  await expect(page.getByLabel('ひとこと（任意・30文字まで）')).toBeDisabled();
+  await expect(page.getByLabel('ひとこと（任意・30文字まで）')).toBeEnabled();
   await page.getByRole('button',{name:'共有を再試行'}).click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
   const records=await page.evaluate(async()=>{ const {houseApi}=await import('/src/api.js');return houseApi('/darupoyo'); });
   expect(records.items).toHaveLength(1);
@@ -85,4 +85,43 @@ test('furniture reacts on taps and keyboard, with a temporary prize (つけま�
   expect((await state(page)).state).toEqual(before.state);
   await page.reload(); await page.locator('.scene-dot').nth(1).click();
   await page.getByRole('button',{name:'玄関のドアであそぶ'}).click(); await expect(page.locator('.furniture-prize')).toHaveCount(0);
+});
+
+test('IME overflow stays editable and never submits until corrected', async ({page}) => {
+  await enter(page); await compose(page);
+  const input=page.getByLabel('ひとこと（任意・30文字まで）'), save=page.locator('.darupoyo-dialog [data-save]');
+  await input.pressSequentially('a'.repeat(31)); await expect(input).toHaveValue('a'.repeat(30));
+  await input.fill('');
+  await input.dispatchEvent('compositionstart');
+  await input.evaluate(el=>{el.value='あ'.repeat(31);el.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,inputType:'insertCompositionText'}));});
+  await expect(save).toBeDisabled(); await expect(input).toHaveValue('あ'.repeat(31));
+  await input.dispatchEvent('compositionend');
+  await expect(input).toHaveValue('あ'.repeat(31));
+  await expect(page.locator('.darupoyo-dialog [data-count]')).toContainText('あと1文字減らしてね');
+  await expect(save).toBeDisabled(); await expect(input).toBeEnabled();
+  await input.fill('あ'.repeat(30)); await expect(save).toBeEnabled();
+  await save.click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
+  await expect(page.locator('.pin-grid .pin-darupoyo')).toContainText('あ'.repeat(30));
+});
+test('rejected darupoyo can edit its draft and submit again', async ({page})=>{
+  await enter(page); await compose(page);
+  const input=page.getByLabel('ひとこと（任意・30文字まで）');
+  await input.fill('修正前');
+  const bodies=[];
+  await page.route('**/darupoyo',async route=>{
+    if(route.request().method()!=='POST') return route.continue();
+    bodies.push(route.request().postDataJSON());
+    if(bodies.length===1) return route.fulfill({status:422,contentType:'application/json',body:'{"detail":"validation error"}'});
+    return route.continue();
+  });
+  await page.getByRole('button',{name:'きょーゆー'}).click();
+  await expect(page.getByRole('button',{name:'共有を再試行'})).toBeEnabled();
+  await expect(input).toBeEnabled();
+  await expect(page.locator('.darupoyo-dialog [data-close]')).toBeEnabled();
+  await expect(page.locator('.darupoyo-dialog [data-library]')).toBeEnabled();
+  await input.fill('修正したよ');
+  await page.getByRole('button',{name:'きょーゆー'}).click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
+  expect(bodies).toHaveLength(2); expect(bodies[1].caption).toBe('修正したよ');
+  expect(bodies[1].request_id).not.toBe(bodies[0].request_id);
+  await expect(page.locator('.pin-grid .pin-darupoyo')).toContainText('修正したよ');
 });
