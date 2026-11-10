@@ -230,3 +230,22 @@ def test_account_deletion_removes_comments_on_moments_and_darupoyo():
         assert store.get(f"houses/{h}/moments/{moment['id']}")["comments"] == []
         kept = store.get(f"houses/{h}/darupoyo_records/{record['id']}")
         assert kept["comments"] == [] and "sync_with" not in kept
+
+
+def test_moments_and_darupoyo_take_reactions_too():
+    with TestClient(create_app(LOCAL)) as c:
+        h = house(c)
+        join(c, h)
+        moment = c.post(f"/api/houses/{h}/moments", headers=auth(), json={"request_id": str(uuid4()), "media_id": upload(c, h, "selfie"), "caption": ""}).json()
+        record = c.post(f"/api/houses/{h}/darupoyo", headers=auth(), json={"request_id": str(uuid4()), "chore": "meal"}).json()["record"]
+        for kind, rid, listing in (("moments", moment["id"], "moments"), ("darupoyo", record["id"], "darupoyo")):
+            url = f"/api/houses/{h}/{kind}/{rid}/reaction"
+            assert c.put(url, headers=auth("bob"), json={"emoji": "heart"}).json()["reactions"] == {"bob": "heart"}
+            assert c.put(url, headers=auth("bob"), json={"emoji": "clap"}).json()["reactions"] == {"bob": "clap"}
+            assert c.put(url, headers=auth("outsider"), json={"emoji": "heart"}).status_code == 404
+            assert c.put(url, headers=auth("bob"), json={"emoji": "poop"}).status_code == 422
+            assert c.get(f"/api/houses/{h}/{listing}", headers=auth()).json()["items"][0]["reactions"] == {"bob": "clap"}
+        # leaving clears your reactions on others' records
+        c.delete("/api/me", headers=auth("bob"))
+        assert c.app.state.store.get(f"houses/{h}/moments/{moment['id']}")["reactions"] == {}
+        assert c.app.state.store.get(f"houses/{h}/darupoyo_records/{record['id']}")["reactions"] == {}

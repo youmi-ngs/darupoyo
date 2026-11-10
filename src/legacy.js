@@ -29,7 +29,7 @@ import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { setupBoardView } from './board-view.js';
 import { THEMES, residentThemes } from './themes.js';
 import { galCharacter, galIcon as dressedGalIcon, outfitOf } from './gal-figure.js';
-import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
+import { residentDot, commentsBlock, reactionRow, setupSocialSettings } from './social.js';
 import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
 import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } from './data.js';
@@ -174,8 +174,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       if (p.caption) { const word = document.createElement('p'); word.className = 'pm-caption'; word.textContent = p.caption; sl.querySelector('.pm-meta').after(word); }
       if (p.voice_media_id) sl.querySelector('.pm-meta').after(voiceButton(() => sound(p.voice_media_id)));
       if (!p.foreign) {
-      const reactions = document.createElement('div'); reactions.className = 'reaction-row';
-      ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
+      sl.append(reactionRow(p, '/posts', { me: ME, toast, after: () => void refresh() }));
       sl.append(commentsBlock(p, { me: ME, nameOf, dotOf, toast }));
       // Your own record: edit its words (the gal writes her line again) or delete it.
       if (p.who === ME) sl.querySelector('.pm-get').after(ownerActions({ record: p, base: '/posts', toast,
@@ -411,6 +410,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   // けーじばん: opens from the board in the entrance, ← goes back there.
   const boardView = setupBoardView({ nameOf, iconOf, themeOf, convertPost, galOf: memberGal, toast,
     comments: (record, base) => commentsBlock(record, { me: ME, nameOf, dotOf, toast, base }),
+    reactions: (record, base) => reactionRow(record, base, { me: ME, toast }),
     openPost: (posts, index) => openPhotos(posts.map(p => ({ p, day: p.day === dashboard.state.day ? '今日' : dayLabel(offOf(p.day)) })), index),
     onClosing: () => { window.__toScene = sceneIndexOf('entry'); $('house-view').hidden = false; window.__goScene?.(); },
     onClose: () => { window.__toScene = sceneIndexOf('entry'); showHouse(); } });

@@ -91,3 +91,6 @@ dialog.album-calendar::backdrop { background: rgba(59, 37, 96, .45); }
 .comment-send.is-busy svg { animation: comment-send-fly .8s ease-in-out infinite; }
 @keyframes comment-send-fly { 50% { transform: translate(3px, -3px); opacity: .5; } }
 @media (prefers-reduced-motion: reduce) { .comment-send.is-busy svg { animation: none; } }
+
+/* the reaction you chose stands out */
+.reaction-row button.is-mine { background: #ffdbf0; }
