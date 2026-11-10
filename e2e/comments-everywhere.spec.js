@@ -18,6 +18,7 @@ test('うちらのなう and だるぽよ on けーじばん take comments, like
     await page.locator(card).first().click();
     const slide = page.locator('.pin-viewer[open] .pin-viewer-slide').filter({ has: page.getByRole('heading', { name: title, exact: true }) });
     await slide.getByLabel('コメントを書く').fill(text);
+    await expect(slide.locator('button.comment-send svg')).toBeVisible(); // #224: a paper plane, named 送る
     await slide.getByRole('button', { name: '送る' }).click();
     await expect(slide.locator('.comment')).toHaveCount(1);
     await expect(slide.locator('.comment')).toContainText(text);

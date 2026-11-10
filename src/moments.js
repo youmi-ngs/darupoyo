@@ -1,4 +1,4 @@
-import { captionCounter, photoPreview } from './composer-ui.js';
+import { captionCounter } from './composer-ui.js';
 // うちらのなう (Figma 207:914): the うちらのなう button opens a camera card. Take a selfie (or pick
 // one), add a word, and みせちゃう shares it with the house. The card then shows what was sent
 // and the gal's word on it (Figma 207:958), with a way to けーじばん.
@@ -24,6 +24,7 @@ export function setupMoments() {
       <video muted playsinline autoplay hidden></video>
       <canvas hidden aria-label="撮った写真"></canvas>
       <p class="now-frame-note" hidden></p>
+      <p class="now-crop-hint" hidden>ドラッグで位置をえらべるよ</p>
       <button type="button" class="now-retake" aria-label="撮り直す" hidden><img src="/moments/retake.svg" alt=""></button>
       <div class="now-controls">
         <label class="now-library" aria-label="ライブラリからえらぶ"><img src="/moments/library.svg" alt=""><input type="file" accept="image/*" hidden></label>
@@ -40,9 +41,10 @@ export function setupMoments() {
   document.body.append(dialog);
   const $ = selector => dialog.querySelector(selector);
   const video = $('video'), canvas = $('canvas'), note = $('.now-frame-note'), retake = $('.now-retake');
+  const cropHint = $('.now-crop-hint');
   const controls = $('.now-controls'), shutter = $('.now-shutter'), flip = $('.now-flip'), library = $('.now-library input');
   const caption = $('.now-field input'), share = $('.now-share'), status = $('.now-status');
-  captionCounter(caption); photoPreview(canvas);
+  captionCounter(caption); // #228: the photo stays full size here (no small thumbnail)
   const leadRow = document.createElement('div'); leadRow.className = 'now-lead-row'; $('.now-lead').before(leadRow); leadRow.append($('.now-lead'));
   const lead = $('.now-lead'), field = $('.now-field'), sentCaption = $('.now-caption'), praiseBox = $('.now-praise'), toBoard = $('.now-board');
   // Before sending: camera, word and みせちゃう. After: the photo, the word, the gal's line and けーじばん.
@@ -61,7 +63,7 @@ export function setupMoments() {
   // The front camera is shown, and saved, like a mirror (#161).
   const mirrored = () => facing() !== 'environment';
   const showLive = () => {
-    taken = false; mediaId = null; canvas.hidden = retake.hidden = true; controls.hidden = false;
+    taken = false; mediaId = null; picture = null; cropHint.hidden = true; canvas.hidden = retake.hidden = true; controls.hidden = false;
     video.hidden = !stream; video.classList.toggle('is-mirrored', !!stream && mirrored());
     share.disabled = true;
   };
@@ -77,16 +79,47 @@ export function setupMoments() {
     }
     showLive();
   }
-  // A taken or picked photo fills the frame (cut to its shape).
-  function draw(source, width, height, mirror) {
-    canvas.width = WIDTH; canvas.height = HEIGHT;
+  // A taken or picked photo fills the frame (cut to its shape). #223: drag it to choose
+  // which part is kept; `focus` is where the window sits (0 = left/top, 1 = right/bottom).
+  let picture = null, focus = { x: .5, y: .5 };
+  function render() {
+    const { source, width, height, mirror } = picture;
     const scale = Math.max(WIDTH / width, HEIGHT / height), w = WIDTH / scale, h = HEIGHT / scale;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, WIDTH, HEIGHT);
     if (mirror) ctx.setTransform(-1, 0, 0, 1, WIDTH, 0);
-    ctx.drawImage(source, (width - w) / 2, (height - h) / 2, w, h, 0, 0, WIDTH, HEIGHT);
+    ctx.drawImage(source, (width - w) * focus.x, (height - h) * focus.y, w, h, 0, 0, WIDTH, HEIGHT);
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    taken = true; mediaId = null; video.hidden = true; canvas.hidden = false; retake.hidden = false; controls.hidden = true; note.hidden = true;
+    mediaId = null; // a new crop is uploaded again
+  }
+  function draw(from, width, height, mirror) {
+    // Keep a still copy, so the crop can move after the camera has moved on.
+    const still = document.createElement('canvas'); still.width = width; still.height = height;
+    still.getContext('2d').drawImage(from, 0, 0, width, height);
+    picture = { source: still, width, height, mirror }; focus = { x: .5, y: .5 };
+    canvas.width = WIDTH; canvas.height = HEIGHT; render();
+    const scale = Math.max(WIDTH / width, HEIGHT / height);
+    cropHint.hidden = Math.abs(width * scale - WIDTH) < 2 && Math.abs(height * scale - HEIGHT) < 2;
+    taken = true; video.hidden = true; canvas.hidden = false; retake.hidden = false; controls.hidden = true; note.hidden = true;
     share.disabled = false; status.textContent = '';
   }
+  // Drag the photo inside the frame (one finger or the mouse).
+  let drag = null;
+  canvas.style.touchAction = 'none';
+  canvas.addEventListener('pointerdown', e => {
+    if (!picture || busy || dialog.classList.contains('is-sent')) return;
+    drag = { x: e.clientX, y: e.clientY, focus: { ...focus } }; canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const { width, height, mirror } = picture, box = canvas.getBoundingClientRect();
+    const scale = Math.max(WIDTH / width, HEIGHT / height), shown = box.width / WIDTH; // screen px per canvas px
+    const slackX = (width * scale - WIDTH) * shown, slackY = (height * scale - HEIGHT) * shown; // how far it can move on screen
+    const dx = (e.clientX - drag.x) * (mirror ? -1 : 1), dy = e.clientY - drag.y;
+    focus = { x: slackX > 1 ? Math.min(1, Math.max(0, drag.focus.x - dx / slackX)) : .5, y: slackY > 1 ? Math.min(1, Math.max(0, drag.focus.y - dy / slackY)) : .5 };
+    render(); cropHint.hidden = true;
+  });
+  const endDrag = () => { drag = null; };
+  canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag);
 
   async function open() {
     document.querySelector('#menu')?.close();

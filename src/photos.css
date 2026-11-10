@@ -81,3 +81,13 @@ dialog.album-calendar::backdrop { background: rgba(59, 37, 96, .45); }
 /* 編集・削除 as round icon buttons */
 .post-owner .post-owner-icon { display: grid; place-items: center; width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 50%; }
 .post-owner .post-owner-icon svg { display: block; }
+
+/* #224: comment box and its paper-plane send, in the soft pill style of the rest of the app */
+.comment-form { align-items: center; }
+.comment-form input { height: 44px; padding: 0 16px; border: 1px solid #775b9d40; background: #ffffffe6; }
+.comment-send { flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1px solid #775b9d33; border-radius: 50%; background: #ffdbf0; color: #3b2560; cursor: pointer; }
+.comment-send svg { display: block; margin: 0 2px 0 0; }
+.comment-send:active { transform: scale(.94); }
+.comment-send.is-busy svg { animation: comment-send-fly .8s ease-in-out infinite; }
+@keyframes comment-send-fly { 50% { transform: translate(3px, -3px); opacity: .5; } }
+@media (prefers-reduced-motion: reduce) { .comment-send.is-busy svg { animation: none; } }
