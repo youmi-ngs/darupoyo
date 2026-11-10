@@ -1,4 +1,6 @@
 import './feedback.css';
+import './full-view.css';
+import './album.css';
 import { setupRoomSwipe } from './room-swipe.js';
 import { listenNotificationOpens } from './notification-open.js';
 import { setupFirstGuide } from './first-guide.js';
@@ -113,7 +115,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     const days = albumDays(foreign);
     const all = [];
     const SLOT = ['laundry', 'meal', 'trash'];
-    days.forEach((d) => d.posts.filter((p) => p.who === who && p.kind !== 'sound').sort((a, b) => SLOT.indexOf(a.task) - SLOT.indexOf(b.task)).forEach((p) => all.push({ p, day: dayName(d.off), off: d.off })));
+    days.forEach((d) => d.posts.filter((p) => p.who === who).sort((a, b) => SLOT.indexOf(a.task) - SLOT.indexOf(b.task)).forEach((p) => all.push({ p, day: dayName(d.off), off: d.off })));
     logDays = days; logCounts = days.map(d => all.filter(x => x.off === d.off).length);
     days.forEach((d) => {
       const mine = all.filter((x) => x.off === d.off);
@@ -122,7 +124,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       const n = document.createElement('span'); n.className = 'log-n'; n.textContent = mine.length ? mine.length + '' : '−'; h.append(n);
       sec.append(h);
       const g = document.createElement('div'); g.className = 'log-grid';
-      mine.forEach((x, k) => { const f = document.createElement('button'); f.type = 'button'; f.className = 'fp' + (x.p.foreign ? ' is-foreign' : ''); f.style.setProperty('--r', ((k % 3) - 1) * 3 + 'deg'); f.append(shotEl(x.p)); if (x.p.foreign) { const tag = document.createElement('span'); tag.className = 'foreign-tag'; tag.textContent = '別ハウス'; f.append(tag); } f.setAttribute('aria-label', dayLabel(d.off) + ' ' + x.p.time + 'の' + TASKS[x.p.task].label + (x.p.foreign ? '（別のハウス）' : '')); f.addEventListener('click', () => openPhotos(all, all.indexOf(x))); g.append(f); });
+      mine.forEach((x, k) => { const f = document.createElement('button'); f.type = 'button'; f.className = 'fp' + (x.p.foreign ? ' is-foreign' : ''); f.style.setProperty('--r', ((k % 3) - 1) * 3 + 'deg'); f.append(x.p.image ? shotEl(x.p) : galShot(x.p)) /* no photo: the gal doing it, as on けーじばん */; if (x.p.foreign) { const tag = document.createElement('span'); tag.className = 'foreign-tag'; tag.textContent = '別ハウス'; f.append(tag); } f.setAttribute('aria-label', dayLabel(d.off) + ' ' + x.p.time + 'の' + TASKS[x.p.task].label + (x.p.foreign ? '（別のハウス）' : '')); f.addEventListener('click', () => openPhotos(all, all.indexOf(x))); g.append(f); });
       for (let q = mine.length; q < 6; q++) { const e = document.createElement('span'); e.className = 'log-empty'; g.append(e); }
       g.classList.add(mine.length > 6 ? 'n-many' : 'n-more');
       sec.append(g);
