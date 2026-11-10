@@ -103,7 +103,9 @@ export function reactionRow(record, base, ctx) {
     return [b, face];
   });
   const draw = () => buttons.forEach(([b, face]) => {
-    const all = Object.values(record.reactions || {}), mine = (record.reactions || {})[ctx.me] === b.dataset.emoji;
+    // Each person may give several kinds (a list; older records hold one string).
+    const list = v => Array.isArray(v) ? v : v ? [v] : [];
+    const all = Object.values(record.reactions || {}).flatMap(list), mine = list((record.reactions || {})[ctx.me]).includes(b.dataset.emoji);
     b.textContent = face + ' ' + all.filter(v => v === b.dataset.emoji).length;
     b.setAttribute('aria-pressed', String(mine)); b.classList.toggle('is-mine', mine);
   });

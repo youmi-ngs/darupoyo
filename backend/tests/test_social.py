@@ -240,12 +240,25 @@ def test_moments_and_darupoyo_take_reactions_too():
         record = c.post(f"/api/houses/{h}/darupoyo", headers=auth(), json={"request_id": str(uuid4()), "chore": "meal"}).json()["record"]
         for kind, rid, listing in (("moments", moment["id"], "moments"), ("darupoyo", record["id"], "darupoyo")):
             url = f"/api/houses/{h}/{kind}/{rid}/reaction"
-            assert c.put(url, headers=auth("bob"), json={"emoji": "heart"}).json()["reactions"] == {"bob": "heart"}
-            assert c.put(url, headers=auth("bob"), json={"emoji": "clap"}).json()["reactions"] == {"bob": "clap"}
+            assert c.put(url, headers=auth("bob"), json={"emoji": "heart"}).json()["reactions"] == {"bob": ["heart"]}
+            # several kinds at once; tapping one again takes it back
+            assert c.put(url, headers=auth("bob"), json={"emoji": "clap"}).json()["reactions"] == {"bob": ["heart", "clap"]}
+            assert c.put(url, headers=auth("bob"), json={"emoji": "heart"}).json()["reactions"] == {"bob": ["clap"]}
             assert c.put(url, headers=auth("outsider"), json={"emoji": "heart"}).status_code == 404
             assert c.put(url, headers=auth("bob"), json={"emoji": "poop"}).status_code == 422
-            assert c.get(f"/api/houses/{h}/{listing}", headers=auth()).json()["items"][0]["reactions"] == {"bob": "clap"}
+            assert c.get(f"/api/houses/{h}/{listing}", headers=auth()).json()["items"][0]["reactions"] == {"bob": ["clap"]}
         # leaving clears your reactions on others' records
         c.delete("/api/me", headers=auth("bob"))
         assert c.app.state.store.get(f"houses/{h}/moments/{moment['id']}")["reactions"] == {}
         assert c.app.state.store.get(f"houses/{h}/darupoyo_records/{record['id']}")["reactions"] == {}
+
+
+def test_a_reaction_kept_as_one_string_still_counts_and_can_grow():
+    with TestClient(create_app(LOCAL)) as c:
+        h = house(c)
+        join(c, h)
+        post = c.post(f"/api/houses/{h}/completions", headers=auth(), json=sound()).json()["post"]
+        path = f"houses/{h}/posts/{post['id']}"
+        old = c.app.state.store.get(path); old["reactions"] = {"bob": "heart"}; c.app.state.store.set(path, old)
+        url = f"/api/houses/{h}/posts/{post['id']}/reaction"
+        assert c.put(url, headers=auth("bob"), json={"emoji": "sparkles"}).json()["reactions"] == {"bob": ["heart", "sparkles"]}

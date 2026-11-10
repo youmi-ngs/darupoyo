@@ -228,7 +228,10 @@ export async function mockFetch(url, init = {}) {
     const table = { posts: db.posts, moments: db.moments, darupoyo: db.darupoyo_records || {} }[reaction[1]];
     const post = table[reaction[2]];
     if (!post || post.house_id !== houseId) return fail(404, 'Post not found');
-    (post.reactions ||= {})[uid] = body.emoji; save(db); return json(post);
+    const mine = [].concat((post.reactions ||= {})[uid] || []);
+    const next = mine.includes(body.emoji) ? mine.filter(e => e !== body.emoji) : [...mine, body.emoji];
+    if (next.length) post.reactions[uid] = next; else delete post.reactions[uid];
+    save(db); return json(post);
   }
   return fail(404, 'API not found');
 }
