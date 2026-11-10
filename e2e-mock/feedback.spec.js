@@ -17,6 +17,7 @@ test('30 visible characters, optional text, compact photo and board categories',
   await expect(composer).toContainText('ま、そんな日もあるっしょ〜♡');
   await expect(composer).not.toContainText('かかなくてもおけ♡'); // the label is just ひとこと; the placeholder says it is optional
   await expect(input).toHaveAttribute('placeholder', '書かんくてもおけ');
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
   await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(30));
   await expect(composer.locator('[data-save]')).toBeEnabled();
   await expect(composer.locator('[data-count]')).toHaveText('30 / 30');
@@ -33,7 +34,7 @@ test('30 visible characters, optional text, compact photo and board categories',
   await composer.locator('[data-save]').click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
   await expect(page.locator('.pin-grid .pin-category')).toHaveText('もちのごはん');
   await expect(page.locator('.pin-grid .pin-state')).toHaveText('だるぽよ');
-  await expect(page.locator('.pin-grid .pin-author strong')).toHaveText('もち');
+  await expect(page.locator('.pin-grid .pin-category .pin-username')).toHaveText('もち');
   await page.screenshot({animations:'disabled',path:'test-results/feedback-board.png'});
 });
 test('name limits preserve old names, invite links and profile cancel leave settings open', async ({page}) => {

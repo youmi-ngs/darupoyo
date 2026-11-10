@@ -1,4 +1,4 @@
-import { photoPreview } from './composer-ui.js';
+import { photoPreview, optionalCaption } from './composer-ui.js';
 import { limitInput, textLength } from './text-limits.js';
 import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
@@ -103,6 +103,8 @@ export function setupDarupoyoRecords() {
     const audience=audienceChip(); save.before(audience.el); // 共有範囲
     const inputState = limitInput(caption, 30, dialog.querySelector("[data-count]"));
     caption.after(dialog.querySelector("[data-count]"));
+    dialog.querySelector('label[for="darupoyo-caption"]').hidden = true;
+    optionalCaption(caption, dialog.querySelector("[data-count]"));
     library.onclick=()=>file.click();
     const valid=()=>{ save.disabled=busy || preparing || textLength(caption.value)>30; };
     caption.oninput=()=>{ submission=null; notice.textContent=''; save.textContent='きょーゆー'; valid(); };

@@ -8,6 +8,7 @@ async function enter(page) {
 async function compose(page) {
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button',{name:/^だるぽよ/}).click();
   await expect(page.locator('.darupoyo-dialog')).toBeVisible();
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
 }
 async function state(page) {
   return page.evaluate(async()=>{ const { houseApi }=await import('/src/api.js'); return houseApi('/dashboard'); });
