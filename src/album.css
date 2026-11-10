@@ -1,0 +1,10 @@
+/* The room album: every record is a 5:6 card like けーじばん (photo, or the gal doing the chore
+   when there is no photo), three to a row; a busy day scrolls. */
+.log-modal .log-day { overflow-y: auto !important; }
+.log-modal .log-day .log-grid.log-grid { display: grid; flex: none; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: none; grid-auto-rows: auto;
+  align-content: start; align-items: start; gap: 14px 10px; container-type: normal; min-height: 0; padding: 6px 6px 4px; }
+.log-modal .log-day .log-grid.log-grid > * { width: 100%; height: auto; aspect-ratio: auto; min-height: 0; justify-self: stretch; }
+.log-modal .log-day .log-grid .fp .shot { flex: none; width: 100%; height: auto; aspect-ratio: 5 / 6; overflow: hidden; }
+.log-modal .log-day .log-grid .fp .shot img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.log-modal .log-day .log-grid .fp .shot.is-drawing .resident-character { transform: scale(.7); }
+.log-modal .log-day .log-grid .log-empty { aspect-ratio: 5 / 6.4; }

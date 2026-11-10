@@ -40,8 +40,11 @@ export function onAbort(signal, reject) {
   return () => signal.removeEventListener('abort', abort);
 }
 
+// A 4:3 picture at a good size: phones then use the whole sensor. Asking for a small portrait
+// size (720×960) made some phones crop the middle of it, which looked like a digital zoom.
+export const CAMERA = { width: { ideal: 1920 }, height: { ideal: 1440 }, aspectRatio: { ideal: 4 / 3 } };
 export async function openCamera(video, facingMode, resources, signal) {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, width: { ideal: 720 }, height: { ideal: 960 } }, audio: false });
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode, ...CAMERA }, audio: false });
   if (signal.aborted) { stream.getTracks().forEach(t => t.stop()); check(signal); }
   resources.push(() => stream.getTracks().forEach(t => t.stop())); check(signal);
   video.srcObject = stream; await video.play();
