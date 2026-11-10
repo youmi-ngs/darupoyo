@@ -3,6 +3,7 @@ import { setBusy } from './busy.js';
 import './utility-menu.css';
 import { sfx } from './sfx.js';
 import { setupInstallGuide } from './install-guide.js';
+import { inviteLink } from './invite-link.js';
 
 const $ = id => document.getElementById(id);
 const asset = name => `/settings/${name}.svg`;
@@ -115,7 +116,7 @@ export function setupSettingsUI() {
     try {
       const house = client.house, code = await loadInvite();
       if (house !== client.house) return;
-      const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({invite:code}).toString();
+      const url = new URL(inviteLink(location.href, code));
       if (navigator.share) { await navigator.share({title:'だるぽよのハウスへの招待',url:url.href}); status.textContent='招待リンクを共有したよ（7日間有効）'; }
       else { await copyInvite(button, '招待リンク', () => url.href)(); }
     } catch(e) { status.textContent = e.name === 'AbortError' ? '' : e.message; status.hidden = e.name === 'AbortError'; }
