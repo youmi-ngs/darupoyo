@@ -5,7 +5,7 @@ test('gal selection shows one check, responds to taps, and persists after reload
   await page.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
   await page.goto('/'); await setWelcomeName(page,'ぽよ'); await setHouseName(page,'ギャルのおうち');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
-  await page.getByRole('button',{name:'おうちに入る'}).click();
+  await page.getByRole('button',{name:'ハウスに入る'}).click();
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   for (const selector of ['[data-gal=heisei]','[data-gal=hime]',':first-child']) {
     const choice=page.locator('#gal-picker > button'+selector);

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'ひとこと');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'おうちに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', {name:'ハウスに入る'}).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 const png = page => page.evaluate(async () => { const c = document.createElement('canvas'); c.width = 600; c.height = 400; c.getContext('2d').fillRect(0, 0, 600, 400); return Array.from(new Uint8Array(await (await new Promise(r => c.toBlob(r, 'image/png'))).arrayBuffer())); });
 

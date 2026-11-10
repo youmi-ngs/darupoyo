@@ -4,7 +4,7 @@ import './daily-tasks.css';
 // PC① may supply data-furniture-name on replacement artwork. Keep artwork and
 // task buttons intact; this adapter only adds keyboard/tap behavior to props.
 const SELECTOR = '.scene .sv > .sv-obj:not(.balcony-pole), .myroom > .mr-bed, .myroom > .mr-desk, .myroom > .mr-lamp, .myroom > .mr-window, [data-furniture-name]';
-const NAMES = { outside:['おうち'], entry:['玄関のドア'], ldk:['時計','窓'], wash:['植木'] };
+const NAMES = { outside:['ハウス'], entry:['玄関のドア'], ldk:['時計','窓'], wash:['植木'] };
 // Every fifth play drops one of these little gal treasures.
 const PRIZES = [
   { name:'つけまつげ', short:'つけま', svg:'<path d="M10 12Q40 40 70 12M15 18L9 28M26 25l-4 12M40 29v12M54 25l4 12M65 18l6 10" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>' },

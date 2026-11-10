@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')); });
 async function enter(page, house) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, house);
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 // The current dot is the entrance scene.
 const atEntry = page => page.evaluate(() => { const i = [...document.querySelectorAll('.scene-dot')].findIndex(d => d.hasAttribute('aria-current')); return i >= 0 && document.querySelectorAll('#plan .scene')[i]?.dataset.scene === 'entry'; });

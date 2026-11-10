@@ -7,7 +7,7 @@ test('retry', async ({ page, context }) => {
   await context.grantPermissions(['camera']);
   await page.goto('/');
   await setWelcomeName(page, 'r'); await setHouseName(page, 'r');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('.scene-dot').nth(4).click(); await page.locator('[data-chore="laundry"]').click();
   await page.getByRole('button', { name: /^干す/ }).click();

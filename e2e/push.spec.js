@@ -15,7 +15,7 @@ test('without Firebase login the notification toggle stays visible, off and disa
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/');
   await setWelcomeName(page, 'p'); await setHouseName(page, 'push');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
    await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   await expect(page.locator('#settings')).toBeVisible();
@@ -56,7 +56,7 @@ test('notification registration succeeds, and a failed save can be retried', asy
   await page.goto('/');
   await setWelcomeName(page, 'push-retry');
   await setHouseName(page, 'notifications');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
     const { client } = await import('/src/api.js');

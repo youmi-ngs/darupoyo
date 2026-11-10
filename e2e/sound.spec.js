@@ -12,7 +12,7 @@ test.beforeEach(async ({ context }) => {
 async function enter(page) {
   await page.goto('/');
   await setWelcomeName(page, 'oto'); await setHouseName(page, 'sound');
-  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'おうちに入る', exact: true }).click();
+  await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
 }
 test('picking a gal plays her voice, and the setting turns every sound off', async ({ page }) => {

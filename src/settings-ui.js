@@ -162,19 +162,19 @@ export function setupSettingsUI() {
         const button = document.createElement('button'); button.type = 'button'; button.className = 'house-choice';
         const icon = document.querySelector('#menu-house svg').cloneNode(true);
         const name = document.createElement('b'); name.textContent = house.name;
-        const label = document.createElement('span'); label.textContent = current ? 'いまのおうち' : 'このおうちへ →';
+        const label = document.createElement('span'); label.textContent = current ? 'いまのハウス' : 'このハウスへ →';
         button.append(icon, name, label); button.disabled = current;
         if (current) button.setAttribute('aria-current', 'true');
         button.onclick = () => switchHouse(house.id);
         list.append(button);
       });
-      status.textContent = houses.length < 2 ? '招待コードで、友だちのおうちにも参加できるよ。' : 'おうちを選んで、ただいま！';
+      status.textContent = houses.length < 2 ? '招待コードで、友だちのハウスにも参加できるよ。' : 'ハウスを選んで、ただいま！';
     };
     // Startup already fetched memberships; show them before opening the page.
     render(client.houses);
     if (!client.houses.length) {
       const placeholder = document.createElement('div'); placeholder.className = 'house-choice house-loading';
-      placeholder.textContent = 'おうちを読み込み中…'; list.append(placeholder); status.textContent = '';
+      placeholder.textContent = 'ハウスを読み込み中…'; list.append(placeholder); status.textContent = '';
     }
     if (!dialog.open) dialog.showModal(); $('house-switch-title').focus();
     try {
