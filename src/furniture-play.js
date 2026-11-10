@@ -30,9 +30,9 @@ export function setupFurniturePlay() {
     const room=target.closest('.sv, .myroom'); if(!room) return;
     const item=PRIZES[Math.floor(Math.random()*PRIZES.length)];
     prize=document.createElement('div'); prize.className='furniture-prize'; prize.setAttribute('aria-hidden','true');
-    prize.innerHTML='<svg viewBox="0 0 80 45" aria-hidden="true">'+item.svg+'</svg><span>'+item.short+'♡</span>';
+    prize.innerHTML='<svg viewBox="0 0 80 45" aria-hidden="true">'+item.svg+'</svg><span>'+item.short+'♡</span><small>ラッキ〜</small>';
     room.append(prize);
-    status.textContent=item.short+'みっけ♡ ラッキ〜'; status.classList.add('is-visible');
+    status.textContent=item.short+'みっけ♡ ラッキ〜';
     expiry=setTimeout(clearPrize,3000);
 
   }

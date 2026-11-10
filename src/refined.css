@@ -1,7 +1,7 @@
 /* Figma: refined / はじめて, refined / 画面・ダイアログ, refined / menu. */
-:root { --refined-bg:linear-gradient(180deg,#c9b6ff 0%,#ffb8dc 19%,#faedf7 40%,#ede6f8 100%); --refined-card:linear-gradient(110deg,#fff5fcfa,#f2edfff7); --refined-shadow:0 2px 5px #3b256014; }
-.refined-button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; width:100%; padding:12px 18px; border:1px solid #6a559024; border-radius:1000px; background:#ffdbf0d9; box-shadow:var(--refined-shadow); color:var(--ink); font:700 16px/24px var(--font-ui); cursor:pointer; }
-.refined-button.secondary { background:#fdfbfe; }
+:root { --record-choice-bg:#ffdbf0d9; --darupoyo-choice-bg:#fdfbfe; --refined-bg:linear-gradient(180deg,#c9b6ff 0%,#ffb8dc 19%,#faedf7 40%,#ede6f8 100%); --refined-card:linear-gradient(110deg,#fff5fcfa,#f2edfff7); --refined-shadow:0 2px 5px #3b256014; }
+.refined-button { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-height:56px; width:100%; padding:12px 18px; border:1px solid #6a559024; border-radius:1000px; background:var(--record-choice-bg); box-shadow:var(--refined-shadow); color:var(--ink); font:700 16px/24px var(--font-ui); cursor:pointer; }
+.refined-button.secondary { background:var(--darupoyo-choice-bg); }
 .refined-button small { font:400 12px/18px var(--font-ui); white-space:pre-line; }
 .refined-button:disabled { cursor:wait; opacity:.6; }
 .refined-button[aria-busy=true]::after { content:''; width:12px; height:12px; border:2px solid #6a559044; border-top-color:var(--ink); border-radius:50%; animation:spin 1s linear infinite; }

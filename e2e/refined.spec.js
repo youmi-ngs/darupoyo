@@ -42,6 +42,7 @@ test('trash asks for a pose only after starting; composer can cancel without pos
   await page.locator('#sheet-close').click();
   await page.locator('[data-chore=trash]').click();
   await page.getByRole('button', { name: /^だるぽよ/ }).click();
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
   await page.getByLabel('ひとこと（任意・30文字まで）').fill('おやすみ');
   await expect(page.locator('[data-count]')).toHaveText('4 / 30');
   await page.evaluate(() => {
@@ -74,6 +75,7 @@ async function openComposer(page) {
 
 test('camera denial leaves the draft intact and the library available', async ({ page }) => {
   await openComposer(page);
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
   await page.getByLabel('ひとこと（任意・30文字まで）').fill('のんびり');
   await page.evaluate(() => { navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('denied', 'NotAllowedError'); }; });
   await page.getByRole('button', { name: '写真を撮る', exact: true }).click();

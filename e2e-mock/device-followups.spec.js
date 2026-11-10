@@ -27,6 +27,7 @@ test('guide stays at the meal until skipped, then navigation works again',async(
 });
 test('share commits capped IME input even if compositionend never arrives',async({page})=>{
   await enter(page); await page.locator('[data-chore=meal]').click(); await page.getByRole('button',{name:/^だるぽよ/}).click();
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
   const field=page.locator('.darupoyo-dialog textarea');
   await field.dispatchEvent('compositionstart');
   await field.evaluate(el=>{el.value='あ'.repeat(31);el.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,inputType:'insertCompositionText'}));});
@@ -98,10 +99,11 @@ test('board separates author, category and status and names moments consistently
  await expect(page.locator('.pin-grid .pin-darupoyo .pin-category')).toHaveText('テストのごはん');
  await expect(page.locator('.pin-grid .pin-darupoyo .pin-state')).toHaveText('だるぽよ');
  await expect(page.locator('.pin-grid .pin-post .pin-state')).toHaveText('やったよ');
- await expect(page.locator('.pin-grid .pin-author strong').first()).toHaveText('テスト');
- await expect(page.locator('.pin-grid .pin-author small')).toHaveCount(0);
+ await expect(page.locator('.pin-grid .pin-category .pin-username').first()).toHaveText('テスト');
+ await expect(page.locator('.pin-grid .pin-author')).toHaveCount(0);
  const styles=await page.locator('.pin-grid .pin-state').evaluateAll(nodes=>nodes.map(el=>[getComputedStyle(el).color,getComputedStyle(el).backgroundColor]));
- expect(styles[0]).toEqual(styles[1]);
+ expect(styles[0][0]).toEqual(styles[1][0]);
+ expect(styles[0][1]).not.toEqual(styles[1][1]);
  await page.screenshot({path:'/tmp/darupoyo-board-followups.png',animations:'disabled'});
  await page.locator('.pin-grid .pin-moment').click();await expect(page.locator('.pin-viewer .pm-title')).toContainText(['テストのなう']);
 });

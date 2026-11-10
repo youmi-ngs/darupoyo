@@ -77,6 +77,7 @@ test('だるぽよ gets the gal line too: on the done card and in けーじば�
   await page.goto('/'); await newHouse(page, 'だるハウス', true);
   await page.getByRole('button', { name: 'スキップ' }).click({ timeout: 3000 }).catch(() => {});
   await page.locator('.scene-dot').nth(2).click(); await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^だるぽよ/ }).click();
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
   await page.locator('#darupoyo-caption').fill('ねむい');
   await page.getByRole('button', { name: 'きょーゆー' }).click();
   const done = page.locator('.darupoyo-dialog.is-success');

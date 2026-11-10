@@ -74,6 +74,7 @@ test('invalid photo, cancellation and preview leave draft intact; blank record h
   await enter(page);
   await page.locator('[data-chore=meal]').click(); await page.getByRole('button', { name: /^だるぽよ/ }).click();
   const dialog = page.locator('.darupoyo-dialog');
+  await page.getByRole('button', { name: '＋ ひとこと', exact: true }).click();
   await dialog.locator('textarea').fill('いったんおやすみ');
   await dialog.locator('[data-file]').setInputFiles({ name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('broken image') });
   await expect(dialog.locator('[role=status]')).toContainText('この写真は開けませんでした');

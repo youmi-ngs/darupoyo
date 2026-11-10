@@ -81,18 +81,16 @@ export function setupBoardView(ctx) {
     if (card.type === 'darupoyo' && !card.record.caption) text.hidden = true;
     el.append(magnet, picture(card));
     if (!small) {
-      const author = document.createElement('span'); author.className = 'pin-author';
-      const authorName = document.createElement('strong'); authorName.textContent = ctx.nameOf(card.who);
-      author.append(authorName);
       const meta = document.createElement('span'); meta.className = 'pin-meta';
       const category = document.createElement('span'); category.className = 'pin-category';
-      category.textContent = ctx.nameOf(card.who) + 'の' + (card.type === 'moment' ? 'なう' : LABELS[card.chore] || '記録');
+      const authorName = document.createElement('strong'); authorName.className = 'pin-username'; authorName.textContent = ctx.nameOf(card.who);
+      category.append(authorName, 'の' + (card.type === 'moment' ? 'なう' : LABELS[card.chore] || '記録'));
       meta.append(category);
       if (card.type !== 'moment') {
         const state = document.createElement('span'); state.className = 'pin-state';
         state.textContent = card.type === 'darupoyo' ? 'だるぽよ' : 'やったよ'; meta.append(state);
       }
-      el.append(author, meta);
+      el.append(meta);
       if (!text.hidden) el.append(text);
       el.setAttribute('aria-label', ctx.nameOf(card.who) + '：' + card.text);
       el.addEventListener('click', () => openCard(card));
