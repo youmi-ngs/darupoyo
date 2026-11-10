@@ -53,13 +53,13 @@ export function setupBoardView(ctx) {
   function cards() {
     return [
       ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.caption || p.praise?.text || '', post: p })),
-      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || 'うちらのなう📷', caption: m.caption, praise: m.praise, record: m })),
+      ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || ctx.nameOf(m.user_id) + 'のなう', caption: m.caption, praise: m.praise, record: m })),
       ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ', record: r })),
     ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
   function picture(card) {
     const box = document.createElement('span'); box.className = 'pin-photo';
-    const img = document.createElement('img'); img.alt = ctx.nameOf(card.who) + 'の' + (card.type === 'moment' ? 'うちらのなうの写真' : (LABELS[card.chore] || '') + 'の記録');
+    const img = document.createElement('img'); img.alt = ctx.nameOf(card.who) + 'の' + (card.type === 'moment' ? 'なうの写真' : (LABELS[card.chore] || '') + 'の記録');
     if (card.image) { img.src = card.image; box.append(img); return box; }
     if (card.media) {
       box.classList.add('is-loading'); box.append(img);
@@ -81,10 +81,19 @@ export function setupBoardView(ctx) {
     if (card.type === 'darupoyo' && !card.record.caption) text.hidden = true;
     el.append(magnet, picture(card));
     if (!small) {
+      const author = document.createElement('span'); author.className = 'pin-author';
+      const authorLabel = document.createElement('small'); authorLabel.textContent = '投稿者';
+      const authorName = document.createElement('strong'); authorName.textContent = ctx.nameOf(card.who);
+      author.append(authorLabel, authorName);
+      const meta = document.createElement('span'); meta.className = 'pin-meta';
       const category = document.createElement('span'); category.className = 'pin-category';
-      category.textContent = card.type === 'moment' ? 'うちらのなう' : (LABELS[card.chore] || '') + (card.type === 'darupoyo' ? ' · だるぽよ' : ' · やったよ');
-      const author = document.createElement('span'); author.className = 'pin-author'; author.textContent = ctx.nameOf(card.who);
-      el.append(category, author);
+      category.textContent = card.type === 'moment' ? ctx.nameOf(card.who) + 'のなう' : LABELS[card.chore] || '';
+      meta.append(category);
+      if (card.type !== 'moment') {
+        const state = document.createElement('span'); state.className = 'pin-state';
+        state.textContent = card.type === 'darupoyo' ? 'だるぽよ' : 'やったよ'; meta.append(state);
+      }
+      el.append(author, meta);
       if (!text.hidden) el.append(text);
       el.setAttribute('aria-label', ctx.nameOf(card.who) + '：' + card.text);
       el.addEventListener('click', () => openCard(card));
@@ -192,15 +201,16 @@ export function setupBoardView(ctx) {
       const house = client.house, version = closeVersion;
       const find = () => cards().find(c => c.id === id && c.type === kind);
       let card = find();
-      if (!card && (kind === 'moment' || kind === 'darupoyo')) {
+      if (!card && ['post', 'moment', 'darupoyo'].includes(kind)) {
         status.textContent = '通知の記録を開いているよ…';
         status.setAttribute('role', 'status');
-        const key = kind === 'moment' ? 'moments' : 'darupoyo';
+        const key = kind === 'post' ? 'posts' : kind === 'moment' ? 'moments' : 'darupoyo';
         // Fetch only the relevant record list, stopping at the target page.
         // Neither unrelated lists nor historical photo downloads block the detail.
         const records = await all('/' + key, id);
         if (house !== client.house || version !== closeVersion || view.hidden) return;
-        extra[key] = records; render(); card = find();
+        if (kind === 'post') posts = records.map(ctx.convertPost); else extra[key] = records;
+        render(); card = find();
       }
       if (house !== client.house || version !== closeVersion || view.hidden) return;
       if (card) openCard(card); else ctx.toast("この投稿は見つからないか、削除されているよ");

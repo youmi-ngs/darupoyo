@@ -1,4 +1,5 @@
 import './feedback.css';
+import { listenNotificationOpens } from './notification-open.js';
 import { setupFirstGuide } from './first-guide.js';
 import { captionCounter } from './composer-ui.js';
 import { textLength, limitInput } from './text-limits.js';
@@ -16,7 +17,7 @@ import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
 import { setupCritters } from './critters.js';
 import { startAmbience } from './ambience.js';
-import { client, start, houseApi, loadImage, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
+import { api, client, start, houseApi, loadImage, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
 import { capture } from './media.js';
 import { renderActivities, roomGal, nextReturn } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
@@ -400,7 +401,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     }
   });
   // けーじばん: opens from the board in the entrance, ← goes back there.
-  const boardView = setupBoardView({ nameOf, iconOf, themeOf, galOf: memberGal, toast,
+  const boardView = setupBoardView({ nameOf, iconOf, themeOf, convertPost, galOf: memberGal, toast,
     comments: (record, base) => commentsBlock(record, { me: ME, nameOf, dotOf, toast, base }),
     openPost: (posts, index) => openPhotos(posts.map(p => ({ p, day: p.day === dashboard.state.day ? '今日' : dayLabel(offOf(p.day)) })), index),
     onClosing: () => { window.__toScene = sceneIndexOf('entry'); $('house-view').hidden = false; window.__goScene?.(); },
@@ -417,13 +418,29 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     const target = new URLSearchParams(location.hash.slice(1));
     if (target.get('house') && target.get('post')) location.reload();
   });
-  window.addEventListener('darupoyo:entered', async () => {
-    const params = new URLSearchParams(location.hash.slice(1));
-    if (!params.get('post')) return;
-    if (params.get('house') !== client.house) { toast('通知のハウスに参加していないため、投稿を開けないよ'); return; }
-    history.replaceState(null, '', location.pathname + location.search);
-    try { showHouse(); await boardView.openNotification(params.get('post'), params.get('kind') || 'post'); }
-    catch { toast('投稿を読み込めなかったよ。もう一度試してね'); }
+  const openNotificationLink = listenNotificationOpens(async link => {
+    const url = new URL(link, location.origin), params = new URLSearchParams(url.hash.slice(1));
+    const house = params.get('house'), post = params.get('post');
+    if (!house || !post) return true;
+    captureController?.abort();
+    window.dispatchEvent(new Event('darupoyo:notification-opening'));
+    document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
+    document.querySelectorAll(':popover-open').forEach(popover => popover.hidePopover());
+    document.querySelectorAll('.push-banner,.menu-exit').forEach(el => el.remove());
+    if (!client.houses.some(h => h.id === house)) {
+      try { const result = await api('/houses'); client.houses = result.items || result; } catch { toast('通知のハウスを確認できなかったよ。もう一度試してね'); return false; }
+    }
+    if (!client.houses.some(h => h.id === house)) { toast('通知のハウスに参加していないため、投稿を開けないよ'); return true; }
+    if (house !== client.house) {
+      url.searchParams.set('notification', url.searchParams.get('notification') || Date.now().toString());
+      location.assign(url.href); return false;
+    }
+    try {
+      showHouse(); await boardView.openNotification(post, params.get('kind') || 'post');
+      const clean = new URL(location.href); clean.hash = ''; clean.searchParams.delete('notification');
+      history.replaceState(null, '', clean.pathname + clean.search);
+      return true;
+    } catch { toast('投稿を読み込めなかったよ。もう一度通知を開いてね'); return false; }
   });
 
   function openRoom(who) {
@@ -865,7 +882,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     document.querySelector('.push-banner')?.remove();
     const banner = document.createElement('div'); banner.className = 'push-banner'; banner.setAttribute('popover', 'manual');
     const open = document.createElement('button'); open.type = 'button'; open.textContent = body + '　投稿を見る ›';
-    open.onclick = () => { url.searchParams.set('notification', Date.now().toString()); location.assign(url.href); };
+    open.onclick = () => openNotificationLink(url.href);
     const dismiss = document.createElement('button'); dismiss.type = 'button'; dismiss.textContent = '×'; dismiss.setAttribute('aria-label', '通知を閉じる');
     dismiss.onclick = () => banner.remove(); banner.append(open, dismiss); document.body.append(banner); banner.showPopover();
   });
