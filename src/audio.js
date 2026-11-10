@@ -177,8 +177,8 @@ export async function dryerSound(box, status, signal, resources) {
   const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'btn'; copy.textContent = '判定情報をコピー';
   const log = []; let elapsed = 0;
   copy.onclick = async () => {
-    try { await navigator.clipboard.writeText(JSON.stringify({version:'dryer-level-v1',sampleRate:context.sampleRate,inputRate:stream.getAudioTracks()[0]?.getSettings().sampleRate,frames:log})); copy.textContent = 'コピーしたよ'; }
-    catch { note.textContent = JSON.stringify({version:'dryer-level-v1',sampleRate:context.sampleRate,inputRate:stream.getAudioTracks()[0]?.getSettings().sampleRate,frames:log}); }
+    try { await navigator.clipboard.writeText(JSON.stringify({version:'dryer-motor-airflow-v2',sampleRate:context.sampleRate,inputRate:stream.getAudioTracks()[0]?.getSettings().sampleRate,frames:log})); copy.textContent = 'コピーしたよ'; }
+    catch { note.textContent = JSON.stringify({version:'dryer-motor-airflow-v2',sampleRate:context.sampleRate,inputRate:stream.getAudioTracks()[0]?.getSettings().sampleRate,frames:log}); }
   };
   diagnostics.append(summary, note, copy); box.append(diagnostics);
   let detected = 0;
@@ -199,7 +199,7 @@ export async function dryerSound(box, status, signal, resources) {
         if (confirmed > 0) { detected += confirmed; hearing.textContent = 'ドライヤーの音、聞こえてるよ！'; }
         progress.value = detected; status.textContent = 'ぶお〜ん…' + Math.min(10, detected).toFixed(1) + ' / 10びょ〜';
         elapsed += data.length / context.sampleRate;
-        log.push({time:+elapsed.toFixed(2),samples:data.length,audioState:context.state,rms:+rms.toFixed(4),gain:+gain.toFixed(2),counted:+confirmed.toFixed(2),scores:categories.filter(c=>['Hair dryer','Steam','Hiss','Speech','Music'].includes(c.categoryName)).map(c=>[c.categoryName,+c.score.toFixed(3)]),top:categories.slice(0,6).map(c=>[c.categoryName,+c.score.toFixed(3)])});
+        log.push({time:+elapsed.toFixed(2),samples:data.length,audioState:context.state,rms:+rms.toFixed(4),gain:+gain.toFixed(2),counted:+confirmed.toFixed(2),scores:categories.filter(c=>['Hair dryer','Steam','Hiss','Drill','Mechanical fan','Speech','Music'].includes(c.categoryName)).map(c=>[c.categoryName,+c.score.toFixed(3)]),top:categories.slice(0,6).map(c=>[c.categoryName,+c.score.toFixed(3)])});
         if (log.length > 30) log.shift();
         diagnostics.hidden = elapsed < 8 || detected >= 10;
         if (detected >= 10) resolve();
