@@ -3,8 +3,10 @@ import {setWelcomeName,setHouseName} from '../e2e/onboarding-helper.js';
 async function swipe(page,x,y,dx,dy=0,cancel=false) {
  await page.locator('#room-view').evaluate((room,{x,y,dx,dy,cancel})=>{
   const send=(type,cx,cy)=>{
-   const touch=new Touch({identifier:1,target:room,clientX:cx,clientY:cy});
-   room.dispatchEvent(new TouchEvent(type,{bubbles:true,cancelable:true,touches:type==='touchend'||type==='touchcancel'?[]:[touch],changedTouches:[touch]}));
+   const touch={identifier:1,target:room,clientX:cx,clientY:cy};
+   const event=new Event(type,{bubbles:true,cancelable:true});
+   Object.defineProperties(event,{touches:{value:type==='touchend'||type==='touchcancel'?[]:[touch]},changedTouches:{value:[touch]}});
+   room.dispatchEvent(event);
   };
   send('touchstart',x,y);send('touchmove',x+dx,y+dy);send(cancel?'touchcancel':'touchend',x+dx,y+dy);
  },{x,y,dx,dy,cancel});
