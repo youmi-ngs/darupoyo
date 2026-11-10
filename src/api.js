@@ -46,7 +46,7 @@ export async function api(path, body, method = 'POST') {
   return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.blob();
 }
 export const houseApi = (path, body, method) => api('/houses/' + client.house + path, body, method);
-function loadImage(id) {
+export function loadImage(id) {
   if (!id || images.has(id)) return Promise.resolve(images.get(id) || null);
   if (!loadingImages.has(id)) loadingImages.set(id, houseApi('/media/' + id).then(blob => {
     const url = URL.createObjectURL(blob); images.set(id, url); loadingImages.delete(id); return url;
