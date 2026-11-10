@@ -17,6 +17,8 @@ const fill = page => page.evaluate(async () => {
 
 test('the order is 外, 玄関, リビング, 洗面所, ベランダ, みんなの部屋; dots move between them and the bar is gone', async ({ page }) => {
   await enter(page);
+  await page.reload();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.scene-dot')).toHaveCount(6);
   const labels = await page.locator('#plan > .scene').evaluateAll(n => n.map(s => s.getAttribute('aria-label')));
   expect(labels).toEqual(['外', '玄関', 'リビング', '洗面所', 'ベランダ', 'みんなの部屋']);

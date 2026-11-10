@@ -18,7 +18,8 @@ test('your own chore record: edit its words (the gal answers again) and delete i
   const field = slide.getByLabel('ひとこと（30文字まで）');
   await expect(field).toHaveValue('かわいた');
   await field.fill('あ'.repeat(31));
-  await expect(slide.getByRole('button', { name: '保存' })).toBeDisabled();
+  await expect(field).toHaveValue('あ'.repeat(30));
+  await expect(slide.getByRole('button', { name: '保存' })).toBeEnabled();
   await field.fill('サラサラになった');
   const saved = page.waitForResponse(r => r.request().method() === 'PATCH' && /\/posts\//.test(r.url()));
   await slide.getByRole('button', { name: '保存' }).click();
