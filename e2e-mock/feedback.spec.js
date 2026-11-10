@@ -16,7 +16,10 @@ test('30 visible characters, optional text, compact photo and board categories',
   const composer=page.locator('.darupoyo-dialog'), input=composer.locator('textarea');
   await expect(composer).toContainText('ま、そんな日もあるっしょ〜♡');
   await expect(composer).toContainText('かかなくてもおけ♡');
-  await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(30));
+  await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(31));
+  await expect(composer.locator('[data-save]')).toBeDisabled();
+  await expect(composer.locator('[data-count]')).toContainText('あと1文字減らしてね');
+  await input.fill('👨‍👩‍👧‍👦'.repeat(30));
   await expect(composer.locator('[data-count]')).toHaveText('30 / 30');
   const buffer=Buffer.from(await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=600;return c.toDataURL().split(',')[1];}),'base64');
   await composer.locator('[data-file]').setInputFiles({name:'photo.png',mimeType:'image/png',buffer});
