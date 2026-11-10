@@ -260,3 +260,8 @@ dialog.install-guide[open] { animation:chore-dialog-in .24s ease-out; }
 .refined-welcome[data-screen=login] .welcome-logo { top:calc(50% - 196px); animation-name:welcome-logo-rise-far; }
 @keyframes welcome-logo-rise-far { from { top:calc(50% - 51px); } to { top:calc(50% - 196px); } }
 .refined-welcome[data-screen=login] .welcome-legal { position:absolute; top:calc(50% + 44px); left:50%; width:296px; max-width:calc(100% - 32px); margin:0; transform:translateX(-50%); }
+
+/* やっほ〜: ＜ beside the title goes back to the name */
+.welcome-head { display:flex; align-items:center; gap:6px; margin-left:-10px; }
+.welcome-back-arrow { display:grid; place-items:center; flex:none; width:44px; height:44px; padding:0; border:0; border-radius:14px; background:transparent; color:var(--ink, #3b2560); cursor:pointer; }
+.welcome-back-arrow:active { background:#ffffff8f; }

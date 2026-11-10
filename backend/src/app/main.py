@@ -15,6 +15,7 @@ from .config import Settings
 from .accounts import delete_account, leave_house, require_active
 from .darupoyo import register_darupoyo_routes
 from .edits import register_edit_routes
+from .sharing import fan_out, targets
 from .domain import Domain, require_member
 from .models import (
     Avatar,
@@ -276,6 +277,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
     @app.post("/api/houses/{house_id}/moments", status_code=201)
     def share_moment(house_id: UUID, body: Moment, tasks: BackgroundTasks, uid=Depends(current_user)):
         house = str(house_id)
+        targets(app.state.store, uid, house, body.share_to)  # check before anything is saved
         moment = app.state.domain.share_moment(uid, house, body)
         if "praise" not in moment:  # new (a retry already has its line and its notification)
             store = app.state.store
@@ -292,7 +294,16 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             line = app.state.praise.moment(gal, moment["caption"], photo)
             moment = app.state.domain.set_moment_praise(house, moment["id"], line)
             tasks.add_task(app.state.notify.friend_moment, store, home, uid, moment["id"])  # #157
-        return moment
+
+        # 共有範囲: the same なう in my other houses, with the same gal line, and a notice there too.
+        def copy(other, media_ids):
+            made = app.state.domain.share_moment(uid, other, body.model_copy(update={**media_ids, "share_to": []}))
+            if "praise" not in made and moment.get("praise"):
+                made = app.state.domain.set_moment_praise(other, made["id"], moment["praise"])
+                tasks.add_task(app.state.notify.friend_moment, app.state.store, require_member(app.state.store, other, uid), uid, made["id"])
+            return made
+
+        return fan_out(app, uid, house, "moments", moment, body, copy)
 
     @app.get("/api/houses/{house_id}/moments")
     def moments(house_id: UUID, before: str | None = Query(default=None, max_length=100), uid=Depends(current_user)):
@@ -306,6 +317,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
         house_id: UUID, body: Completion, tasks: BackgroundTasks, uid=Depends(current_user)
     ):
         house = str(house_id)
+        targets(app.state.store, uid, house, body.share_to)  # check before anything is saved
         post, created = app.state.domain.complete(uid, house, body)
         if created:
             post = app.state.domain.set_praise(
@@ -321,6 +333,19 @@ def create_app(settings=None, store=None, praise=None, clock=None):
                 body.chore.value,
                 post["id"],
             )
+
+        # 共有範囲: the same record in my other houses (their own copy of the photo, the same
+        # gal line, and a notice for the people there). Today's pose stays per house.
+        def copy(other, media_ids):
+            update = {**media_ids, "share_to": [], "reference_post_id": None, "similarity": None}
+            made, fresh = app.state.domain.complete(uid, other, body.model_copy(update=update))
+            if fresh:
+                made = app.state.domain.set_praise(other, made["id"], post["praise"])
+                tasks.add_task(app.state.notify.friend_cleared, app.state.store,
+                               require_member(app.state.store, other, uid), uid, body.chore.value, made["id"])
+            return made
+
+        post = fan_out(app, uid, house, "posts", post, body, copy)
         return {"post": post, "created": created}
 
     @app.get("/api/houses/{house_id}/posts")

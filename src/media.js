@@ -119,7 +119,7 @@ function livePreview(video, landmarker, choice, reference, status, resources) {
   return stop;
 }
 
-export async function capture(root, chore, choice, reference, signal) {
+export async function capture(root, chore, choice, reference, signal, options = {}) {
   root.innerHTML = '<div class="capture"><h2 class="sheet-title" id="sheet-title"></h2><p class="capture-status" role="status" aria-live="polite"></p></div>';
   const box = root.firstChild, status = box.querySelector('p'); box.querySelector('h2').textContent = choice.title;
   const resources = [];
@@ -236,6 +236,7 @@ export async function capture(root, chore, choice, reference, signal) {
     }
     const word = wordBox(box, choice.preset === 'santa' ? 'めりくり！' : 'ゴミ捨てえらい！');
     const go = mainButton(box, 'プレゼントを届ける');
+    if (options.audience) go.before(options.audience); // 共有範囲
     status.textContent = 'ポーズ判定を準備中…';
     landmarker = await landmarkerReady; check(signal);
     // #98: 切り抜きモデルも、撮影を待つあいだに裏で読み込んでおく（以前は1枚目の判定後に読み込み始めていた）。

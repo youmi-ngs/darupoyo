@@ -12,8 +12,14 @@ export function ownerActions({ record, base, onEdited, onDeleted, toast }) {
   const box = document.createElement('div'); box.className = 'post-owner';
   const path = base + '/' + record.id;
   const row = document.createElement('div'); row.className = 'post-owner-actions';
-  const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'post-owner-edit'; edit.textContent = 'ひとことを編集';
-  const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'post-owner-delete'; remove.textContent = '削除';
+  // Icons (pencil / trash); the words stay as their names for screen readers.
+  const icon = paths => '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+  const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'post-owner-icon post-owner-edit';
+  edit.setAttribute('aria-label', 'ひとことを編集'); edit.title = 'ひとことを編集';
+  edit.innerHTML = icon('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>');
+  const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'post-owner-icon post-owner-delete';
+  remove.setAttribute('aria-label', '削除'); remove.title = '削除';
+  remove.innerHTML = icon('<path d="M4 7h16M9 7V4.5h6V7M6 7l1 13h10l1-13M10 11v6M14 11v6"/>');
   row.append(edit, remove); box.append(row);
 
   edit.onclick = () => {

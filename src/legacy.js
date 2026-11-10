@@ -9,6 +9,7 @@ import { whileSending } from './sending.js';
 import { celebrationHTML, burst, doneActionsHTML } from './celebrate.js';
 import { lockSwipeAxis } from './swipe-axis.js';
 import { ownerActions } from './post-actions.js';
+import { audienceChip } from './audience.js';
 import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
@@ -503,8 +504,10 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     sheet.classList.remove('refined-modal', 'pose-picker');
     captureController?.abort(); captureController = new AbortController();
     const signal = captureController.signal;
+    // 共有範囲: which of my houses get this record (starts as this house only).
+    const audience = currentAudience = audienceChip();
     try {
-      const evidence = await capture(sheetBody, id, c, state.originals[id], signal);
+      const evidence = await capture(sheetBody, id, c, state.originals[id], signal, { audience: audience.el });
       if (signal.aborted) return;
       const gal = pickGal();
       const { blob, kind, result, voice, ...fields } = evidence;
@@ -526,6 +529,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
         sheetBody.querySelector('.result-card').after(praise);
         galVoice(gal, GALS[gal].lines.cutout);
       }
+      $('post').before(audience.el);
       $('redo').onclick = () => { captureController.abort(); openSheet(id); };
       $('post').onclick = async () => {
         const button = $('post'); setBusy(button, true, '飾っています…'); $('redo').disabled = true; $('sheet-close').disabled = true;
@@ -551,7 +555,10 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   // Photo tasks (Figma 写真のタスク): the word was written with the photo. ゴミ出し is sent right
   // from its card (プレゼントを届ける); ごはん asks once more after いただきます (04). Both end on
   // a card with the photo, the word and the gal's line, and a way to けーじばん (05 / 11).
+  let currentAudience = null;
   async function sendRecord(body, blob, kind, voice) {
+    // The houses are fixed with the first try, so a retry is the same request.
+    if (!('share_to' in body)) body.share_to = currentAudience?.shareTo() || [];
     if (blob && !body.media_id) body.media_id = (await houseApi('/media?kind=' + kind, blob)).id;
     // A confirmed recording must not disappear silently on upload failure.
     if (voice && !body.voice_media_id) body.voice_media_id = (await houseApi('/media?kind=voice', voice)).id;
@@ -573,6 +580,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     sheetBody.querySelector('.result-main').textContent = heard ? '「いただきます」聞こえた！' : '写真で記録できるよ';
     sheetBody.querySelector('.result-sub').textContent = heard ? '声を確認したよ。写真といっしょに残そ！' : 'ちゃんと食べてえらい。写真だけで残そ！';
     if (voice) { const url = URL.createObjectURL(voice); sheetBody.querySelector('.result-sub').after(voiceButton(() => url)); }
+    if (currentAudience) $('post').before(currentAudience.el);
     $('post').onclick = () => send($('post'));
   }
   function photoTaskDone(id, c, gal, post, blob) {

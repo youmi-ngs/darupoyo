@@ -58,6 +58,8 @@ class Completion(Model):
     gal: Literal["heisei", "reiwa", "kuro", "hime"] = "reiwa"
     # A word from the resident about this chore (optional), shown with the record.
     caption: Caption = ""
+    # 共有範囲: my other houses that get this post too (the house in the URL always does).
+    share_to: list[UUID] = Field(default_factory=list, max_length=10)
 
     @model_validator(mode="after")
     def evidence(self):
@@ -142,6 +144,8 @@ class Moment(Model):
     request_id: UUID
     media_id: UUID
     caption: Caption = ""
+    # 共有範囲: my other houses that get this post too (the house in the URL always does).
+    share_to: list[UUID] = Field(default_factory=list, max_length=10)
 
 
 class Comment(Model):

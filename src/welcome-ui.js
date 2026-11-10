@@ -90,8 +90,15 @@ export function createWelcome() {
     },
     choose({ items, invite, initialName, askName, saveName, enter, submit }) {
       let name=initialName || '', code=invite || '', houseName='';
+      // ＜ beside the title: every step of the welcome goes back the same way.
+      const backArrow=(h, label, onClick)=>{
+        const head=document.createElement('div'); head.className='welcome-head';
+        const back=document.createElement('button'); back.type='button'; back.className='welcome-back-arrow'; back.setAttribute('aria-label',label);
+        back.innerHTML='<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        back.onclick=onClick; h.before(head); head.append(back,h); return back;
+      };
       const formScreen=(title, label, value, limit, confirm, onSubmit, back) => {
-        const {card,status}=screen(title); const form=document.createElement('form'); card.insertBefore(form,status);
+        const {card,status,h}=screen(title); const form=document.createElement('form'); card.insertBefore(form,status);
         const input=document.createElement('input'); input.placeholder=label==='あなたの名前'?'なまえ':label==='新しいハウスの名前'?'ハウスのなまえ':label;
         input.setAttribute('aria-label',label); input.required=true; input.maxLength=limit; input.value=value; input.enterKeyHint='done'; input.autocomplete=label==='あなたの名前'?'nickname':'off'; form.append(input); limitInput(input, limit);
         if (label !== '招待コード') {
@@ -101,7 +108,7 @@ export function createWelcome() {
         const b=action(card,confirm,()=>onSubmit(input.value.trim())); b.hidden=!input.value.trim();
         input.oninput=()=>{ b.hidden=!input.value.trim(); };
         form.onsubmit=e=>{e.preventDefault();if(input.value.trim())b.click();};
-        if(back) {const goBack=action(card,'もどる',()=>back(input.value),true); goBack.classList.add('welcome-back');}
+        if(back) backArrow(h,'もどる',()=>back(input.value));
         // Keep the initial screen's empty-input composition. A tap or Tab starts editing.
         return input;
       };
@@ -109,18 +116,22 @@ export function createWelcome() {
       const join=()=>formScreen('友達の家に住む','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
       // #181: the houses you already live in sit one step further in, under 帰る.
       const homes=()=>{
-        const {card}=screen('どのハウスに帰る？','card');
-        items.forEach(h=>action(card,h.name+'に帰る',()=>enter(h.id)).classList.add('welcome-home'));
-        action(card,'もどる',()=>choose('back'),true).classList.add('welcome-back');
+        const {card,h}=screen('どのハウスに帰る？','card');
+        backArrow(h,'もどる',()=>choose('back'));
+        items.forEach(house=>action(card,house.name+'に帰る',()=>enter(house.id)).classList.add('welcome-home'));
       };
       // Three choices, each its own colour (#181).
       const choose=(direction='forward')=>{
-        const {card}=screen('やっほ〜','card',direction);
+        const {card,h}=screen('やっほ〜','card',direction);
         if(items.length) action(card,'すでに入居済みの家に帰る',homes).classList.add('welcome-home');
         action(card,'友達の家に住む',join).classList.add('welcome-join');
         action(card,'新しく家をつくる',create,true).classList.add('welcome-create');
+        // The name was typed just before: ＜ next to the title goes back to fix it.
+        if(askedName) backArrow(h,'名前にもどる',()=>nameStep());
       };
-      if(askName || !name) formScreen('なまえおしえて〜','あなたの名前',name,12,'次へ',value=>{name=value;saveName(value);invite?join():choose();});
+      const askedName=askName || !name;
+      const nameStep=()=>formScreen('なまえおしえて〜','あなたの名前',name,12,'次へ',value=>{name=value;saveName(value);invite?join():choose();});
+      if(askedName) nameStep();
       else invite?join():choose();
     },
   };

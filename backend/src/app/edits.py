@@ -35,7 +35,37 @@ def _own(tx, house_id, uid, collection, record_id):
     return record
 
 
+def _copies(record, house_id):
+    """The other houses' copies of a shared post (共有範囲): [(house_id, record_id)]."""
+    return [(h, r) for h, r in (record.get("shared_copies") or {}).items() if h != house_id]
+
+
+def _set_copy(app, uid, house_id, kind, record_id, caption, praise):
+    """Give one copy the new words (and the gal's new line). A house I left is skipped."""
+    path = f"houses/{house_id}/{KINDS[kind][0]}/{record_id}"
+
+    def save(tx):
+        try:
+            record = _own(tx, house_id, uid, KINDS[kind][0], record_id)
+        except HTTPException:
+            return
+        record["caption"] = caption
+        record["edited_at"] = app.state.domain.clock().isoformat()
+        if praise is not None:
+            record["praise"] = praise
+        tx.set(path, record)
+
+    app.state.store.atomic(save)
+
+
 def edit_caption(app, uid, house_id, kind, record_id, caption):
+    record = _edit_one(app, uid, house_id, kind, record_id, caption)
+    for other, copy_id in _copies(record, house_id):  # 共有範囲: the same words everywhere
+        _set_copy(app, uid, other, kind, copy_id, record.get("caption", ""), record.get("praise"))
+    return record
+
+
+def _edit_one(app, uid, house_id, kind, record_id, caption):
     collection = KINDS[kind][0]
     path = f"houses/{house_id}/{collection}/{record_id}"
     caption = caption.strip()
@@ -97,6 +127,15 @@ def _undo_day(tx, house_id, uid, kind, record, others):
 
 
 def delete_record(app, uid, house_id, kind, record_id):
+    record = _delete_one(app, uid, house_id, kind, record_id)
+    for other, copy_id in _copies(record, house_id):  # 共有範囲: gone from every house
+        try:
+            _delete_one(app, uid, other, kind, copy_id)
+        except HTTPException:
+            pass  # already gone, or a house I left
+
+
+def _delete_one(app, uid, house_id, kind, record_id):
     store, media = app.state.store, app.state.media
     collection, requests, field = KINDS[kind]
     root = f"houses/{house_id}"
@@ -124,6 +163,7 @@ def delete_record(app, uid, house_id, kind, record_id):
         if meta and meta.get("owner_id") == uid:
             media.delete(meta["object_name"])
             store.atomic(lambda tx, media_id=media_id: tx.delete(f"{root}/media/{media_id}"))
+    return removed
 
 
 def register_edit_routes(app, current_user):

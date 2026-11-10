@@ -9,6 +9,7 @@ import { sfx } from './sfx.js';
 import { momentPraise } from './moment-praise.js';
 import { whileSending } from './sending.js';
 import { burst } from './celebrate.js';
+import { audienceChip } from './audience.js';
 
 const WIDTH = 600, HEIGHT = 755; // the 302×380 frame of the design
 
@@ -42,16 +43,18 @@ export function setupMoments() {
   const controls = $('.now-controls'), shutter = $('.now-shutter'), flip = $('.now-flip'), library = $('.now-library input');
   const caption = $('.now-field input'), share = $('.now-share'), status = $('.now-status');
   captionCounter(caption); photoPreview(canvas);
+  const leadRow = document.createElement('div'); leadRow.className = 'now-lead-row'; $('.now-lead').before(leadRow); leadRow.append($('.now-lead'));
   const lead = $('.now-lead'), field = $('.now-field'), sentCaption = $('.now-caption'), praiseBox = $('.now-praise'), toBoard = $('.now-board');
   // Before sending: camera, word and みせちゃう. After: the photo, the word, the gal's line and けーじばん.
   const setSent = sent => {
     lead.textContent = sent ? 'そ〜しんできたよん' : '今のうちら撮ろ〜';
     field.hidden = share.hidden = sent; toBoard.hidden = !sent;
     if (sent) retake.hidden = true;
+    if (audience) audience.el.hidden = sent;
     if (!sent) { dialog.querySelector('.now-frame .done-burst')?.remove(); sentCaption.hidden = praiseBox.hidden = true; praiseBox.replaceChildren(); dialog.classList.remove('is-sent'); }
   };
   const ctx = canvas.getContext('2d');
-  let stream = null, controller = null, taken = false, mediaId = null, requestId = null, busy = false, house = null;
+  let stream = null, controller = null, taken = false, mediaId = null, requestId = null, busy = false, house = null, audience = null, shareTo = null;
 
   const stopCamera = () => { stream?.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null; };
   const facing = () => stream?.getVideoTracks()[0]?.getSettings().facingMode;
@@ -89,6 +92,8 @@ export function setupMoments() {
     document.querySelector('#menu')?.close();
     controller?.abort(); controller = new AbortController();
     house = client.house; requestId = crypto.randomUUID(); caption.value = ''; status.textContent = ''; setSent(false);
+    // 共有範囲: a fresh pill each time (this house only), just above みせちゃう.
+    audience?.el.remove(); audience = audienceChip(); shareTo = null; leadRow.append(audience.el);
     setBusy(share, false); share.disabled = true; caption.disabled = retake.disabled = false; busy = false;
     dialog.showModal();
     await startCamera('user');
@@ -127,7 +132,8 @@ export function setupMoments() {
     try {
       const moment = await whileSending($('.now-frame'), async () => { // そ〜しんちゅ〜 over the photo
         mediaId ||= (await houseApi('/media?kind=selfie', await blobOf(canvas, 'image/jpeg'))).id;
-        return houseApi('/moments', { request_id: requestId, media_id: mediaId, caption: caption.value.trim() });
+        shareTo ||= audience?.shareTo() || [];
+        return houseApi('/moments', { request_id: requestId, media_id: mediaId, caption: caption.value.trim(), share_to: shareTo });
       });
       window.dispatchEvent(new CustomEvent('darupoyo:moment')); // けーじばん picks up the new selfie
       stopCamera(); setSent(true);
