@@ -580,3 +580,25 @@ def test_household_day_boundaries(instant, expected):
     post, _ = domain.complete("alice", house, Completion(**sound()))
     assert post["day"] == expected
     assert domain.dashboard("alice", house)["state"]["day"] == expected
+
+
+def test_invite_preview_only_exposes_name_without_joining(client):
+    h = house(client)
+    code = client.post(f"/api/houses/{h}/invites", headers=auth()).json()["token"]
+    data = {"token": code}
+    assert client.post("/api/invites/preview", json=data).status_code == 401
+    preview = client.post("/api/invites/preview", headers=auth("bob"), json=data)
+    assert preview.status_code == 200
+    assert preview.json() == {"name": "温玉ハウス"}
+    assert client.get("/api/houses", headers=auth("bob")).json()["items"] == []
+    invalid = client.post("/api/invites/preview", headers=auth("bob"), json={"token": "invalid-code"})
+    assert invalid.status_code == 404
+
+
+def test_expired_invite_preview_is_rejected(client):
+    h = house(client)
+    code = client.post(f"/api/houses/{h}/invites", headers=auth()).json()["token"]
+    now = datetime.now(UTC)
+    client.app.state.domain.clock = lambda: now + timedelta(days=8)
+    response = client.post("/api/invites/preview", headers=auth("bob"), json={"token": code})
+    assert response.status_code == 404

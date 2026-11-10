@@ -1,6 +1,6 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test.beforeEach(async ({ context }) => { await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1')); });
+test.beforeEach(async ({ context }) => { await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))); });
 async function enter(page) {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'ゆるいおうち');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
@@ -16,7 +16,7 @@ test('darupoyo shares text, preserves completion state and survives reload',asyn
   await enter(page); const before=await state(page);
   const token=await page.evaluate(async()=>{ const {houseApi}=await import('/src/api.js'); return (await houseApi('/invites',{})).token; });
   const context=await browser.newContext(); const friend=await context.newPage();
-  await friend.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
+  await friend.addInitScript(()=>['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await friend.goto(page.url()); await setWelcomeName(friend, '友だち'); await friend.getByRole('button',{name:'友達の家に住む',exact:true}).click();  await friend.getByLabel('招待コード').fill(token);
   await friend.getByRole('button',{name:'招待に参加する'}).click(); await friend.getByRole('button',{name:'おじゃまします！'}).click();
   await compose(page);
@@ -87,18 +87,18 @@ test('furniture reacts on taps and keyboard, with a temporary prize (つけま�
   await page.getByRole('button',{name:'玄関のドアであそぶ'}).click(); await expect(page.locator('.furniture-prize')).toHaveCount(0);
 });
 
-test('IME overflow stays editable and never submits until corrected', async ({page}) => {
+test('IME input stops at the limit and can submit after composition', async ({page}) => {
   await enter(page); await compose(page);
   const input=page.getByLabel('ひとこと（任意・30文字まで）'), save=page.locator('.darupoyo-dialog [data-save]');
   await input.pressSequentially('a'.repeat(31)); await expect(input).toHaveValue('a'.repeat(30));
   await input.fill('');
   await input.dispatchEvent('compositionstart');
   await input.evaluate(el=>{el.value='あ'.repeat(31);el.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,inputType:'insertCompositionText'}));});
-  await expect(save).toBeDisabled(); await expect(input).toHaveValue('あ'.repeat(31));
+  await expect(save).toBeDisabled(); await expect(input).toHaveValue('あ'.repeat(30));
   await input.dispatchEvent('compositionend');
-  await expect(input).toHaveValue('あ'.repeat(31));
-  await expect(page.locator('.darupoyo-dialog [data-count]')).toContainText('あと1文字減らしてね');
-  await expect(save).toBeDisabled(); await expect(input).toBeEnabled();
+  await expect(input).toHaveValue('あ'.repeat(30));
+  await expect(page.locator('.darupoyo-dialog [data-count]')).toHaveText('30 / 30');
+  await expect(save).toBeEnabled(); await expect(input).toBeEnabled();
   await input.fill('あ'.repeat(30)); await expect(save).toBeEnabled();
   await save.click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
   await expect(page.locator('.pin-grid .pin-darupoyo')).toContainText('あ'.repeat(30));

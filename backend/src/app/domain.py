@@ -85,6 +85,19 @@ class Domain:
         token = self.store.atomic(run)
         return {"token": token, "expires_at": expires}
 
+    def preview_invite(self, uid, token):
+        def run(tx):
+            require_active(tx, uid)
+            invitation = tx.get(f"invites/{digest(normalize_invite(token))}")
+            if not invitation or datetime.fromisoformat(invitation["expires_at"]) <= self.clock():
+                raise HTTPException(404, "Invite not found or expired")
+            house = tx.get(f"houses/{invitation['house_id']}")
+            if not house or not house["member_ids"]:
+                raise HTTPException(404, "House not found")
+            # A valid invitation exposes only the name, never members or records.
+            return {"name": house["name"]}
+        return self.store.atomic(run)
+
     def join(self, uid, body):
         def run(tx):
             require_active(tx, uid)

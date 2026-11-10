@@ -63,16 +63,22 @@ for (const format of ['hash', 'query']) {
     const house = await created.json();
     const response = await request.post(`${process.env.TEST_BACKEND_URL || 'http://127.0.0.1:8080'}/api/houses/${house.id}/invites`, { headers, data: {} });
     const { token } = await response.json();
+    await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
     await fakeGoogle(page, true);
     await page.goto('/' + (format === 'hash' ? '#' : '?') + new URLSearchParams({ invite: token }));
     await page.getByRole('button', { name: 'Googleでログイン' }).click();
     await expect(page.getByLabel('あなたの名前')).toHaveValue('Tester');
     await page.getByRole('button', { name: '次へ', exact: true }).click();
-    await expect(page.getByLabel('招待コード')).toHaveValue(token);
+    await expect(page.locator('.welcome-invite-name')).toHaveText('「招待先」');
+    await expect(page.getByLabel('招待コード')).toHaveCount(0);
+    if (format === 'query') await page.screenshot({ path: '/tmp/mobile-invite.png', animations: 'disabled' });
     await expect(page.getByRole('button', { name: '新しく家をつくる', exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: '招待に参加する', exact: true }).click();
     await expect(page.locator('.onboarding')).toHaveCount(0);
     expect(await page.evaluate(async () => (await import('/src/api.js')).client.house)).toBe(house.id);
     expect(await page.evaluate(() => sessionStorage.getItem('darupoyo-pending-invite'))).toBeNull();
+    await expect(page.locator('.first-guide')).toHaveCount(0);
+    await page.getByRole('button', { name: 'おじゃまします！' }).click();
+    await expect(page.locator('.first-guide')).toBeVisible();
   });
 }

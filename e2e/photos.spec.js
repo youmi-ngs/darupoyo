@@ -1,7 +1,7 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => {
-  await context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
 });
 async function enter(page, name = 'もち', houseName = 'photos') {
   await page.goto('/'); await setWelcomeName(page, name); await setHouseName(page, houseName);
@@ -100,7 +100,7 @@ test('records from another house appear only after their owner shares them', asy
   const alice = await mealPost(page);
   // bob lives in a new house and invites alice.
   const other = await browser.newContext(); const bobPage = await other.newPage();
-  await bobPage.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1'));
+  await bobPage.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await enter(bobPage, 'ぼぶ', 'あたらしい家');
   const bob = await bobPage.evaluate(async () => { const { client, houseApi } = await import('/src/api.js'); const { token } = await houseApi('/invites', {}); return { house: client.house, token }; });
   const asAlice = { Authorization: 'Bearer dev:' + alice.uid };

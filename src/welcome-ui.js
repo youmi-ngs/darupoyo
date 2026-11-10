@@ -88,7 +88,7 @@ export function createWelcome() {
     deletion(work) {
       const {card,status}=screen('アカウント削除の再開'); status.hidden=false; status.textContent='アカウント削除が途中です。再開して残りのデータを削除してください。'; action(card,'削除を再開',work);
     },
-    choose({ items, invite, initialName, askName, saveName, enter, submit }) {
+    choose({ items, invite, initialName, askName, saveName, enter, submit, previewInvite }) {
       let name=initialName || '', code=invite || '', houseName='';
       // ＜ beside the title: every step of the welcome goes back the same way.
       const backArrow=(h, label, onClick)=>{
@@ -113,7 +113,30 @@ export function createWelcome() {
         return input;
       };
       const create=()=>formScreen('新しく家をつくる','新しいハウスの名前',houseName,20,'ハウスをつくる',async value=>{await submit(false,value,name);}, value=>{houseName=value;choose('back');});
-      const join=()=>formScreen('友達の家に住む','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
+      const codeForm=()=>formScreen('友達の家に住む','招待コード',code,200,'招待に参加する',async value=>{await submit(true,value,name);}, value=>{code=value;choose('back');});
+      const join = () => {
+        if (!invite || code !== invite) return codeForm();
+        const { card, status, h } = screen('友達の家に住む');
+        status.hidden = false; status.textContent = '招待先を確認しているよ…';
+        backArrow(h, 'もどる', () => choose('back'));
+        const load = async () => {
+          try {
+            const house = await previewInvite(code);
+            if (!card.isConnected) return;
+            status.hidden = true;
+            const label = document.createElement('p'); label.className = 'welcome-invite-name';
+            label.textContent = '「' + house.name + '」';
+            card.insertBefore(label, status);
+            action(card, '招待に参加する', () => submit(true, code, name));
+          } catch {
+            if (!card.isConnected) return;
+            status.textContent = '招待先を確認できなかったよ。リンクの期限や通信を確認してね';
+            action(card, 'もう一度確認する', () => join());
+            action(card, 'コードを入力する', codeForm, true);
+          }
+        };
+        void load();
+      };
       // #181: the houses you already live in sit one step further in, under 帰る.
       const homes=()=>{
         const {card,h}=screen('どのハウスに帰る？','card');

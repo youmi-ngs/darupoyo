@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 // 効果音とギャルの声っぽい音（#8 #17）。鳴らした音（オシレーター）の数で確かめる。
 test.beforeEach(async ({ context }) => {
   await context.addInitScript(() => {
-    localStorage.setItem('darupoyo-howto-seen', '1');
+    ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())));
     window.tones = 0;
     const make = AudioContext.prototype.createOscillator;
     AudioContext.prototype.createOscillator = function () { window.tones++; return make.call(this); };

@@ -26,6 +26,8 @@ self.addEventListener('notificationclick', (event) => {
     const app = windows.find((w) => new URL(w.url).origin === self.location.origin);
     const destination = new URL(link, self.location.origin);
     if (destination.origin !== self.location.origin) return;
+    // A hash-only navigate can resume the old screen without booting the target house.
+    destination.searchParams.set('notification', Date.now().toString());
     if (app) { await app.navigate(destination.href); await app.focus(); return; }
     await self.clients.openWindow(destination.href);
   })());

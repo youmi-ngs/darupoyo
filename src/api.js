@@ -120,7 +120,7 @@ export async function start(onUpdate, onError) {
   const houses = await api('/houses');
   const items = houses.items || houses;
   client.houses = items;
-  const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); if (invite) history.replaceState(null, '', clearInvite(location.href, inviteStorage)); await welcome.leave(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
+  const enter = async (id, joining = false) => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); if (invite) history.replaceState(null, '', clearInvite(location.href, inviteStorage)); await welcome.leave(); subscribe(); window.dispatchEvent(new CustomEvent('darupoyo:entered', { detail: { joining } })); };
   if (!invite) {
     const requested = new URLSearchParams(location.hash.slice(1)).get('house');
     if (requested && items.some(h => h.id === requested)) { await enter(requested); return; }
@@ -130,6 +130,7 @@ export async function start(onUpdate, onError) {
   const nameKey = 'darupoyo-name-' + client.uid;
   const rememberedName = read(nameKey, userStore());
   welcome.choose({ items, invite, initialName: rememberedName || client.auth?.currentUser?.displayName || '',
+    previewInvite: code => api('/invites/preview', { token: code }),
     askName: !rememberedName && !items.length,
     saveName: name => write(nameKey, name, userStore()), enter,
     submit: async (joining, value, name) => {
@@ -137,7 +138,7 @@ export async function start(onUpdate, onError) {
       client.houses = [...client.houses.filter(item => item.id !== h.id), h];
       write(nameKey, name, userStore());
       if (!joining) { welcome.created(h.name || value, () => enter(h.id)); return; }
-      await enter(h.id);
+      await enter(h.id, true);
       if (joining) window.dispatchEvent(new Event('darupoyo:joined'));
     },
   });

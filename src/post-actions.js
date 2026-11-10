@@ -1,6 +1,7 @@
 // Edit the words of, or delete, your own post. Shown under your own chore records,
 // うちらのなう and だるぽよ in the enlarged views. Only the text can be edited; the server
 // writes the gal's line again from the new words.
+import { limitInput } from './text-limits.js';
 import { houseApi } from './api.js';
 import { setBusy } from './busy.js';
 
@@ -32,7 +33,7 @@ export function ownerActions({ record, base, onEdited, onDeleted, toast }) {
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'やめる';
     const save = document.createElement('button'); save.type = 'submit'; save.className = 'is-main'; save.textContent = '保存';
     buttons.append(cancel, save); label.append(input); form.append(label, counter, buttons);
-    row.hidden = true; box.append(form); input.oninput = hint; hint(); input.focus();
+    row.hidden = true; box.append(form); limitInput(input, LIMIT); input.oninput = hint; hint(); input.focus();
     cancel.onclick = () => { form.remove(); row.hidden = false; };
     form.onsubmit = async e => {
       e.preventDefault();

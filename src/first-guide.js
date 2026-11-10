@@ -33,14 +33,16 @@ export function setupFirstGuide(goToLiving) {
   };
   const again = document.createElement('button'); again.type = 'button'; again.className = 'refined-button secondary'; again.textContent = '操作案内をもう一度見る'; again.onclick = open;
   document.querySelector('#howto-track').before(again);
-  window.addEventListener('darupoyo:entered', () => {
+  const first = () => {
     const key = 'darupoyo-first-guide-' + client.uid;
     try {
-      if (localStorage.getItem(key) || localStorage.getItem('darupoyo-howto-seen')) return;
+      if (localStorage.getItem(key)) return;
       localStorage.setItem(key, '1');
     } catch { /* still let a new visitor discover the controls */ }
     open();
-  });
+  };
+  window.addEventListener('darupoyo:entered', event => { if (!event.detail?.joining) first(); });
+  window.addEventListener('darupoyo:guide-ready', first);
   sheet.addEventListener('close', close);
   document.querySelector('#open-menu').addEventListener('click', close);
 }

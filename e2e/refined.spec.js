@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 test.use({ viewport: { width: 390, height: 704 } });
-test.beforeEach(async ({ context }) => context.addInitScript(() => localStorage.setItem('darupoyo-howto-seen', '1')));
+test.beforeEach(async ({ context }) => context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))));
 
 test('welcome keeps drafts on back, validates invitations and submits explicitly', async ({ page }) => {
   let creates = 0;

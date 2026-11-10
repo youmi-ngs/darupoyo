@@ -27,6 +27,7 @@ from .models import (
     HouseCreate,
     HouseUpdate,
     Join,
+    InvitePreview,
     NotifySettings,
     Moment,
     Profile,
@@ -212,6 +213,10 @@ def create_app(settings=None, store=None, praise=None, clock=None):
     @app.post("/api/houses/{house_id}/invites", status_code=201)
     def invite(house_id: UUID, uid=Depends(current_user)):
         return app.state.domain.invite(uid, str(house_id))
+
+    @app.post("/api/invites/preview")
+    def preview_invite(body: InvitePreview, uid=Depends(current_user)):
+        return app.state.domain.preview_invite(uid, body.token)
 
     @app.post("/api/join")
     def join(body: Join, uid=Depends(current_user)):

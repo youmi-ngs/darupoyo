@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 test('gal selection shows one check, responds to taps, and persists after reload', async ({page}) => {
   await page.setViewportSize({width:390,height:844});
-  await page.addInitScript(()=>localStorage.setItem('darupoyo-howto-seen','1'));
+  await page.addInitScript(()=>['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/'); await setWelcomeName(page,'ぽよ'); await setHouseName(page,'ギャルのおうち');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
   await page.getByRole('button',{name:'ハウスに入る'}).click();

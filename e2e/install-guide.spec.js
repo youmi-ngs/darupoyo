@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 async function howto(page) {
-  await page.addInitScript(() => localStorage.setItem('darupoyo-howto-seen','1'));
+  await page.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click()))));
   await page.goto('/'); await setWelcomeName(page,'ぽよ'); await setHouseName(page,'追加の案内');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click();
   await page.getByRole('button',{name:'ハウスに入る'}).click();

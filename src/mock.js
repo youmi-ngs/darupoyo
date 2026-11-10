@@ -89,10 +89,12 @@ export async function mockFetch(url, init = {}) {
     db.houses[id] = { id, name: body.name, owner_id: uid, member_ids: [uid], members: { [uid]: { display_name: body.display_name, theme: 'pink' } }, created_at: new Date().toISOString() };
     save(db); return json(db.houses[id], 201);
   }
-  if (path === '/join') {
+  if (path === '/join' || path === '/invites/preview') {
     const compact = body.token.replace(/[\s-]/g, ''), invite = db.invites[compact.length === 8 ? compact.toUpperCase() : body.token];
     if (!invite || Date.parse(invite.expires_at) <= Date.now()) return fail(404, 'Invite not found or expired');
     const house = db.houses[invite.house_id];
+    if (!house || !house.member_ids.length) return fail(404, 'House not found');
+    if (path === '/invites/preview') return json({ name: house.name });
     if (!house.member_ids.includes(uid)) {
       if (house.member_ids.length >= 6) return fail(409, 'House is full');
       house.member_ids.push(uid); house.members[uid] = { display_name: body.display_name }; settleThemes(house); save(db);
