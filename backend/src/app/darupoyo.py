@@ -1,4 +1,5 @@
 """Non-completion records, kept separate from chores and their rewards."""
+from .text_limits import Caption
 from uuid import UUID, uuid4
 from fastapi import Depends, HTTPException, Query
 from pydantic import Field, model_validator
@@ -9,7 +10,7 @@ from .models import Chore, Model
 class DarupoyoRecord(Model):
     request_id: UUID
     chore: Chore
-    caption: str = Field(default="", max_length=140)
+    caption: Caption = ""
     media_id: UUID | None = None
 
     @model_validator(mode="after")

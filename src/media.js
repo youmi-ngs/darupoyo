@@ -1,3 +1,4 @@
+import { captionCounter, photoPreview } from './composer-ui.js';
 import { confirmMealVoice } from './meal-voice.js';
 import { blobOf, check, countdown, openCamera, photoCrop, timing } from './camera.js';
 import { laundryRhythm, dryerSound } from './audio.js';
@@ -36,8 +37,8 @@ function shootOrPick(frame, signal, canShoot, flip) {
 // The ひとこと box and the main button under the photo (Figma 写真のタスク 01 / 06).
 function wordBox(root, example) {
   const label = document.createElement('label'); label.className = 'capture-word';
-  label.innerHTML = '<span>ひとこと（30文字まで）</span><input maxlength="30" autocomplete="off">';
-  label.querySelector('input').placeholder = example; root.append(label);
+  label.innerHTML = '<span>ひとこと（かかなくてもおけ♡）</span><input maxlength="30" autocomplete="off">';
+  label.querySelector('input').placeholder = example; captionCounter(label.querySelector('input')); root.append(label);
   return { label, value: () => label.querySelector('input').value.trim() };
 }
 function mainButton(root, text) {
@@ -150,7 +151,7 @@ export async function capture(root, chore, choice, reference, signal) {
     try { stream = await openCamera(video, chore === 'meal' ? 'environment' : 'user', resources, signal); }
     catch (e) { if (e.name === 'AbortError' || signal.aborted) throw e; video.hidden = true; }
     let landmarker, segmenter, segmenterReady, stopPreview = () => {};
-    const canvas = document.createElement('canvas'); canvas.hidden = true; live.append(canvas);
+    const canvas = document.createElement('canvas'); canvas.hidden = true; live.append(canvas); photoPreview(canvas);
     const note = document.createElement('p'); note.className = 'capture-note'; note.hidden = !!stream; note.textContent = 'カメラを使えないので、左下からライブラリの写真をえらんでね'; live.append(note);
     // The front camera is shown like a mirror, before and after the shot, and the photo is saved
     // as it was seen (#161), so it never comes out flipped. Pose scoring keeps raw pixels/landmarks.

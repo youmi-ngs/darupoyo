@@ -45,7 +45,7 @@ test('ゴミ出し: the pose is judged as soon as the photo is in, and プレゼ
   await expect(send).toBeDisabled();
   // the timer sits right under the photo, the word under the timer
   expect(await page.locator('.capture > *').evaluateAll(n => n.map(e => e.className).filter(c => /capture-(frame|timer|word|use)/.test(c)).map(c => c.match(/capture-(frame|timer|word|use)/)[0]))).toEqual(['capture-frame', 'capture-timer', 'capture-word', 'capture-use']);
-  const word = page.locator('#sheet').getByLabel('ひとこと（30文字まで）');
+  const word = page.locator('#sheet').getByLabel('ひとこと（かかなくてもおけ♡）');
   await expect(word).toHaveAttribute('placeholder', 'めりくり！');
   await word.fill('ゴミ捨てえらい');
   await page.getByRole('button', { name: 'この写真を撮る' }).click();

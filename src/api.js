@@ -119,6 +119,8 @@ export async function start(onUpdate, onError) {
   client.houses = items;
   const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); await welcome.leave(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
   if (!invite) {
+    const requested = new URLSearchParams(location.hash.slice(1)).get('house');
+    if (requested && items.some(h => h.id === requested)) { await enter(requested); return; }
     const saved = read('darupoyo-house-' + client.uid);
     if (items.some(h => h.id === saved)) { await enter(saved); return; }
   }

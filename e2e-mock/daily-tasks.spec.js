@@ -5,7 +5,7 @@ test('mock darupoyo shares, retries, persists and is removed with the account',a
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'mock');
   await page.getByRole('button',{name:'ハウスをつくる',exact:true}).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button',{name:/^だるぽよ/}).click();
-  await page.getByLabel('ひとこと（任意・140文字まで）').fill('お休み〜'); await page.getByRole('button',{name:'きょーゆー'}).click();
+  await page.getByLabel('ひとこと（任意・30文字まで）').fill('お休み〜'); await page.getByRole('button',{name:'きょーゆー'}).click();
   await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
   const result=await page.evaluate(async()=>{
     const {houseApi}=await import('/src/api.js'); const body={request_id:crypto.randomUUID(),chore:'laundry',caption:'今日はここまで'};

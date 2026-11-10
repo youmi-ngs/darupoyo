@@ -14,8 +14,8 @@ test('the うちらのなう button opens うちらのなう: take, retake, add 
   await now.getByRole('button', { name: '撮り直す' }).click(); // back to the camera
   await expect(now.locator('video')).toBeVisible();
   await now.getByRole('button', { name: '撮る' }).click();
-  const word = now.getByLabel('ひとこと（30文字まで）');
-  await expect(word).toHaveAttribute('maxlength', '30');
+  const word = now.getByLabel('ひとこと（かかなくてもおけ♡）');
+  await word.fill('あ'.repeat(31)); await expect(word).toHaveValue('あ'.repeat(30));
   await word.fill('おはよう');
   await now.getByRole('button', { name: 'みせちゃう' }).click();
   // sent (Figma 207:958): the photo, the word and the gal's line, then on to けーじばん
@@ -25,7 +25,7 @@ test('the うちらのなう button opens うちらのなう: take, retake, add 
   await expect(now.locator('.now-praise .moment-praise b')).toHaveText(/ギャル$/);
   await expect(now.locator('.now-praise .moment-praise .gal-text')).not.toHaveText('');
   await expect(now.getByRole('button', { name: 'みせちゃう' })).toBeHidden();
-  await expect(now.getByLabel('ひとこと（30文字まで）')).toBeHidden();
+  await expect(now.getByLabel('ひとこと（かかなくてもおけ♡）')).toBeHidden();
   await expect(now.getByRole('button', { name: '撮り直す' })).toBeHidden();
   await expect(page.locator('.door.is-lit')).toHaveCount(0); // not a chore
   await now.getByRole('button', { name: 'け〜じばんをちぇけらする' }).click();

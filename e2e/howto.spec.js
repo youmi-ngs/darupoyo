@@ -1,23 +1,44 @@
 import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
-test('how-to opens automatically only on the first entry (#14)', async ({ browser }) => {
+test('first-entry guide can be skipped, replayed from how-to, and stays dismissed on reload', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } }); const page = await context.newPage();
   await page.goto('/'); await setWelcomeName(page, 'はじめて'); await setHouseName(page, 'howto'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
   await expect(page.locator('.onboarding')).toHaveCount(0);
+  await expect(page.locator('.first-guide')).toBeVisible();
+  await page.getByRole('button', { name: 'スキップ', exact: true }).click();
+  await expect(page.locator('.first-guide')).toHaveCount(0);
+  await page.locator('#open-menu').click();
+  await page.locator('#open-howto').click();
   await expect(page.locator('#howto-page')).toBeVisible();
   await page.locator('.howto-card.is-active').getByRole('button', { name: '5ページ目へ' }).click();
   await expect(page.locator('#howto-page').getByRole('button', { name: 'はじめる' })).toHaveCount(0); // #154
   await page.locator('#howto-close').click();
   await expect(page.locator('#howto-page')).toBeHidden();
   await page.locator('#open-menu').click(); await page.locator('#open-howto').click(); await expect(page.locator('#howto-page')).toBeVisible(); await page.locator('#howto-close').click();
+  await page.locator('#open-menu').click(); await page.locator('#open-howto').click();
+  await page.getByRole('button', { name: '操作案内をもう一度見る' }).click();
+  await expect(page.locator('.first-guide')).toBeVisible();
+  await expect(page.locator('#howto-page')).toBeHidden();
+  await page.getByRole('button', { name: 'ごはんをタップしてみる' }).click();
+  await expect(page.locator('.first-guide')).toHaveCount(0);
+  await expect(page.locator('.first-guide-next')).toContainText('けーじばんで見られるよ');
+  await page.getByRole('button', { name: 'わかった！ 案内おわり' }).click();
+  await expect(page.locator('.first-guide-next')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^たべる/ })).toBeVisible();
   await page.reload(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.door')).toHaveCount(1);
   await expect(page.locator('#howto-page')).toBeHidden();
+  await expect(page.locator('.first-guide')).toHaveCount(0);
   await context.close();
 });
 test('how-to has five swipe cards on a small phone', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 375, height: 667 } }); const page = await context.newPage();
   await page.goto('/'); await setWelcomeName(page, 'え'); await setHouseName(page, 'pics'); await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click();
+  await expect(page.locator('.first-guide')).toBeVisible();
+  await page.getByRole('button', { name: 'スキップ', exact: true }).click();
+  await expect(page.locator('.first-guide')).toHaveCount(0);
+  await page.locator('#open-menu').click();
+  await page.locator('#open-howto').click();
   await expect(page.locator('#howto-page')).toBeVisible();
   await expect(page.locator('.howto-card')).toHaveCount(5);
   await expect(page.locator('.howto-illustration')).toHaveCount(4);

@@ -41,6 +41,7 @@ def test_other_residents_with_a_device_hear_about_a_moment(client):
     sent.clear()
     created, body = share(client, h)
     assert created.status_code == 201
+    assert f"house={h}" in sent[0]["link"] and created.json()["id"] in sent[0]["link"] and "kind=moment" in sent[0]["link"]
     # bob has a device; alice shared it herself; carol has no device
     assert [m["uid"] for m in sent] == ["bob"]
     assert sent[0]["title"] == "Aliceがなうをシェアしたよ"
