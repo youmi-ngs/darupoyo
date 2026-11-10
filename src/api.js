@@ -32,6 +32,7 @@ async function useMock() {
   ({ mockFetch } = await import('./mock.js'));
   return (await mockFetch(API_BASE + '/config')).json();
 }
+let houseVersion = 0;
 let update, report, timer, subscriptions = [], refreshing, refreshQueued = false, watchedDay = '', stopDay = null;
 // Photos: object URL once loaded; the promise while loading (#98: each photo is fetched once).
 const images = new Map(), loadingImages = new Map();
@@ -46,41 +47,47 @@ export async function api(path, body, method = 'POST') {
   return response.headers.get('content-type')?.includes('application/json') ? response.json() : response.blob();
 }
 export const houseApi = (path, body, method) => api('/houses/' + client.house + path, body, method);
-export function loadImage(id) {
-  if (!id || images.has(id)) return Promise.resolve(images.get(id) || null);
-  if (!loadingImages.has(id)) loadingImages.set(id, houseApi('/media/' + id).then(blob => {
-    const url = URL.createObjectURL(blob); images.set(id, url); loadingImages.delete(id); return url;
-  }, error => { loadingImages.delete(id); throw error; }));
-  return loadingImages.get(id);
+export function loadImage(id, house = client.house) {
+  const key = house + '/' + id;
+  if (!id || images.has(key)) return Promise.resolve(images.get(key) || null);
+  if (!loadingImages.has(key)) loadingImages.set(key, api('/houses/' + house + '/media/' + id).then(blob => {
+    const url = URL.createObjectURL(blob); images.set(key, url); loadingImages.delete(key); return url;
+  }, error => { loadingImages.delete(key); throw error; }));
+  return loadingImages.get(key);
 }
 // A few downloads at a time, so many photos do not queue behind each other on a phone.
-async function loadImages(ids, parallel = 6) {
-  const queue = [...new Set(ids)].filter(id => id && !images.has(id));
+async function loadImages(ids, house, parallel = 6) {
+  const queue = [...new Set(ids)].filter(id => id && !images.has(house + '/' + id));
   await Promise.all(Array.from({ length: Math.min(parallel, queue.length) }, async () => {
-    while (queue.length) await loadImage(queue.shift()).catch(() => null);
+    while (queue.length) await loadImage(queue.shift(), house).catch(() => null);
   }));
 }
 export async function refresh({ onPaint } = {}) {
   if (!client.house) return;
   if (refreshing) { refreshQueued = true; return refreshing; }
+  const version = houseVersion, house = client.house;
+  const request = path => api('/houses/' + house + path);
+  const current = () => version === houseVersion && house === client.house;
   refreshing = (async () => {
-    const dashboard = await houseApi('/dashboard');
+    const dashboard = await request('/dashboard');
+    if (!current()) return;
     watchDay(dashboard.state.day);
     client.houses = client.houses.map(h => h.id === dashboard.house.id ? {...h, name:dashboard.house.name} : h);
     const posts = []; let cursor;
-    do { const page = await houseApi('/posts?limit=100' + (cursor ? '&before=' + cursor : '')); posts.push(...page.items); cursor = page.next_cursor; } while (cursor);
+    do { const page = await request('/posts?limit=100' + (cursor ? '&before=' + cursor : '')); posts.push(...page.items); cursor = page.next_cursor; } while (cursor);
+    if (!current()) return;
     const poses = Object.values(dashboard.state.poses), members = Object.values(dashboard.house.members);
     // Profile photos (#96) are house media like any other photo.
     const fill = () => {
-      posts.forEach(p => { p.image = images.get(p.media_id) || null; });
-      poses.forEach(p => { p.image = images.get(p.media_id) || null; });
-      members.forEach(m => { m.avatar = images.get(m.avatar_media_id) || null; });
+      posts.forEach(p => { p.image = images.get(house + '/' + p.media_id) || null; });
+      poses.forEach(p => { p.image = images.get(house + '/' + p.media_id) || null; });
+      members.forEach(m => { m.avatar = images.get(house + '/' + m.avatar_media_id) || null; });
     };
     // #98: show the house at once with the photos already here, then add the new ones.
     fill(); update({ ...dashboard, posts }); onPaint?.();
-    const missing = [...posts, ...poses].map(p => p.media_id).concat(members.map(m => m.avatar_media_id)).filter(id => id && !images.has(id));
-    if (missing.length) { await loadImages(missing); fill(); update({ ...dashboard, posts }); }
-  })().finally(() => { refreshing = null; if (refreshQueued) { refreshQueued = false; void refresh().catch(report); } });
+    const missing = [...posts, ...poses].map(p => p.media_id).concat(members.map(m => m.avatar_media_id)).filter(id => id && !images.has(house + '/' + id));
+    if (missing.length) { await loadImages(missing, house); if (!current()) return; fill(); update({ ...dashboard, posts }); }
+  })().finally(() => { if (!current()) return; refreshing = null; if (refreshQueued) { refreshQueued = false; void refresh().catch(report); } });
   return refreshing;
 }
 export async function start(onUpdate, onError) {
@@ -163,7 +170,23 @@ function subscribe() {
   }
   // Also handles the 04:00 day boundary and recovery from missed notifications. Local mode polls.
   timer = setInterval(() => { if (!document.hidden) sync(); }, client.db ? 60000 : 2500);
+  window.removeEventListener('focus', sync);
   window.addEventListener('focus', sync);
+}
+// Notification navigation must not depend on reloading a suspended iOS PWA.
+export async function enterNotificationHouse(id) {
+  if (id === client.house) return;
+  const previous = client.house;
+  const select = async target => {
+    clearInterval(timer); subscriptions.forEach(stop => stop()); subscriptions = [];
+    stopDay?.(); stopDay = null; watchedDay = '';
+    houseVersion++; refreshing = null; refreshQueued = false;
+    client.house = target;
+    await new Promise((resolve, reject) => refresh({onPaint:resolve}).then(resolve, reject));
+    write('darupoyo-house-' + client.uid, target); subscribe();
+  };
+  try { await select(id); }
+  catch (error) { await select(previous).catch(report); throw error; }
 }
 // Forget the remembered house and reopen the house list (stays signed in).
 export function switchHouse(houseId) {

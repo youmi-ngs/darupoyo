@@ -51,9 +51,11 @@ for (const surface of ['dryer','mypage','howto','house','now','darupoyo']) {
  test(`notification tap replaces ${surface} with the target detail without navigation`,async({page})=>{
   await enter(page);
   const target=await page.evaluate(async()=>{
-   const {houseApi,client}=await import('/src/api.js');
-   const {record}=await houseApi('/darupoyo',{request_id:crypto.randomUUID(),chore:'meal',caption:'通知の目的地'});
-   return {id:crypto.randomUUID(),link:'/#'+new URLSearchParams({house:client.house,post:record.id,kind:'darupoyo'})};
+   const {api,client}=await import('/src/api.js');
+   window.notificationDocument=crypto.randomUUID();
+   const house=await api('/houses',{name:'別ハウス通知先',display_name:'テスト'});
+   const {record}=await api('/houses/'+house.id+'/darupoyo',{request_id:crypto.randomUUID(),chore:'meal',caption:'通知の目的地'});
+   return {id:crypto.randomUUID(),link:'/#'+new URLSearchParams({house:house.id,post:record.id,kind:'darupoyo'}),document:window.notificationDocument,house:house.id};
   });
   if(surface==='dryer'){await page.locator('.scene-dot').nth(3).click();await page.locator('[data-chore=dryer]').click();}
   else if(surface==='darupoyo'){await page.locator('[data-chore=meal]').click();await page.getByRole('button',{name:/^だるぽよ/}).click();}
@@ -61,6 +63,8 @@ for (const surface of ['dryer','mypage','howto','house','now','darupoyo']) {
   else {await page.locator('#open-menu').click();await page.locator(surface==='mypage'?'#open-settings':surface==='howto'?'#open-howto':'#menu-house').click();}
   await page.evaluate(target=>navigator.serviceWorker.dispatchEvent(new MessageEvent('message',{data:{type:'darupoyo-notification-open',...target}})),target);
   await expect(page.locator('.pin-viewer')).toContainText('通知の目的地');
+  expect(await page.evaluate(()=>window.notificationDocument)).toBe(target.document);
+  expect(await page.evaluate(async()=>(await import('/src/api.js')).client.house)).toBe(target.house);
   await expect(page.locator('dialog[open]')).toHaveCount(1);
   await expect(page.locator('#sheet')).not.toBeVisible();
  });
