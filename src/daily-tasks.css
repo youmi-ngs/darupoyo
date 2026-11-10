@@ -26,7 +26,7 @@
 .furniture-toy { pointer-events: auto !important; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .furniture-toy:focus { outline: none; }
 .keyboard-nav .furniture-toy:focus-visible:not(.is-pointer-focus) { outline: 3px solid #a32862; outline-offset: 4px; }
-.furniture-prize { position: absolute; z-index: 6; left: calc(50% - 38px); bottom: 5%; width: 76px; min-height: 66px; padding: 4px; border: 2px solid var(--ink); border-radius: 18px; background: #fff3fa; color: var(--ink); box-shadow: 0 3px 8px #3b256030; animation: furniture-prize-drop .6s ease-out; }
+.furniture-prize { pointer-events:none; position: absolute; z-index: 6; left: calc(50% - 38px); bottom: 5%; width: 76px; min-height: 66px; padding: 4px; border: 2px solid var(--ink); border-radius: 18px; background: #fff3fa; color: var(--ink); box-shadow: 0 3px 8px #3b256030; animation: furniture-prize-drop .6s ease-out; }
 .furniture-prize svg { display: block; width: 58px; margin: auto; }
 .furniture-prize span { font-size: 11px; font-weight: 900; }
 .furniture-play-status { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }

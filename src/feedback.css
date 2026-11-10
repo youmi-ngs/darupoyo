@@ -21,10 +21,8 @@ dialog.sheet .capture .capture-frame canvas.composer-thumbnail:not([hidden]),dia
 .invite-row { flex-wrap:wrap; }
 .pin-meta { display:flex;align-items:center;flex-wrap:wrap;gap:5px;padding:0 5px; }
 .pin-category { font-size:12px;font-weight:700;line-height:1.5;overflow-wrap:anywhere; }
-.pin-state { padding:3px 7px;border-radius:9px;background:#e3f3eb;color:#38624d;font-size:10px;font-weight:700;line-height:1.4;white-space:nowrap; }
-.pin-darupoyo .pin-state { background:#ffe6f2;color:#8a426c; }
+.pin-state { padding:3px 7px;border-radius:9px;background:#f0e8f8;color:#604779;font-size:10px;font-weight:700;line-height:1.4;white-space:nowrap; }
 .pin-author { display:flex;flex-direction:column;gap:2px;padding:6px 5px 8px;margin:0 0 2px;border-bottom:1px solid #e9e0ef;overflow-wrap:anywhere; }
-.pin-author small { font-size:9px;color:#8c789f;letter-spacing:.08em; }
 .pin-author strong { font-size:14px;line-height:1.4;color:#40285e; }
 .pin-grid .pin-text { padding:5px;margin:2px 0 0;color:#776586;font-size:12px;line-height:1.6; }
 .pin-text { overflow-wrap:anywhere; }

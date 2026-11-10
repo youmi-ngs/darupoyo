@@ -82,12 +82,11 @@ export function setupBoardView(ctx) {
     el.append(magnet, picture(card));
     if (!small) {
       const author = document.createElement('span'); author.className = 'pin-author';
-      const authorLabel = document.createElement('small'); authorLabel.textContent = '投稿者';
       const authorName = document.createElement('strong'); authorName.textContent = ctx.nameOf(card.who);
-      author.append(authorLabel, authorName);
+      author.append(authorName);
       const meta = document.createElement('span'); meta.className = 'pin-meta';
       const category = document.createElement('span'); category.className = 'pin-category';
-      category.textContent = card.type === 'moment' ? ctx.nameOf(card.who) + 'のなう' : LABELS[card.chore] || '';
+      category.textContent = ctx.nameOf(card.who) + 'の' + (card.type === 'moment' ? 'なう' : LABELS[card.chore] || '記録');
       meta.append(category);
       if (card.type !== 'moment') {
         const state = document.createElement('span'); state.className = 'pin-state';
