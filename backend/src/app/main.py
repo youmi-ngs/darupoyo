@@ -14,6 +14,7 @@ from starlette.concurrency import run_in_threadpool
 from .config import Settings
 from .accounts import delete_account, leave_house, require_active
 from .darupoyo import register_darupoyo_routes
+from .edits import register_edit_routes
 from .domain import Domain, require_member
 from .models import (
     Avatar,
@@ -94,6 +95,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
 
     app = FastAPI(title="Clean Your Life / 温玉", version="0.2.0", lifespan=lifespan)
     register_darupoyo_routes(app, current_user)
+    register_edit_routes(app, current_user)
     origins = (settings or Settings.from_env()).origins
     app.add_middleware(
         CORSMiddleware,

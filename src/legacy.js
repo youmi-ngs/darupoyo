@@ -8,6 +8,7 @@ import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
 import { celebrationHTML, burst, doneActionsHTML } from './celebrate.js';
 import { lockSwipeAxis } from './swipe-axis.js';
+import { ownerActions } from './post-actions.js';
 import { setupSettingsUI, updateSettingsHouse } from './settings-ui.js';
 import { setupDarupoyoRecords } from './darupoyo-records.js';
 import { setupFurniturePlay } from './furniture-play.js';
@@ -164,6 +165,16 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       const reactions = document.createElement('div'); reactions.className = 'reaction-row';
       ['heart','clap','sparkles'].forEach((emoji,i) => { const b=document.createElement('button'); b.textContent=['♥','👏','✨'][i]+' '+Object.values(p.reactions||{}).filter(v=>v===emoji).length; b.onclick=async()=>{ try { await houseApi('/posts/'+p.id+'/reaction',{emoji},'PUT'); b.textContent=['♥','👏','✨'][i]+' ✓'; await refresh(); } catch(e) { toast(e.message); } }; reactions.append(b); }); sl.append(reactions);
       sl.append(commentsBlock(p, { me: ME, nameOf, dotOf, toast }));
+      // Your own record: edit its words (the gal writes her line again) or delete it.
+      if (p.who === ME) sl.querySelector('.pm-get').after(ownerActions({ record: p, base: '/posts', toast,
+        onEdited: updated => {
+          p.galLine = updated.praise?.text || p.galLine; sl.querySelector('.gal-text').textContent = postLine(p);
+          let word = sl.querySelector('.pm-caption');
+          if (!word && updated.caption) { word = document.createElement('p'); word.className = 'pm-caption'; sl.querySelector('.pm-meta').after(word); }
+          if (word) { word.textContent = updated.caption; word.hidden = !updated.caption; }
+          void refresh().catch(() => {});
+        },
+        onDeleted: () => { $('photo-modal').close(); void refresh().catch(() => {}); window.dispatchEvent(new Event('darupoyo:recorded')); } }));
       }
       track.append(sl);
     });

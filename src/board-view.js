@@ -1,7 +1,8 @@
 // けーじばん: every chore record, selfie and だるぽよ record of the house, newest
 // first, pinned as cards. The magnet is the poster's icon; a card without a photo
 // shows the poster's gal doing that chore. The entrance shows the newest six.
-import { client, houseApi } from './api.js';
+import { client, houseApi, refresh } from './api.js';
+import { ownerActions } from './post-actions.js';
 import { galCharacter } from './gal-figure.js';
 import { momentPraise } from './moment-praise.js';
 import { lockSwipeAxis } from './swipe-axis.js';
@@ -123,11 +124,26 @@ export function setupBoardView(ctx) {
     time.textContent = new Intl.DateTimeFormat('ja-JP', { timeZone: dashboard?.timezone || 'Asia/Tokyo', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(card.at));
     const text = document.createElement('p'); text.className = 'pin-viewer-text'; text.textContent = card.text;
     box.append(picture(card), title, time, text);
+    let praise = null;
     if (card.type === 'moment') { // the caption, then the gal's line (#158)
       text.textContent = card.caption || ''; text.hidden = !card.caption;
-      const praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
+      praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
     }
     // Housemates can comment on うちらのなう and だるぽよ too, like on chore records.
+    // Your own うちらのなう / だるぽよ: edit the words (the gal answers again) or delete it.
+    if (card.record && card.who === client.uid) box.append(ownerActions({
+      record: card.record, base: card.type === 'moment' ? '/moments' : '/darupoyo', toast: ctx.toast,
+      onEdited: updated => {
+        if (card.type === 'moment') {
+          text.textContent = updated.caption || ''; text.hidden = !updated.caption;
+          const fresh = momentPraise(updated.praise, ctx.themeOf(card.who));
+          if (praise && fresh) praise.replaceWith(fresh); else if (fresh) text.after(fresh);
+          praise = fresh;
+        } else text.textContent = updated.caption || (LABELS[card.chore] || '') + '、だるぽよ';
+        render();
+      },
+      onDeleted: () => { viewer.close(); void loadExtra(); void refresh().catch(() => {}); },
+    }));
     if (card.record && ctx.comments) box.append(ctx.comments(card.record, card.type === 'moment' ? '/moments' : '/darupoyo'));
     return box;
   }

@@ -62,3 +62,18 @@ dialog.album-calendar::backdrop { background: rgba(59, 37, 96, .45); }
 .log-header #log-close img { width:16px; height:16px; }
 .log-modal .log-day h3 { font:700 14px/24px var(--font-ui); margin-bottom:10px; }
 @media(max-width:359px) { .log-header { gap:8px; } .log-actions { gap:4px; } .log-heading #log-title { font-size:15px; line-height:23px; } }
+
+/* Your own post: edit its words or delete it */
+.post-owner { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.post-owner-actions { display: flex; gap: 8px; justify-content: flex-end; }
+.post-owner-actions[hidden] { display: none; }
+.post-owner button { min-height: 44px; padding: 0 16px; border: 1px solid #775b9d33; border-radius: 999px; background: #ffffffcc; color: var(--ink, #3b2560); font: 700 14px/20px var(--font-ui, inherit); }
+.post-owner button.is-main { background: #ffdbf0; }
+.post-owner .post-owner-delete, .post-owner button.is-danger { color: #a32862; }
+.post-owner button.is-danger { background: #ffe3ec; border-color: #a3286240; }
+.post-owner-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: #6a5590; }
+.post-owner-form input { font: inherit; font-size: 16px; padding: 10px 12px; border: 1px solid #775b9d55; border-radius: 14px; background: white; color: var(--ink, #3b2560); }
+.post-owner-count { align-self: flex-end; font-size: 12px; color: #6a5590; }
+.post-owner-count.is-over { color: #a32862; font-weight: 700; }
+.post-owner-form { display: flex; flex-direction: column; gap: 6px; }
+.post-owner-confirm p { margin: 0; font-size: 14px; color: #a32862; }
