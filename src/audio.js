@@ -153,7 +153,8 @@ export async function laundryRhythm(box, status, choice, signal, resources) {
 
 export async function dryerSound(box, status, signal, resources) {
   status.textContent = 'じゅんびちゅ〜…音はスマホの中だけで聞くから安心してね♡';
-  const { FilesetResolver, AudioClassifier } = await import('@mediapipe/tasks-audio');
+  // tasks-audio 0.10.32 declares FilesetResolver but does not export it at runtime.
+  const [{ FilesetResolver }, { AudioClassifier }] = await Promise.all([import('@mediapipe/tasks-vision'), import('@mediapipe/tasks-audio')]);
   const classifier = await AudioClassifier.createFromOptions(await FilesetResolver.forAudioTasks('/models/audio'), { baseOptions: { modelAssetPath: '/models/yamnet.tflite' }, runningMode: 'AUDIO_CLIPS', maxResults: -1 });
   resources.push(() => classifier.close()); check(signal);
   const stream = await openMic(resources, signal);
