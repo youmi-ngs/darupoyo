@@ -5,3 +5,4 @@ google-cloud-firestore>=2.20,<3
 google-cloud-storage>=3,<4
 google-genai>=1,<2
 Pillow>=11,<13
+regex==2026.11.9

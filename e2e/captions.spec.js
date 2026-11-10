@@ -14,8 +14,8 @@ test('a chore record can carry a word, shown in the photo viewer and on けー�
   await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^たべる/ }).click();
   await page.locator('.capture-library input').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: Buffer.from(await png(page)) });
   // the word is written with the photo (Figma 写真のタスク 01)
-  const word = page.locator('#sheet').getByLabel('ひとこと（30文字まで）');
-  await expect(word).toHaveAttribute('maxlength', '30');
+  const word = page.locator('#sheet').getByLabel('ひとこと（かかなくてもおけ♡）');
+  await word.fill('あ'.repeat(31)); await expect(word).toHaveValue('あ'.repeat(30));
   await expect(word).toHaveAttribute('placeholder', '今日のお昼は、おはぎ！');
   await word.fill('お昼のパスタ');
   await page.getByRole('button', { name: 'いただきますをする' }).click();

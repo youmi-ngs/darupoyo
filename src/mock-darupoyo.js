@@ -1,3 +1,4 @@
+import { textLength } from './text-limits.js';
 // Isolated mock adapter for the non-completion record API.
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } });
 export function mockDarupoyo({ db, houseId, uid, rest, method, body, searchParams, day, state, postId, save }) {
@@ -12,7 +13,7 @@ export function mockDarupoyo({ db, houseId, uid, rest, method, body, searchParam
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if (!body || typeof body.caption !== 'string' && body.caption != null || !uuid.test(body.request_id) || !['meal','dryer','laundry','garbage'].includes(body.chore)) return json({detail:'Invalid record'},422);
   const caption = (body.caption || '').trim();
-  if (caption.length > 140) return json({detail:'Caption too long'},422); // #142: photo and caption are optional
+  if (textLength(caption) > 30) return json({detail:'Caption too long'},422); // #142: photo and caption are optional
   const key = houseId + '/' + uid + '_' + body.request_id, fingerprint = JSON.stringify([body.chore, caption, body.media_id || null]);
   const prior = db.darupoyo_requests[key];
   if (prior) return prior.fingerprint === fingerprint ? json({record:db.darupoyo_records[prior.id],created:false},201) : json({detail:'Request ID already used'},409);

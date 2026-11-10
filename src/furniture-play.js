@@ -31,7 +31,7 @@ export function setupFurniturePlay() {
     const item=PRIZES[Math.floor(Math.random()*PRIZES.length)];
     prize=document.createElement('button'); prize.type='button'; prize.className='furniture-prize'; prize.setAttribute('aria-label','落ちた'+item.name+'を拾う');
     prize.innerHTML='<svg viewBox="0 0 80 45" aria-hidden="true">'+item.svg+'</svg><span>'+item.short+'♡</span>';
-    prize.onclick=()=>{ clearPrize(); sfx.clear(); status.textContent=item.short+'ゲット♡ ＋1'; status.classList.add('is-visible'); setTimeout(()=>status.classList.remove('is-visible'),2000); };
+    prize.onclick=()=>{ clearPrize(); sfx.clear(); status.textContent=item.short+'みっけ♡ ラッキ〜'; status.classList.add('is-visible'); setTimeout(()=>status.classList.remove('is-visible'),2000); };
     room.append(prize); status.textContent=item.short+'が落ちた！拾ってみよ♡'; expiry=setTimeout(clearPrize,15000);
   }
   function bind() {

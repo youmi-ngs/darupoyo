@@ -15,6 +15,14 @@ const steps = [
 
 export function setupSettingsUI() {
   const trigger = $('open-menu'), quick = $('utility-menu');
+  let ignoreMenuPointerUntil = 0;
+  trigger.addEventListener('click', e => {
+    // With reduced motion the × disappears immediately; the second tap of a
+    // double-tap must not hit the menu button underneath it. Keyboard stays usable.
+    if (e.detail > 1 && performance.now() < ignoreMenuPointerUntil) {
+      e.preventDefault(); e.stopImmediatePropagation(); trigger.focus();
+    }
+  }, true);
   const placeMenu = () => {
     const r = trigger.getBoundingClientRect();
     quick.style.top = `${r.bottom + 10}px`;
@@ -65,13 +73,17 @@ export function setupSettingsUI() {
           fade = page.animate([{opacity:getComputedStyle(page).opacity},{opacity:0}], {duration:220,easing:'ease-in',fill:'forwards'});
           await fade.finished.catch(() => {});
         }
-        if (page.open) page.close();
+        if (page.open) { ignoreMenuPointerUntil = performance.now() + 250; page.close(); }
       } finally { fade?.cancel(); page.classList.remove('is-closing'); closing = false; }
     };
     page.querySelector('.drawer-close').addEventListener('click', e => {
       e.preventDefault(); e.stopImmediatePropagation(); closePage();
     }, true);
-    page.addEventListener('cancel', e => { e.preventDefault(); closePage(); });
+    page.addEventListener('cancel', e => {
+      // A file input's cancel event bubbles too; only Escape on this dialog closes it.
+      if (e.target !== page) return;
+      e.preventDefault(); closePage();
+    });
     page.addEventListener('close', () => { if (!document.querySelector('dialog[open]')) trigger.focus(); });
   }
 
@@ -97,6 +109,18 @@ export function setupSettingsUI() {
   };
   $('copy-invite').onclick = copyInvite($('copy-invite'), '招待コード', code => code);
   $('settings-invite').onclick = copyInvite($('settings-invite'), '招待コード', code => code);
+  $('share-invite').onclick = async () => {
+    const button = $('share-invite'), status = $('invite-status');
+    button.disabled = true; status.hidden = false; status.textContent = '招待リンクを準備中…';
+    try {
+      const house = client.house, code = await loadInvite();
+      if (house !== client.house) return;
+      const url = new URL(location.pathname, location.origin); url.hash = new URLSearchParams({invite:code}).toString();
+      if (navigator.share) { await navigator.share({title:'だるぽよのハウスへの招待',url:url.href}); status.textContent='招待リンクを共有したよ（7日間有効）'; }
+      else { await copyInvite(button, '招待リンク', () => url.href)(); }
+    } catch(e) { status.textContent = e.name === 'AbortError' ? '' : e.message; status.hidden = e.name === 'AbortError'; }
+    finally { button.disabled = false; }
+  };
 
   const track = $('howto-track');
   const guideSteps = [...steps, {title:'ホーム画面に追加',kind:'install',lines:['ホーム画面に追加すると、','通知がとどくよ♡']}];

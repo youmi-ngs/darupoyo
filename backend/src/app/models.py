@@ -1,3 +1,4 @@
+from .text_limits import UserName, HouseName, Caption
 from enum import StrEnum
 from typing import Literal
 from uuid import UUID
@@ -17,14 +18,14 @@ class Chore(StrEnum):
 
 
 class HouseCreate(Model):
-    name: str = Field(min_length=1, max_length=60, pattern=r"\S")
-    display_name: str = Field(min_length=1, max_length=40, pattern=r"\S")
+    name: HouseName = Field(min_length=1, pattern=r"\S")
+    display_name: UserName = Field(min_length=1, pattern=r"\S")
 
 
 class Join(Model):
     # Short code (8 chars, any case, optional hyphen) or an older long link token.
     token: str = Field(min_length=8, max_length=200)
-    display_name: str = Field(min_length=1, max_length=40, pattern=r"\S")
+    display_name: UserName = Field(min_length=1, pattern=r"\S")
 
 
 class Goals(Model):
@@ -56,7 +57,7 @@ class Completion(Model):
     total_beats: int | None = Field(default=None, ge=1, le=1000)
     gal: Literal["heisei", "reiwa", "kuro", "hime"] = "reiwa"
     # A word from the resident about this chore (optional), shown with the record.
-    caption: str = Field(default="", max_length=140)
+    caption: Caption = ""
 
     @model_validator(mode="after")
     def evidence(self):
@@ -117,7 +118,7 @@ class Profile(Model):
         "pink", "cyan", "lilac", "lime", "peach", "mint", "cream", "night",
         "coral", "sky", "grape", "leaf", "orange", "teal", "berry", "cocoa",
     ] | None = None
-    display_name: str | None = Field(default=None, min_length=1, max_length=40, pattern=r"\S")
+    display_name: UserName | None = Field(default=None, min_length=1, pattern=r"\S")
 
     @model_validator(mode="after")
     def any_field(self):
@@ -127,7 +128,7 @@ class Profile(Model):
 
 
 class HouseUpdate(Model):
-    name: str = Field(min_length=1, max_length=60, pattern=r"\S")
+    name: HouseName = Field(min_length=1, pattern=r"\S")
 
 
 class NotifySettings(Model):
@@ -140,7 +141,7 @@ class NotifySettings(Model):
 class Moment(Model):
     request_id: UUID
     media_id: UUID
-    caption: str = Field(default="", max_length=140)
+    caption: Caption = ""
 
 
 class Comment(Model):

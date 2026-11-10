@@ -42,8 +42,8 @@ test('trash asks for a pose only after starting; composer can cancel without pos
   await page.locator('#sheet-close').click();
   await page.locator('[data-chore=trash]').click();
   await page.getByRole('button', { name: /^だるぽよ/ }).click();
-  await page.getByLabel('ひとこと（任意・140文字まで）').fill('おやすみ');
-  await expect(page.locator('[data-count]')).toHaveText('4 / 140');
+  await page.getByLabel('ひとこと（任意・30文字まで）').fill('おやすみ');
+  await expect(page.locator('[data-count]')).toHaveText('4 / 30');
   await page.evaluate(() => {
     const get = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
     navigator.mediaDevices.getUserMedia = async options => { window.photoStream = await get(options); return window.photoStream; };
@@ -54,7 +54,7 @@ test('trash asks for a pose only after starting; composer can cancel without pos
   await expect(page.locator('.darupoyo-preview')).toBeVisible();
   await expect(page.locator('.photo-camera')).toHaveCount(0);
   expect(await page.evaluate(() => window.photoStream.getTracks().every(t => t.readyState === 'ended'))).toBe(true);
-  await expect(page.getByLabel('ひとこと（任意・140文字まで）')).toHaveValue('おやすみ');
+  await expect(page.getByLabel('ひとこと（任意・30文字まで）')).toHaveValue('おやすみ');
   const library = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'ライブラリから選ぶ' }).click();
   expect(await (await library).element().getAttribute('capture')).toBeNull();
@@ -74,12 +74,12 @@ async function openComposer(page) {
 
 test('camera denial leaves the draft intact and the library available', async ({ page }) => {
   await openComposer(page);
-  await page.getByLabel('ひとこと（任意・140文字まで）').fill('のんびり');
+  await page.getByLabel('ひとこと（任意・30文字まで）').fill('のんびり');
   await page.evaluate(() => { navigator.mediaDevices.getUserMedia = async () => { throw new DOMException('denied', 'NotAllowedError'); }; });
   await page.getByRole('button', { name: '写真を撮る', exact: true }).click();
   await expect(page.locator('.darupoyo-dialog [role=status]')).toContainText('カメラの利用を許可');
   await expect(page.locator('.photo-camera')).toHaveCount(0);
-  await expect(page.getByLabel('ひとこと（任意・140文字まで）')).toHaveValue('のんびり');
+  await expect(page.getByLabel('ひとこと（任意・30文字まで）')).toHaveValue('のんびり');
   const picker = page.waitForEvent('filechooser');
   await page.getByRole('button', { name: 'ライブラリから選ぶ' }).click();
   expect(await (await picker).element().getAttribute('capture')).toBeNull();

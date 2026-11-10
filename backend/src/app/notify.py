@@ -8,6 +8,7 @@ Tokens live in notify/{uid}, which the browser cannot read (Firestore rules deny
 Without Firebase (local/dev) messages are only recorded in `sent`, so tests can check them.
 """
 
+from urllib.parse import urlencode
 import logging
 import random
 
@@ -115,7 +116,7 @@ class Notifier:
         if not tokens:
             return 0
         if self.app is None:
-            self.sent.append({"uid": uid, "title": title, "body": body, "tokens": list(tokens)})
+            self.sent.append({"uid": uid, "title": title, "body": body, "tokens": list(tokens), "link": link})
             return len(tokens)
         from firebase_admin import messaging
 
@@ -149,20 +150,20 @@ class Notifier:
         tx.set(f"notify/{uid}", record)
 
     # ---------- events ----------
-    def friend_cleared(self, store, house, uid, chore):
+    def friend_cleared(self, store, house, uid, chore, post_id=None):
         name = house["members"].get(uid, {}).get("display_name", "住人")
         for member in house["member_ids"]:
             record = store.get(f"notify/{member}") or {} if member != uid else {}
             if record.get("tokens"):
-                self.send(store, member, self.friend_text(record.get("gal"), name, chore), title=f"{name}が{DONE[chore]}よ")
+                self.send(store, member, self.friend_text(record.get("gal"), name, chore), link="/#" + urlencode({"house": house["id"], "post": post_id, "kind": "post"}) if post_id else "/", title=f"{name}が{DONE[chore]}よ")
 
-    def friend_moment(self, store, house, uid):
+    def friend_moment(self, store, house, uid, post_id=None):
         """#157: the other members hear that someone shared 「うちらのなう」."""
         name = house["members"].get(uid, {}).get("display_name", "住人")
         for member in house["member_ids"]:
             record = store.get(f"notify/{member}") or {} if member != uid else {}
             if record.get("tokens"):
-                self.send(store, member, self.moment_text(record.get("gal"), name), title=f"{name}がなうをシェアしたよ")
+                self.send(store, member, self.moment_text(record.get("gal"), name), link="/#" + urlencode({"house": house["id"], "post": post_id, "kind": "moment"}) if post_id else "/", title=f"{name}がなうをシェアしたよ")
 
     def evening(self, store, day):
         """Nudge everyone who has done nothing today in any of their houses (once per person)."""
