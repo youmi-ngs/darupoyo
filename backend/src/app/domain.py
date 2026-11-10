@@ -335,7 +335,15 @@ class Domain:
             post = tx.get(path)
             if not post:
                 raise HTTPException(404, "Post not found")
-            post.setdefault("reactions", {})[uid] = emoji
+            # Several kinds per person: each tap adds that emoji, or takes it back off.
+            reactions = post.setdefault("reactions", {})
+            mine = reactions.get(uid) or []
+            mine = [mine] if isinstance(mine, str) else list(mine)  # older records kept one
+            mine = [e for e in mine if e != emoji] if emoji in mine else mine + [emoji]
+            if mine:
+                reactions[uid] = mine
+            else:
+                reactions.pop(uid, None)
             tx.set(path, post)
             return post
 

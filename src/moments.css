@@ -51,14 +51,14 @@ dialog.now-dialog::backdrop { background: #3b256059; }
 .now-dialog .audience-chip svg { width: 16px; height: 16px; }
 
 /* #225: the うちらのなう card is full screen, like a camera app. */
-dialog.now-dialog.now-dialog { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; inset: 0; border: 0; border-radius: 0;
+dialog.now-dialog.now-dialog { width: min(100%, 430px); max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0 auto; inset: 0; border: 0; border-radius: 0;
   padding: max(16px, env(safe-area-inset-top)) 20px max(20px, env(safe-area-inset-bottom)); gap: 14px; background: linear-gradient(170deg, #fff5fc 0%, #f2edff 100%); }
 dialog.now-dialog[open] { display: flex; }
 /* #228: the frame (and そ〜しんちゅ〜 over it) stays big: as wide as it can be, with room left for the word and みせちゃう. */
 dialog.now-dialog.now-dialog .now-frame,
-dialog.now-dialog.now-dialog .now-frame:has(canvas:not([hidden])) { width: auto; min-width: 0; height: min(620px, calc(100dvh - 355px), (100vw - 40px) * 380 / 302); min-height: 200px; aspect-ratio: 302 / 380; background: #eee; }
+dialog.now-dialog.now-dialog .now-frame:has(canvas:not([hidden])) { width: auto; min-width: 0; height: min(620px, calc(100dvh - 355px), (min(100vw, 430px) - 40px) * 380 / 302); min-height: 200px; aspect-ratio: 302 / 380; background: #eee; }
 dialog.now-dialog.now-dialog .now-frame canvas:not([hidden]) { width: 100%; height: 100%; object-fit: cover; background: #eee; cursor: grab; }
 dialog.now-dialog .now-frame canvas:active { cursor: grabbing; }
 /* #223: a hint that the photo can be dragged */
 .now-crop-hint { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); margin: 0; padding: 6px 12px; border-radius: 999px; background: #3b2560b3; color: #fff; font-size: 12px; line-height: 18px; white-space: nowrap; pointer-events: none; }
-@media (min-width: 600px) { dialog.now-dialog.now-dialog { padding-inline: max(20px, calc((100vw - 520px) / 2)); } }
+@media (min-width: 600px) { dialog.now-dialog.now-dialog { box-shadow: 0 0 40px -8px #2b1a4533; } }

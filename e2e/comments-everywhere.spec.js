@@ -25,6 +25,9 @@ test('うちらのなう and だるぽよ on けーじばん take comments and �
     // ♥👏✨ too: the count goes up and your choice is marked
     await slide.getByRole('button', { name: /^♥/ }).click();
     await expect(slide.getByRole('button', { name: '♥ 1' })).toHaveAttribute('aria-pressed', 'true');
+    await slide.getByRole('button', { name: /^👏/ }).click(); // several kinds at once
+    await expect(slide.getByRole('button', { name: '👏 1' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(slide.getByRole('button', { name: '♥ 1' })).toHaveAttribute('aria-pressed', 'true');
     await page.locator('.pin-viewer .pm-close').click();
   }
   // they are saved: a fresh look at the board shows them
@@ -37,5 +40,5 @@ test('うちらのなう and だるぽよ on けーじばん take comments and �
     const { houseApi, client } = await import('/src/api.js');
     return [(await houseApi('/moments')).items[0].reactions[client.uid], (await houseApi('/darupoyo')).items[0].reactions[client.uid]];
   });
-  expect(hearts).toEqual(['heart', 'heart']);
+  expect(hearts).toEqual([['heart', 'clap'], ['heart', 'clap']]);
 });

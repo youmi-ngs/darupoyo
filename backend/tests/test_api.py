@@ -169,7 +169,7 @@ def test_completion_retry_sync_reactions_and_pagination(client):
         f"/api/houses/{h}/posts/{post_id}/reaction", headers=auth("bob"), json={"emoji": "clap"}
     )
     assert reaction.status_code == 200
-    assert reaction.json()["reactions"] == {"bob": "clap"}
+    assert reaction.json()["reactions"] == {"bob": ["clap"]}
     first = client.get(f"/api/houses/{h}/posts?limit=1", headers=auth()).json()
     second = client.get(
         f"/api/houses/{h}/posts", params={"before": first["next_cursor"]}, headers=auth()
