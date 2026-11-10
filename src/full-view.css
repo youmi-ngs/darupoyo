@@ -34,8 +34,9 @@ dialog.sheet.sheet.sheet .capture .capture-frame.is-body-frame:has(canvas:not([h
 /* ごはん: the frame has the photo's own 5:6 shape, so the taken photo fills it with no gray bands. */
 dialog.sheet.sheet.sheet .capture .capture-frame.is-photo-frame,
 dialog.sheet.sheet.sheet .capture .capture-frame.is-photo-frame:has(canvas:not([hidden])) { aspect-ratio: 5 / 6; }
-/* Screens without the camera (記録する？, done, try again) sit in the middle of the screen instead
-   of hugging the top; the camera screens keep their top-down layout. */
-dialog.sheet.sheet.sheet:not(.refined-modal) .sheet-body:not(:has(.capture)) {
+/* Every full-screen chore screen sits in the middle of the screen (top to bottom) instead of
+   hugging the top; a screen taller than the phone just scrolls. */
+dialog.sheet.sheet.sheet:not(.refined-modal) .sheet-body {
   box-sizing: border-box; min-height: 100dvh; display: flex; flex-direction: column; justify-content: center;
 }
+dialog.sheet.sheet.sheet:not(.refined-modal) .sheet-body > .capture { flex: none; }
