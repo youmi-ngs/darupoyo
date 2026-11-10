@@ -154,4 +154,13 @@ class Avatar(Model):
 
 
 class HistorySharing(Model):
-    enabled: bool
+    # house_ids: the resident's other houses whose records this house may see, picked one by
+    # one. enabled alone is the older all-or-nothing switch (True = every other house).
+    enabled: bool | None = None
+    house_ids: list[UUID] | None = Field(default=None, max_length=50)
+
+    @model_validator(mode="after")
+    def one_of(self):
+        if self.enabled is None and self.house_ids is None:
+            raise ValueError("Send enabled or house_ids")
+        return self

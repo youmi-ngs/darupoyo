@@ -78,7 +78,7 @@
 ### ハウス・マイページ
 - はじめての画面（やっほ〜）：「すでに入居済みの家に帰る」（住んでいるハウスの一覧へ）・「友達の家に住む」（招待コード）・「新しく家をつくる」
 - ハウスは最大6人。招待コード / 招待リンクで入る。複数のハウスを切り替えられる
-- マイページ：名前・プロフィール写真・ハウス名・招待コード（タップでコピー）・ギャル・効果音・通知・利用規約とプライバシーポリシー
+- マイページ：名前・プロフィール写真・ハウス名・招待コード（タップでコピー）・ギャル・通知・ほかのハウスの記録（見せるハウスを1つずつ選ぶ）・効果音・利用規約とプライバシーポリシー
 - ハウスから退去（自分の記録だけ消える）・ハウスを削除（住人が自分だけのとき）・アカウント削除
 - 通知（Firebase Cloud Messaging）：友だちの家事・うちらのなう、19:00 にまだ何もしていない人へのやさしい声かけ
 - あそびかた（5枚のスワイプカード。最後の1枚はホーム画面への追加。追加済みなら「もう追加できてるよ」と出る）
@@ -251,7 +251,7 @@ Base は `/api`。認証は `Authorization: Bearer <Firebase ID トークン>`�
 | 今日のようす | `GET /houses/{id}/dashboard`、`PUT /houses/{id}/goals`、`PUT /houses/{id}/profile` |
 | 記録 | `POST /houses/{id}/media`、`POST /houses/{id}/completions`、`GET /houses/{id}/posts`、`POST /houses/{id}/media/{voice}/itadakimasu` |
 | だるぽよ・うちらのなう | `POST/GET /houses/{id}/darupoyo`、`POST/GET /houses/{id}/moments` |
-| つながり | リアクション、コメント（`/posts`・`/moments`・`/darupoyo` の `{id}/comments`）、プロフィール写真、別ハウスの記録（`/history-sharing`、`/members/{uid}/history`。画面からの切り替えはまだない） |
+| つながり | リアクション、コメント（`/posts`・`/moments`・`/darupoyo` の `{id}/comments`）、プロフィール写真、別ハウスの記録（`PUT /history-sharing` に `{house_ids}` で見せるハウスを選ぶ、`/members/{uid}/history`） |
 | 通知・天気 | `PUT /notifications`、`POST /tasks/evening`（Scheduler 専用）、`GET /weather` |
 
 ---
@@ -293,7 +293,7 @@ Base は `/api`。認証は `Authorization: Bearer <Firebase ID トークン>`�
 - 家事の記録の内容とひとこと（ほめ言葉・通知文）。家事の写真は送らない
 
 そのほか
-- 写真・音声はハウスの住人だけが見られる。別のハウスに記録を見せるかは本人が選ぶ。
+- 写真・音声はハウスの住人だけが見られる。ほかのハウスでの記録を見せるかは、本人がハウスごとに選ぶ（はじめは見せない）。
 - 天気は東京で固定して取得し、端末の位置情報は使わない。
 - アカウント削除・ハウスからの退去で、本人の写真・音声・記録・コメントをまとめて消す（途中で止まってもやり直せる）。
 

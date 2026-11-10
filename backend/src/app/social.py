@@ -112,30 +112,57 @@ def set_avatar(store, media, uid, house_id, media_id):
     return house
 
 
-def set_history_sharing(store, uid, house_id, enabled):
+def set_history_sharing(store, uid, house_id, enabled=None, house_ids=None):
+    """Which of my other houses this house may see. house_ids picks them one by one;
+    enabled alone is the older switch for all of them (True) or none (False)."""
     def run(tx):
         house = require_member(tx, house_id, uid)
-        house["members"][uid]["share_history"] = enabled
+        member = house["members"][uid]
+        if house_ids is not None:
+            picked = sorted({str(h) for h in house_ids})
+            for other in picked:
+                source = tx.get(f"houses/{other}")
+                if other == house_id or not source or uid not in source["member_ids"]:
+                    raise HTTPException(422, "You can only share records from your other houses")
+            member["share_history_from"] = picked
+            member["share_history"] = bool(picked)
+        else:
+            member.pop("share_history_from", None)
+            member["share_history"] = bool(enabled)
         tx.set(f"houses/{house_id}", house)
         return house
 
     return store.atomic(run)
 
 
+def shared_sources(member):
+    """The houses whose records this member shows here: a set, or None for every house."""
+    if "share_history_from" in member:
+        return set(member["share_history_from"])
+    return None if member.get("share_history") else set()
+
+
 def _history_access(store, uid, house_id, member_id):
+    """None when every other house may be seen, else the set of house ids that may be."""
     house = require_member(store, house_id, uid)
     if member_id not in house["member_ids"]:
         raise HTTPException(404, "Resident not found")
-    if uid != member_id and not house["members"][member_id].get("share_history"):
+    if uid == member_id:
+        return None
+    allowed = shared_sources(house["members"][member_id])
+    if allowed is not None and not allowed:
         raise HTTPException(403, "This resident keeps other houses private")
+    return allowed
 
 
 def history(store, uid, house_id, member_id, before=None):
     """The member's own records from their other houses, newest first."""
-    _history_access(store, uid, house_id, member_id)
+    allowed = _history_access(store, uid, house_id, member_id)
     items = []
     for _, other in store.scan("houses"):
         if other["id"] == house_id or member_id not in other["member_ids"]:
+            continue
+        if allowed is not None and other["id"] not in allowed:
             continue
         for _, post in store.scan(f"houses/{other['id']}/posts"):
             if post["user_id"] == member_id and (not before or post["id"] < before):
@@ -147,7 +174,9 @@ def history(store, uid, house_id, member_id, before=None):
 
 
 def history_media(store, media, uid, house_id, member_id, source_house_id, media_id):
-    _history_access(store, uid, house_id, member_id)
+    allowed = _history_access(store, uid, house_id, member_id)
+    if allowed is not None and source_house_id not in allowed:
+        raise HTTPException(404, "Image not found")
     source = store.get(f"houses/{source_house_id}")
     meta = store.get(f"houses/{source_house_id}/media/{media_id}")
     if (not source or member_id not in source["member_ids"] or not meta

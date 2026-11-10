@@ -230,3 +230,36 @@ def test_account_deletion_removes_comments_on_moments_and_darupoyo():
         assert store.get(f"houses/{h}/moments/{moment['id']}")["comments"] == []
         kept = store.get(f"houses/{h}/darupoyo_records/{record['id']}")
         assert kept["comments"] == [] and "sync_with" not in kept
+
+
+def test_history_sharing_picks_houses_one_by_one():
+    with TestClient(create_app(LOCAL)) as c:
+        first = own_house(c, "alice", "実家")
+        second = own_house(c, "alice", "寮")
+        a = c.post(f"/api/houses/{first}/completions", headers=auth(), json=meal(upload(c, first))).json()["post"]
+        b = c.post(f"/api/houses/{second}/completions", headers=auth(), json=sound()).json()["post"]
+        here = own_house(c, "bob", "新居")
+        invite_into(c, here, "bob", "alice")
+        url = f"/api/houses/{here}/members/alice/history"
+        base = f"/api/houses/{here}/history-sharing"
+
+        # Only 実家 is shared: its records and photos show, 寮 stays private.
+        res = c.put(base, headers=auth(), json={"house_ids": [first]})
+        assert res.status_code == 200 and res.json()["members"]["alice"]["share_history_from"] == [first]
+        assert [p["id"] for p in c.get(url, headers=auth("bob")).json()["items"]] == [a["id"]]
+        assert c.get(f"{url}/{first}/media/{a['media_id']}", headers=auth("bob")).status_code == 200
+        # Both, then none.
+        c.put(base, headers=auth(), json={"house_ids": [first, second]})
+        assert {p["id"] for p in c.get(url, headers=auth("bob")).json()["items"]} == {a["id"], b["id"]}
+        c.put(base, headers=auth(), json={"house_ids": []})
+        assert c.get(url, headers=auth("bob")).status_code == 403
+        assert c.get(f"{url}/{first}/media/{a['media_id']}", headers=auth("bob")).status_code == 403
+        # Only your own other houses can be picked (not this one, not someone else's).
+        stranger = own_house(c, "carol", "よそ")
+        for bad in (here, stranger, str(uuid4())):
+            assert c.put(base, headers=auth(), json={"house_ids": [bad]}).status_code == 422
+        assert c.put(base, headers=auth(), json={}).status_code == 422
+        # The older switch still works and means every house.
+        c.put(base, headers=auth(), json={"enabled": True})
+        assert "share_history_from" not in c.get(f"/api/houses/{here}/dashboard", headers=auth()).json()["house"]["members"]["alice"]
+        assert len(c.get(url, headers=auth("bob")).json()["items"]) == 2

@@ -10,9 +10,9 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await enter(page);
   await page.locator('#open-menu').click(); await page.locator('#open-settings').click();
   const settings = page.locator('#settings');
-  // Cards stay in Figma order; history sharing has no settings section.
+  // Cards stay in Figma order, with ほかのハウスの記録 (picked house by house) before 効果音.
   await expect(settings.locator('.set-card:visible .drawer-h').first()).toHaveText('アカウント');
-  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '通知', '効果音']);
+  await expect(settings.locator('.set-card:visible > .drawer-h, .set-card:visible .push-row > .drawer-h')).toHaveText(['アカウント', 'ハウス', 'ほめてくれるギャル', '通知', 'ほかのハウスの記録', '効果音']);
   // the invite code shows in the house card; no extra 招待リンク button or photo card
   await expect(page.locator('#settings-invite')).not.toHaveText('友だちを招待しよう');
   await expect(settings.getByRole('button', { name: '招待リンク', exact: true })).toHaveCount(0);
@@ -22,7 +22,6 @@ test('マイページ follows the Figma mypage frame (#152)', async ({ page }) =
   await expect(page.locator('.account-management button:visible')).toHaveText(['アカウントを削除', 'ハウスを削除', 'ログアウト']);
   await expect(settings.locator('#share-history')).toHaveCount(0);
   await expect(settings.locator('#social-card')).toBeHidden();
-  await expect(settings.getByText('ほかのハウスの記録を見せる')).toHaveCount(0);
   // the required weather credits stay
   await expect(page.locator('.data-credits')).toContainText('気象データ提供：株式会社ウェザーニューズ');
 });

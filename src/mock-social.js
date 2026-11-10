@@ -37,12 +37,24 @@ export function socialRoute({ db, uid, houseId, house, rest, method, body, save,
     if (old && old !== member.avatar_media_id) dropMedia(old);
     save(db); return json(house);
   }
-  if (rest === '/history-sharing' && method === 'PUT') { house.members[uid].share_history = !!body.enabled; save(db); return json(house); }
+  if (rest === '/history-sharing' && method === 'PUT') {
+    const member = house.members[uid];
+    if (Array.isArray(body.house_ids)) {
+      const picked = [...new Set(body.house_ids)].sort();
+      if (picked.some(id => id === houseId || !db.houses[id]?.member_ids.includes(uid))) return fail(422, 'You can only share records from your other houses');
+      member.share_history_from = picked; member.share_history = picked.length > 0;
+    } else { delete member.share_history_from; member.share_history = !!body.enabled; }
+    save(db); return json(house);
+  }
   const history = rest.match(/^\/members\/([^/]+)\/history(?:\/([^/]+)\/media\/([^/]+))?$/);
   if (history && method === 'GET') {
     const [, member, source, mediaId] = history;
     if (!house.member_ids.includes(member)) return fail(404, 'Resident not found');
-    if (member !== uid && !house.members[member].share_history) return fail(403, 'Private');
+    // Which of their other houses this house may see (null: all of them).
+    const picked = house.members[member].share_history_from;
+    const allowed = member === uid ? null : picked ? new Set(picked) : house.members[member].share_history ? null : new Set();
+    if (allowed && !allowed.size) return fail(403, 'Private');
+    if (source && allowed && !allowed.has(source)) return fail(404, 'Image not found');
     if (mediaId) {
       const meta = db.media[mediaId];
       if (!meta || meta.house_id !== source || meta.owner_id !== member || !['meal', 'cutout', 'voice'].includes(meta.kind) || !db.houses[source]?.member_ids.includes(member)) return fail(404, 'Image not found');
@@ -50,7 +62,7 @@ export function socialRoute({ db, uid, houseId, house, rest, method, body, save,
       if (!published) return fail(404, 'Record media not found');
       return readMedia(mediaId);
     }
-    const others = new Set(Object.values(db.houses).filter(h => h.id !== houseId && h.member_ids.includes(member)).map(h => h.id));
+    const others = new Set(Object.values(db.houses).filter(h => h.id !== houseId && h.member_ids.includes(member) && (!allowed || allowed.has(h.id))).map(h => h.id));
     const before = searchParams?.get('before');
     const all = Object.values(db.posts).filter(p => others.has(p.house_id) && p.user_id === member && (!before || p.id < before))
       .sort((a, b) => b.id.localeCompare(a.id));

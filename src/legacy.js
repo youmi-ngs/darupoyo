@@ -19,7 +19,7 @@ import { sfx, galVoice, soundOn, setSound } from './sfx.js';
 import { setupBoardView } from './board-view.js';
 import { THEMES, residentThemes } from './themes.js';
 import { galCharacter, galIcon as dressedGalIcon, outfitOf } from './gal-figure.js';
-import { residentDot, commentsBlock, setupSocialSettings } from './social.js';
+import { residentDot, commentsBlock, setupSocialSettings, renderHistorySharing } from './social.js';
 import { otherHouseRecords, forgetHistory } from './history.js';
 import { openCalendar } from './album-calendar.js';
 import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } from './data.js';
@@ -637,7 +637,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     document.querySelector('.account-row b').textContent = nameOf(ME);
     document.querySelector('.account-row small').textContent = data.house.name + '・' + RESIDENTS.length + '人';
     updateSettingsHouse(data.house, nameOf, ME);
-    forgetHistory(); renderSocial();
+    forgetHistory(); renderSocial(); renderHistorySharing(data.house, ME, client.houses, toast);
     renderAccountForm();
     renderAll();
     placeGals();

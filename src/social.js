@@ -2,6 +2,7 @@
 // setting that shows records from other houses to this house (#99).
 import { houseApi, refresh } from './api.js';
 import { setBusy } from './busy.js';
+import { forgetHistory } from './history.js';
 
 // A resident's round mark: their profile photo, or the first letter of their name.
 export function residentDot(member, name, color, className = 'who-dot') {
@@ -82,4 +83,40 @@ export function setupSocialSettings(getMe, toast) {
     } catch (e) { toast(e.message); } finally { pick.removeAttribute('aria-busy'); }
   };
   return () => {};
+}
+
+// ---------- records from my other houses (#99) ----------
+// Pick, one house at a time, which of my other houses this house may see.
+export function renderHistorySharing(house, me, houses, toast) {
+  const list = document.getElementById('history-share-list'); if (!list) return;
+  const member = house.members[me] || {};
+  const others = houses.filter(h => h.id !== house.id);
+  const picked = new Set(member.share_history_from ?? (member.share_history ? others.map(h => h.id) : []));
+  list.replaceChildren();
+  if (!others.length) {
+    const li = document.createElement('li'); li.className = 'history-share-empty';
+    li.textContent = 'ほかのハウスにも住むと、ここで選べるよ'; list.append(li); return;
+  }
+  for (const other of others) {
+    const li = document.createElement('li');
+    const name = document.createElement('span'); name.textContent = other.name;
+    const toggle = document.createElement('button'); toggle.type = 'button'; toggle.className = 'sound-switch';
+    const draw = () => {
+      const on = picked.has(other.id);
+      toggle.setAttribute('aria-pressed', String(on));
+      toggle.innerHTML = '<img src="/settings/' + (on ? 'c8fcf' : '6b989') + '.svg" alt="">';
+    };
+    toggle.setAttribute('aria-label', '「' + other.name + '」での記録を見せる');
+    toggle.onclick = async () => {
+      const next = new Set(picked); next.has(other.id) ? next.delete(other.id) : next.add(other.id);
+      toggle.disabled = true;
+      try {
+        await houseApi('/history-sharing', { house_ids: [...next] }, 'PUT');
+        picked.clear(); next.forEach(id => picked.add(id)); draw(); forgetHistory();
+        toast(picked.has(other.id) ? '「' + other.name + '」の記録を見せるよ' : '「' + other.name + '」の記録はかくしたよ');
+        void refresh();
+      } catch (e) { toast(e.message); } finally { toggle.disabled = false; }
+    };
+    draw(); li.append(name, toggle); list.append(li);
+  }
 }
