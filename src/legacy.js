@@ -1,4 +1,5 @@
 import './feedback.css';
+import { setupRoomSwipe } from './room-swipe.js';
 import { listenNotificationOpens } from './notification-open.js';
 import { setupFirstGuide } from './first-guide.js';
 import { captionCounter } from './composer-ui.js';
@@ -17,7 +18,7 @@ import { setupFurniturePlay } from './furniture-play.js';
 import { setupMoments } from './moments.js';
 import { setupCritters } from './critters.js';
 import { startAmbience } from './ambience.js';
-import { api, client, start, houseApi, loadImage, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
+import { api, client, start, enterNotificationHouse, houseApi, loadImage, refresh, inviteCode, logout, switchHouse, deleteAccount } from './api.js';
 import { capture } from './media.js';
 import { renderActivities, roomGal, nextReturn } from './resident-activities.js';
 import { pushState, pushOn, enablePush, disablePush, syncPushGal, listenInApp } from './push.js';
@@ -377,29 +378,34 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       window.scrollTo(0, 0); $('room-back').focus();
     }
   }
-  let closingRoom = false;
-  $('room-back').addEventListener('click', async () => {
+  let closingRoom = false, roomReturnVersion = 0;
+  async function returnFromRoom(swipe = false) {
     if (closingRoom) return;
-    closingRoom = true; closePaint();
+    closingRoom = true; const version = ++roomReturnVersion; closePaint();
     const room = $('room-view'), house = $('house-view');
     window.__toHall = true; house.hidden = false; window.__goScene?.();
     room.inert = house.inert = true;
     let exit;
     try {
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        exit = room.animate([
+        exit = room.animate(swipe ? [
+          {translate:getComputedStyle(room).translate,opacity:1},
+          {translate:"100% 0",opacity:0}
+        ] : [
           {opacity:1,transform:getComputedStyle(room).transform,offset:0,easing:'ease-out'},
           {opacity:1,transform:'translateY(-2px) scale(1.01)',offset:.22,easing:'cubic-bezier(.4,0,.8,.5)'},
           {opacity:0,transform:'translate(-6%, 8%) scale(.82) rotate(-.5deg)',offset:1}
-        ], {duration:300,fill:'forwards'});
+        ], {duration:swipe ? 180 : 300,fill:'forwards'});
         await exit.finished.catch(() => {});
       }
-      showHouse();
+      if (version === roomReturnVersion) showHouse();
     } finally {
-      exit?.cancel(); room.inert = house.inert = false; closingRoom = false;
-      [...house.querySelectorAll('.door')].find(door => door.dataset.who === currentRoom)?.focus({preventScroll:true});
+      exit?.cancel(); room.style.translate = ''; room.inert = house.inert = false; closingRoom = false;
+      if (version === roomReturnVersion) [...house.querySelectorAll('.door')].find(door => door.dataset.who === currentRoom)?.focus({preventScroll:true});
     }
-  });
+  }
+  $('room-back').addEventListener('click', () => returnFromRoom());
+  setupRoomSwipe($('room-view'), () => returnFromRoom(true));
   // けーじばん: opens from the board in the entrance, ← goes back there.
   const boardView = setupBoardView({ nameOf, iconOf, themeOf, convertPost, galOf: memberGal, toast,
     comments: (record, base) => commentsBlock(record, { me: ME, nameOf, dotOf, toast, base }),
@@ -423,6 +429,8 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     const house = params.get('house'), post = params.get('post');
     if (!house || !post) return true;
     captureController?.abort();
+    roomReturnVersion++;
+    $('room-view').getAnimations().forEach(animation => animation.cancel());
     window.dispatchEvent(new Event('darupoyo:notification-opening'));
     document.querySelectorAll('dialog[open]').forEach(dialog => dialog.close());
     document.querySelectorAll(':popover-open').forEach(popover => popover.hidePopover());
@@ -431,11 +439,9 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
       try { const result = await api('/houses'); client.houses = result.items || result; } catch { toast('通知のハウスを確認できなかったよ。もう一度試してね'); return false; }
     }
     if (!client.houses.some(h => h.id === house)) { toast('通知のハウスに参加していないため、投稿を開けないよ'); return true; }
-    if (house !== client.house) {
-      url.searchParams.set('notification', url.searchParams.get('notification') || Date.now().toString());
-      location.assign(url.href); return false;
-    }
     try {
+      showHouse();
+      await enterNotificationHouse(house);
       showHouse(); await boardView.openNotification(post, params.get('kind') || 'post');
       const clean = new URL(location.href); clean.hash = ''; clean.searchParams.delete('notification');
       history.replaceState(null, '', clean.pathname + clean.search);
