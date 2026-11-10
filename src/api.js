@@ -120,6 +120,7 @@ export async function start(onUpdate, onError) {
   const houses = await api('/houses');
   const items = houses.items || houses;
   client.houses = items;
+  client.firstEntry = items.length === 0;
   const enter = async (id, joining = false) => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); if (invite) history.replaceState(null, '', clearInvite(location.href, inviteStorage)); await welcome.leave(); subscribe(); window.dispatchEvent(new CustomEvent('darupoyo:entered', { detail: { joining } })); };
   if (!invite) {
     const requested = new URLSearchParams(location.hash.slice(1)).get('house');

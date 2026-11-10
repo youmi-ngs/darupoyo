@@ -44,7 +44,9 @@ export function limitInput(input, limit, counter) {
   // IME and some paste events cannot be cancelled. Clamp in the input event,
   // before painting; keep submission disabled until composition has finished.
   input.addEventListener('input', update);
-  input.addEventListener('compositionend', () => { composing = false; update(); });
+  const finish = () => { composing = false; update(); };
+  input.addEventListener('compositionend', finish);
+  input.addEventListener('blur', finish);
   if (counter) counter.textContent = `${textLength(input.value)} / ${limit}`;
-  return { isComposing: () => composing };
+  return { isComposing: () => composing, finish };
 }

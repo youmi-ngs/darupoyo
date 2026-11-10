@@ -789,6 +789,7 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
   const sceneIndexOf = (name, page = 0) => Math.max(0, scenes().findIndex(sc => sc.dataset.scene === name && (sc.dataset.page == null || Number(sc.dataset.page) === page)));
   let sceneIdx = 1;
   function goScene(i, instant) {
+    if (document.body.classList.contains('first-guide-active') && i !== sceneIndexOf('ldk')) return;
     sceneIdx = Math.max(0, Math.min(scenes().length - 1, i));
     plan.scrollTo({ left: sceneIdx * plan.clientWidth, behavior: instant ? 'instant' : 'smooth' });
     markScene();
@@ -857,11 +858,16 @@ import { TASKS, REWARD, figSvg, MEAL_SVG, GALS, GAL_IDS, ITEM_SVG, galFaceImg } 
     if (error) { note.hidden = false; note.textContent = error; }
   });
   listenInApp((body, link) => {
-    sfx.ding(); toast(body);
-    if (!link || link === '/') return;
+    sfx.ding();
+    if (!link || link === '/') { toast(body); return; }
     const url = new URL(link, location.origin); if (url.origin !== location.origin) return;
-    const button = document.createElement('button'); button.type = 'button'; button.textContent = '投稿を見る';
-    button.onclick = () => { location.href = url.href; location.reload(); }; $('toast').append(button);
+    // A popover stays above open dialogs; the entire notification is tappable.
+    document.querySelector('.push-banner')?.remove();
+    const banner = document.createElement('div'); banner.className = 'push-banner'; banner.setAttribute('popover', 'manual');
+    const open = document.createElement('button'); open.type = 'button'; open.textContent = body + '　投稿を見る ›';
+    open.onclick = () => { url.searchParams.set('notification', Date.now().toString()); location.assign(url.href); };
+    const dismiss = document.createElement('button'); dismiss.type = 'button'; dismiss.textContent = '×'; dismiss.setAttribute('aria-label', '通知を閉じる');
+    dismiss.onclick = () => banner.remove(); banner.append(open, dismiss); document.body.append(banner); banner.showPopover();
   });
   // ---------- sound effects (#8 #17) ----------
   function renderSound() { const on = soundOn(), b = $('sound-toggle'); b.querySelector('img').src = '/settings/' + (on ? 'c8fcf' : '6b989') + '.svg'; b.setAttribute('aria-pressed', String(on)); }

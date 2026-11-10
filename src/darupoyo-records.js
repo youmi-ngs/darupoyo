@@ -103,7 +103,7 @@ export function setupDarupoyoRecords() {
     const inputState = limitInput(caption, 30, dialog.querySelector("[data-count]"));
     caption.after(dialog.querySelector("[data-count]"));
     library.onclick=()=>file.click();
-    const valid=()=>{ save.disabled=busy || preparing || inputState.isComposing() || textLength(caption.value)>30; };
+    const valid=()=>{ save.disabled=busy || preparing || textLength(caption.value)>30; };
     caption.oninput=()=>{ submission=null; notice.textContent=''; save.textContent='きょーゆー'; valid(); };
     caption.addEventListener('compositionstart',valid); caption.addEventListener('compositionend',valid);
     close.onclick=()=>{ if(!busy) dialog.close(); };
@@ -129,7 +129,8 @@ export function setupDarupoyoRecords() {
       finally { if(version===composer) { camera.disabled=false; camera.focus(); } }
     };
     save.onclick=async()=>{
-      if(busy || preparing || inputState.isComposing() || client.house!==house) return;
+      if(busy || preparing || client.house!==house) return;
+      caption.blur(); inputState.finish();
       if(textLength(caption.value)>30) { caption.reportValidity(); caption.focus(); valid(); return; }
       submission ||= {request_id:crypto.randomUUID(),chore,caption:caption.value.trim(),share_to:audience.shareTo()};
       busy=true; [file,camera,library,caption,remove,save,close].forEach(n=>n.disabled=true); notice.textContent=''; setBusy(save,true,'共有しています…');
