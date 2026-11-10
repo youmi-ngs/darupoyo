@@ -1,0 +1,31 @@
+/* Every chore screen (choosing, recording, posting, done) and だるぽよ fill the screen like
+   うちらのなう, instead of floating as a card. On a wide screen the content stays phone width. */
+dialog.sheet.sheet.sheet, dialog.darupoyo-dialog.darupoyo-dialog.darupoyo-dialog, dialog.refined-modal.sheet.sheet {
+  box-sizing: border-box; width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; margin: 0; inset: 0;
+  border: 0; border-radius: 0; box-shadow: none; overflow-y: auto; overscroll-behavior: contain;
+  background: linear-gradient(170deg, #fff5fc 0%, #f2edff 100%);
+}
+dialog.sheet.sheet.sheet { padding: 0; }
+dialog.sheet.sheet.sheet .sheet-body, dialog.darupoyo-dialog.darupoyo-dialog.darupoyo-dialog {
+  padding: max(16px, env(safe-area-inset-top)) max(20px, calc((100vw - 520px) / 2)) max(24px, env(safe-area-inset-bottom));
+}
+dialog.sheet.refined-modal.sheet { padding: max(16px, env(safe-area-inset-top)) max(20px, calc((100vw - 520px) / 2)) max(24px, env(safe-area-inset-bottom)); }
+/* the close button sits in the title row, at the same place on every screen */
+dialog.sheet.sheet.sheet .sheet-bar { top: max(16px, env(safe-area-inset-top)); right: max(20px, calc((100vw - 520px) / 2)); }
+.sheet.refined-modal.sheet.sheet #sheet-close, .sheet.refined-modal.pose-picker.sheet.sheet #sheet-close { top: max(16px, env(safe-area-inset-top)); right: max(20px, calc((100vw - 520px) / 2)); }
+dialog.darupoyo-dialog.darupoyo-dialog.darupoyo-dialog .btn[data-close] { top: max(16px, env(safe-area-inset-top)); right: max(20px, calc((100vw - 520px) / 2)); }
+/* the done card of だるぽよ sits in the middle of the screen */
+dialog.darupoyo-dialog.darupoyo-dialog.darupoyo-dialog.is-success { justify-content: center; border: 0 !important; box-shadow: none !important; }
+
+/* The camera frame and the taken photo (ごはん・ゴミ出し) are as big as fits, with the word and
+   the send button still in view; no small thumbnail. */
+dialog.sheet.sheet.sheet .capture .capture-frame,
+dialog.sheet.sheet.sheet .capture .capture-frame:has(canvas:not([hidden])) {
+  align-self: center; width: min(100%, 440px, max(160px, calc((100dvh - 410px) * 302 / 380))); height: auto; min-width: 0; min-height: 0;
+  aspect-ratio: 302 / 380; margin: 0 auto; background: #eee;
+}
+dialog.sheet.sheet.sheet .capture .capture-frame canvas:not([hidden]) { width: 100%; height: 100%; object-fit: cover; }
+dialog.sheet.sheet.sheet .capture .capture-frame.is-body-frame canvas:not([hidden]) { object-fit: contain; }
+/* ゴミ出し has the timer and 共有範囲 under the photo too, so its frame leaves a little more room. */
+dialog.sheet.sheet.sheet .capture .capture-frame.is-body-frame,
+dialog.sheet.sheet.sheet .capture .capture-frame.is-body-frame:has(canvas:not([hidden])) { width: min(100%, 440px, max(150px, calc((100dvh - 500px) * 302 / 380))); }

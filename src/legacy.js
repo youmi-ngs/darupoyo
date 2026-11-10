@@ -1,4 +1,5 @@
 import './feedback.css';
+import './full-view.css';
 import { setupRoomSwipe } from './room-swipe.js';
 import { listenNotificationOpens } from './notification-open.js';
 import { setupFirstGuide } from './first-guide.js';
