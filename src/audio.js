@@ -3,6 +3,7 @@ import { BEAT_MS, TOTAL_BEATS, PASS_HITS, OK_MS, COUNTDOWN_SECONDS, GRADE_LABEL,
 import { createPoseLandmarker } from './pose.js';
 import { playSparkle, sparkle, sparkleOutline } from './sparkle.js';
 import { sfx } from './sfx.js';
+import { normalizeAudio } from './audio-level.js';
 import { createDryerDetector } from './dryer-detector.js';
 
 const UPPER_HINT = '顔・肩・腕が映るようにしてね（上半身だけでOK）';
@@ -170,6 +171,16 @@ export async function dryerSound(box, status, signal, resources) {
   const hearing = document.createElement('small'); hearing.textContent = 'ドライヤーをつけてみてね';
   levelLabel.append(level, hearing); box.append(levelLabel);
   status.textContent = 'ドライヤーぶお〜んってして！10びょ〜でクリアだよん';
+  const diagnostics = document.createElement('details'); diagnostics.className = 'dryer-diagnostics'; diagnostics.hidden = true;
+  const summary = document.createElement('summary'); summary.textContent = '音が届いているのに進まないとき';
+  const note = document.createElement('p'); note.textContent = '確認用の情報をコピーして教えてね。音声・名前・写真は含まれないよ。';
+  const copy = document.createElement('button'); copy.type = 'button'; copy.className = 'btn'; copy.textContent = '判定情報をコピー';
+  const log = []; let elapsed = 0;
+  copy.onclick = async () => {
+    try { await navigator.clipboard.writeText(JSON.stringify({version:'dryer-level-v1',sampleRate:context.sampleRate,inputRate:stream.getAudioTracks()[0]?.getSettings().sampleRate,frames:log})); copy.textContent = 'コピーしたよ'; }
+    catch { note.textContent = JSON.stringify({version:'dryer-level-v1',sampleRate:context.sampleRate,inputRate:stream.getAudioTracks()[0]?.getSettings().sampleRate,frames:log}); }
+  };
+  diagnostics.append(summary, note, copy); box.append(diagnostics);
   let detected = 0;
   const dryerSeconds = createDryerDetector();
   await new Promise((resolve, reject) => {
@@ -179,14 +190,18 @@ export async function dryerSound(box, status, signal, resources) {
     resources.push(() => { worklet.port.onmessage = null; worklet.onprocessorerror = null; });
     worklet.port.onmessage = ({ data }) => {
       try {
-        const rms = Math.sqrt(data.reduce((sum, value) => sum + value * value, 0) / data.length);
+        const {samples, rms, gain} = normalizeAudio(data);
         level.value = Math.min(1, rms * 8);
         hearing.textContent = rms > .005 ? '音は届いているよ。ドライヤーの音を確認中…' : '音が小さいみたい。スマホを少し近づけてね';
-        const result = classifier.classify(data, context.sampleRate);
+        const result = classifier.classify(samples, context.sampleRate);
         const categories = result.flatMap(r => r.classifications.flatMap(c => c.categories));
         const confirmed = dryerSeconds(categories, rms, data.length / context.sampleRate);
         if (confirmed > 0) { detected += confirmed; hearing.textContent = 'ドライヤーの音、聞こえてるよ！'; }
         progress.value = detected; status.textContent = 'ぶお〜ん…' + Math.min(10, detected).toFixed(1) + ' / 10びょ〜';
+        elapsed += data.length / context.sampleRate;
+        log.push({time:+elapsed.toFixed(2),samples:data.length,audioState:context.state,rms:+rms.toFixed(4),gain:+gain.toFixed(2),counted:+confirmed.toFixed(2),scores:categories.filter(c=>['Hair dryer','Steam','Hiss','Speech','Music'].includes(c.categoryName)).map(c=>[c.categoryName,+c.score.toFixed(3)]),top:categories.slice(0,6).map(c=>[c.categoryName,+c.score.toFixed(3)])});
+        if (log.length > 30) log.shift();
+        diagnostics.hidden = elapsed < 8 || detected >= 10;
         if (detected >= 10) resolve();
       } catch (e) { reject(e); }
     };

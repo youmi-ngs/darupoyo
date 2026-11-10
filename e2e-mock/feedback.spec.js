@@ -30,7 +30,9 @@ test('30 visible characters, optional text, compact photo and board categories',
   await input.fill(''); await composer.locator('[data-remove]').click();
   await page.screenshot({animations:'disabled',path:'test-results/feedback-composer.png'});
   await composer.locator('[data-save]').click(); await page.getByRole('button',{name:'けーじばんを見る',exact:true}).click();
-  await expect(page.locator('.pin-grid .pin-category')).toHaveText('ごはん · だるぽよ');
+  await expect(page.locator('.pin-grid .pin-category')).toHaveText('ごはん');
+  await expect(page.locator('.pin-grid .pin-state')).toHaveText('だるぽよ');
+  await expect(page.locator('.pin-grid .pin-author strong')).toHaveText('もち');
   await page.screenshot({animations:'disabled',path:'test-results/feedback-board.png'});
 });
 test('name limits preserve old names, invite links and profile cancel leave settings open', async ({page}) => {

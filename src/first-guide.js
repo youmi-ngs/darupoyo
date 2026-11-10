@@ -56,6 +56,7 @@ export function setupFirstGuide(goToLiving) {
   };
   window.addEventListener('darupoyo:entered', event => { if (!event.detail?.joining) first(); });
   window.addEventListener('darupoyo:guide-ready', first);
+  window.addEventListener('darupoyo:notification-opening', close);
   sheet.addEventListener('close', close);
   document.querySelector('#open-menu').addEventListener('click', close);
 }
