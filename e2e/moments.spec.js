@@ -187,3 +187,29 @@ test('うちらのなう opens from the camera on the wall shelf under けーじ
   await page.locator('.scene-dot').nth(1).click(); await table.click();
   await expect(page.getByRole('dialog', { name: 'うちらのなう' })).toBeVisible();
 });
+
+test('a tall library photo can be dragged to choose what stays in the frame, and stays full size (#223 #228 #225)', async ({ page }) => {
+  await openSelfie(page);
+  // full screen
+  const box = await page.locator('.now-dialog').boundingBox(), vp = page.viewportSize();
+  expect(Math.round(box.width)).toBe(vp.width);
+  // a tall picture: red on top, blue at the bottom
+  const tall = await page.evaluate(() => { const c = document.createElement('canvas'); c.width = 300; c.height = 900; const x = c.getContext('2d'); x.fillStyle = '#ff0000'; x.fillRect(0, 0, 300, 450); x.fillStyle = '#0000ff'; x.fillRect(0, 450, 300, 450); return c.toDataURL('image/png').split(',')[1]; });
+  await page.locator('.now-library input').setInputFiles({ name: 'tall.png', mimeType: 'image/png', buffer: Buffer.from(tall, 'base64') });
+  const canvas = page.locator('.now-frame canvas');
+  await expect(canvas).toBeVisible();
+  await expect(page.locator('.now-crop-hint')).toBeVisible();
+  const frame = await page.locator('.now-frame').boundingBox();
+  expect(frame.height).toBeGreaterThan(190); // not the small 180px thumbnail
+  const top = () => canvas.evaluate(c => Array.from(c.getContext('2d').getImageData(300, 5, 1, 1).data.slice(0, 3)));
+  // the middle of the picture shows at first; drag down to bring the red top into view
+  const c = await canvas.boundingBox();
+  await page.mouse.move(c.x + c.width / 2, c.y + c.height / 2); await page.mouse.down();
+  await page.mouse.move(c.x + c.width / 2, c.y + c.height / 2 + 400, { steps: 6 }); await page.mouse.up();
+  expect(await top()).toEqual([255, 0, 0]);
+  await expect(page.locator('.now-crop-hint')).toBeHidden();
+  // drag up: the blue bottom
+  await page.mouse.move(c.x + c.width / 2, c.y + c.height / 2); await page.mouse.down();
+  await page.mouse.move(c.x + c.width / 2, c.y + c.height / 2 - 800, { steps: 6 }); await page.mouse.up();
+  expect(await top()).toEqual([0, 0, 255]);
+});

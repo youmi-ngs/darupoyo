@@ -14,6 +14,7 @@ for(const viewport of [{width:390,height:844},{width:844,height:390}]) test(`cam
   await page.getByRole('button',{name:'撮る',exact:true}).click();
   const canvas=frame.locator('canvas'); await expect(canvas).toBeVisible();
   await expect.poll(()=>canvas.evaluate(el=>{const b=el.getBoundingClientRect();return Math.abs(b.width/b.height-el.width/el.height);})).toBeLessThan(.01);
-  const photo=await frame.boundingBox(); expect(Math.max(photo.width,photo.height)).toBeLessThanOrEqual(181);
+  // #228: in うちらのなう the taken photo stays as big as the frame (not a small thumbnail)
+  const photo=await frame.boundingBox(); expect(Math.abs(photo.width-bounds.width)).toBeLessThan(1); expect(Math.abs(photo.height-bounds.height)).toBeLessThan(1);
   await page.screenshot({path:`/tmp/round3-photo-${viewport.width}.png`,animations:'disabled'});
 });

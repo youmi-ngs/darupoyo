@@ -19,6 +19,7 @@ test('だるぽよ: the 共有範囲 pill picks houses, and the record shows up 
   await newHouse(page, '実家', true);
   await newHouse(page, '寮');
   await page.locator('.scene-dot').nth(2).click(); await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^だるぽよ/ }).click();
+  await expect(page.locator('#darupoyo-caption')).toHaveAttribute('placeholder', '書かんくてもおけ'); // #226
   const chip = page.locator('.darupoyo-dialog .audience-chip');
   await expect(chip).toHaveText(/寮/);
   await chip.click();

@@ -1,7 +1,6 @@
 // Photos and sharing: profile photos (#96), photo comments (#88) and the
 // setting that shows records from other houses to this house (#99).
 import { houseApi, refresh } from './api.js';
-import { setBusy } from './busy.js';
 
 // A resident's round mark: their profile photo, or the first letter of their name.
 export function residentDot(member, name, color, className = 'who-dot') {
@@ -22,7 +21,9 @@ export function commentsBlock(post, ctx) {
   const list = document.createElement('ul'); list.className = 'comment-list';
   const form = document.createElement('form'); form.className = 'comment-form';
   const input = document.createElement('input'); input.maxLength = 200; input.placeholder = 'コメントする'; input.setAttribute('aria-label', 'コメントを書く');
-  const send = document.createElement('button'); send.type = 'submit'; send.className = 'btn'; send.textContent = '送る';
+  // #224: a round paper-plane button in the app's pink, named 送る for screen readers.
+  const send = document.createElement('button'); send.type = 'submit'; send.className = 'comment-send'; send.setAttribute('aria-label', '送る'); send.title = '送る';
+  send.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true"><path d="M21 3 10 14"/><path d="M21 3 14.5 21l-4.5-7-7-4.5z"/></svg>';
   form.append(input, send); box.append(list, form);
   const draw = () => {
     list.replaceChildren();
@@ -44,11 +45,11 @@ export function commentsBlock(post, ctx) {
     e.preventDefault();
     const text = input.value.trim(); if (!text) return;
     if (pending?.text !== text) pending = { text, id: crypto.randomUUID() };
-    setBusy(send, true, '送信中…');
+    send.classList.add('is-busy'); send.setAttribute('aria-busy', 'true'); send.disabled = true;
     try {
       post.comments = (await houseApi(base, { request_id: pending.id, text })).comments;
       pending = null; input.value = ''; draw(); void refresh();
-    } catch (err) { ctx.toast(err.message); } finally { setBusy(send, false); send.disabled = false; }
+    } catch (err) { ctx.toast(err.message); } finally { send.classList.remove('is-busy'); send.removeAttribute('aria-busy'); send.disabled = false; }
   };
   draw();
   return box;
