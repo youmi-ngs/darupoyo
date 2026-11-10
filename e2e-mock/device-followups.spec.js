@@ -101,7 +101,8 @@ test('board separates author, category and status and names moments consistently
  await expect(page.locator('.pin-grid .pin-author strong').first()).toHaveText('テスト');
  await expect(page.locator('.pin-grid .pin-author small')).toHaveCount(0);
  const styles=await page.locator('.pin-grid .pin-state').evaluateAll(nodes=>nodes.map(el=>[getComputedStyle(el).color,getComputedStyle(el).backgroundColor]));
- expect(styles[0]).toEqual(styles[1]);
+ expect(styles[0][0]).toEqual(styles[1][0]);
+ expect(styles[0][1]).not.toEqual(styles[1][1]);
  await page.screenshot({path:'/tmp/darupoyo-board-followups.png',animations:'disabled'});
  await page.locator('.pin-grid .pin-moment').click();await expect(page.locator('.pin-viewer .pm-title')).toContainText(['テストのなう']);
 });

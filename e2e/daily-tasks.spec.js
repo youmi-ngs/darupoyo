@@ -83,7 +83,8 @@ test('furniture reacts on taps and keyboard, with a temporary prize (つけま�
   await expect(page.locator('.furniture-prize')).not.toHaveAttribute('role','button');
   await expect(page.getByRole('button',{name:/拾う/})).toHaveCount(0);
   await expect(page.locator('.furniture-play-status')).toHaveText(/^(つけま|ネイルチップ|アメピン|ピアスのキャッチ)みっけ♡ ラッキ〜$/);
-  await expect(page.locator('.furniture-play-status')).toHaveClass(/is-visible/);
+  await expect(page.locator('.furniture-play-status')).not.toHaveClass(/is-visible/);
+  await expect(page.locator('.furniture-prize')).toContainText('ラッキ〜');
   await expect(page.locator('.furniture-prize')).toHaveCount(0,{timeout:5000});
   expect((await state(page)).state).toEqual(before.state);
   await page.reload(); await page.locator('.scene-dot').nth(1).click();
