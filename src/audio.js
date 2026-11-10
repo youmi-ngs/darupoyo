@@ -3,6 +3,7 @@ import { BEAT_MS, TOTAL_BEATS, PASS_HITS, OK_MS, COUNTDOWN_SECONDS, GRADE_LABEL,
 import { createPoseLandmarker } from './pose.js';
 import { playSparkle, sparkle, sparkleOutline } from './sparkle.js';
 import { sfx } from './sfx.js';
+import { createDryerDetector } from './dryer-detector.js';
 
 const UPPER_HINT = '顔・肩・腕が映るようにしてね（上半身だけでOK）';
 // #124: once the upper body was found, a retry ("もう一回") starts right away with the same
@@ -170,6 +171,7 @@ export async function dryerSound(box, status, signal, resources) {
   levelLabel.append(level, hearing); box.append(levelLabel);
   status.textContent = 'ドライヤーぶお〜んってして！10びょ〜でクリアだよん';
   let detected = 0;
+  const dryerSeconds = createDryerDetector();
   await new Promise((resolve, reject) => {
     resources.push(onAbort(signal, reject));
     const timeout = setTimeout(() => reject(new Error('ドライヤーの音、あんま聞こえなかった〜。スマホ近づけてもっかいやってみて！')), 120000); resources.push(() => clearTimeout(timeout));
@@ -182,7 +184,8 @@ export async function dryerSound(box, status, signal, resources) {
         hearing.textContent = rms > .005 ? '音は届いているよ。ドライヤーの音を確認中…' : '音が小さいみたい。スマホを少し近づけてね';
         const result = classifier.classify(data, context.sampleRate);
         const categories = result.flatMap(r => r.classifications.flatMap(c => c.categories));
-        if (categories.some(c => /hair dryer/i.test(c.categoryName) && c.score >= .2)) { detected += data.length / context.sampleRate; hearing.textContent = 'ドライヤーの音、聞こえてるよ！'; }
+        const confirmed = dryerSeconds(categories, rms, data.length / context.sampleRate);
+        if (confirmed > 0) { detected += confirmed; hearing.textContent = 'ドライヤーの音、聞こえてるよ！'; }
         progress.value = detected; status.textContent = 'ぶお〜ん…' + Math.min(10, detected).toFixed(1) + ' / 10びょ〜';
         if (detected >= 10) resolve();
       } catch (e) { reject(e); }
