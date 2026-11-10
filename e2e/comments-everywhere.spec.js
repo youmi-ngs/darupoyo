@@ -2,7 +2,7 @@ import { setWelcomeName, setHouseName } from './onboarding-helper.js';
 import { test, expect } from '@playwright/test';
 test.beforeEach(async ({ context }) => { await context.addInitScript(() => ['darupoyo:entered', 'darupoyo:guide-ready'].forEach(event => window.addEventListener(event, () => queueMicrotask(() => document.querySelector('.first-guide [data-skip]')?.click())))); });
 
-test('うちらのなう and だるぽよ on けーじばん take comments, like chore records', async ({ page }) => {
+test('うちらのなう and だるぽよ on けーじばん take comments and ♥👏✨, like chore records', async ({ page }) => {
   await page.goto('/'); await setWelcomeName(page, 'もち'); await setHouseName(page, 'comments');
   await page.getByRole('button', { name: 'ハウスをつくる', exact: true }).click(); await page.getByRole('button', { name: 'ハウスに入る', exact: true }).click(); await expect(page.locator('.onboarding')).toHaveCount(0);
   await page.evaluate(async () => {
@@ -22,6 +22,9 @@ test('うちらのなう and だるぽよ on けーじばん take comments, like
     await slide.getByRole('button', { name: '送る' }).click();
     await expect(slide.locator('.comment')).toHaveCount(1);
     await expect(slide.locator('.comment')).toContainText(text);
+    // ♥👏✨ too: the count goes up and your choice is marked
+    await slide.getByRole('button', { name: /^♥/ }).click();
+    await expect(slide.getByRole('button', { name: '♥ 1' })).toHaveAttribute('aria-pressed', 'true');
     await page.locator('.pin-viewer .pm-close').click();
   }
   // they are saved: a fresh look at the board shows them
@@ -30,4 +33,9 @@ test('うちらのなう and だるぽよ on けーじばん take comments, like
     return [(await houseApi('/moments')).items[0].comments[0].text, (await houseApi('/darupoyo')).items[0].comments[0].text];
   });
   expect(saved).toEqual(['かわいい！', 'だるぽよえらい']);
+  const hearts = await page.evaluate(async () => {
+    const { houseApi, client } = await import('/src/api.js');
+    return [(await houseApi('/moments')).items[0].reactions[client.uid], (await houseApi('/darupoyo')).items[0].reactions[client.uid]];
+  });
+  expect(hearts).toEqual(['heart', 'heart']);
 });

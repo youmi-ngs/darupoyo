@@ -84,3 +84,29 @@ export function setupSocialSettings(getMe, toast) {
   };
   return () => {};
 }
+
+// ---------- reactions ----------
+// ♥👏✨ under a chore record, うちらのなう or だるぽよ. base: '/posts', '/moments' or '/darupoyo'.
+// ctx = { me, toast, after? } — after() runs once the server has the reaction.
+const EMOJI = [['heart', '♥'], ['clap', '👏'], ['sparkles', '✨']];
+export function reactionRow(record, base, ctx) {
+  const row = document.createElement('div'); row.className = 'reaction-row';
+  const buttons = EMOJI.map(([emoji, face]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.emoji = emoji;
+    b.onclick = async () => {
+      buttons.forEach(x => { x.disabled = true; });
+      try {
+        const updated = await houseApi(base + '/' + record.id + '/reaction', { emoji }, 'PUT');
+        record.reactions = updated.reactions || {}; draw(); ctx.after?.();
+      } catch (e) { ctx.toast(e.message); } finally { buttons.forEach(x => { x.disabled = false; }); }
+    };
+    return [b, face];
+  });
+  const draw = () => buttons.forEach(([b, face]) => {
+    const all = Object.values(record.reactions || {}), mine = (record.reactions || {})[ctx.me] === b.dataset.emoji;
+    b.textContent = face + ' ' + all.filter(v => v === b.dataset.emoji).length;
+    b.setAttribute('aria-pressed', String(mine)); b.classList.toggle('is-mine', mine);
+  });
+  draw(); row.append(...buttons.map(([b]) => b));
+  return row;
+}

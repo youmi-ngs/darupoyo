@@ -222,11 +222,13 @@ export async function mockFetch(url, init = {}) {
     (state.activity ||= {})[uid] = {chore:'meal', phase:'finished', gal:post.gal, at:post.finished_at, post_id:post.id};
     db.days[dayKey] = state; save(db); return json(post);
   }
-  const reaction = rest.match(/^\/posts\/([^/]+)\/reaction$/);
+  // Chore posts, うちらのなう and だるぽよ all take ♥👏✨.
+  const reaction = rest.match(/^\/(posts|moments|darupoyo)\/([^/]+)\/reaction$/);
   if (reaction) {
-    const post = db.posts[reaction[1]];
+    const table = { posts: db.posts, moments: db.moments, darupoyo: db.darupoyo_records || {} }[reaction[1]];
+    const post = table[reaction[2]];
     if (!post || post.house_id !== houseId) return fail(404, 'Post not found');
-    post.reactions[uid] = body.emoji; save(db); return json(post);
+    (post.reactions ||= {})[uid] = body.emoji; save(db); return json(post);
   }
   return fail(404, 'API not found');
 }
