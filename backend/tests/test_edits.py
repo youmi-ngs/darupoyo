@@ -20,6 +20,10 @@ class Lines:
         self.calls.append(("moment", caption, bool(photo)))
         return {"text": "なう:" + caption, "source": "gemini", "gal": gal}
 
+    def darupoyo(self, gal, chore, caption="", photo=None):
+        self.calls.append(("darupoyo", chore, caption, bool(photo)))
+        return {"text": "だる:" + caption, "source": "gemini", "gal": gal}
+
     def close(self):
         pass
 
@@ -61,12 +65,13 @@ def test_editing_a_moment_lets_the_gal_look_at_the_photo_again():
         assert c.app.state.praise.calls[-1] == ("moment", "カフェきた", True)
 
 
-def test_editing_darupoyo_changes_its_words_only():
+def test_editing_darupoyo_changes_its_words_and_the_gal_answers_again():
     with TestClient(create_app(LOCAL)) as c:
         h = setup(c)
         record = c.post(f"/api/houses/{h}/darupoyo", headers=auth(), json={"request_id": str(uuid4()), "chore": "meal"}).json()["record"]
+        assert record["praise"]["text"] == "だる:"  # the gal answers every だるぽよ
         edited = c.patch(f"/api/houses/{h}/darupoyo/{record['id']}", headers=auth(), json={"caption": "あした やる"}).json()
-        assert edited["caption"] == "あした やる" and "praise" not in edited
+        assert edited["caption"] == "あした やる" and edited["praise"]["text"] == "だる:あした やる"
 
 
 def test_deleting_a_post_takes_it_out_of_the_day_and_removes_its_photo():

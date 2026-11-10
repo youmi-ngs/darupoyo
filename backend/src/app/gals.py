@@ -174,6 +174,41 @@ def moment_fallback(gal, rng=random):
     return rng.choice(MOMENT_FALLBACK[gal_or_default(gal)])
 
 
+# だるぽよ: the resident did not do a chore today and said so. The gal backs the rest, never
+# pushes the chore and never makes them feel guilty.
+DARUPOYO_CHORES = {"laundry": "洗濯", "meal": "ごはん", "dryer": "ドライヤー", "garbage": "ゴミ出し"}
+DARUPOYO_RULES = (
+    "家の友だちが、今日は「{chore}」をやらずに休むこと（だるぽよ）を、同じ家の住人に共有した。"
+    "休むのもえらい、正直に言えたのがえらい、と肯定して、気持ちが軽くなる一言を、あなたのキャラのまま日本語で返す。"
+    "ひとことがあれば、それに軽く反応する。{photo}"
+    "50文字以内の1〜2文。説明や前置き、かぎかっこは付けない。"
+    "禁止：責める・がっかりする・家事をうながす（「明日こそ」「やろう」など）・説教・見た目の評価・ユーザーへの指示。"
+)
+DARUPOYO_PHOTO = "写真が添付されているので、写っているものに軽くふれてよい（人の見た目は評価しない、自撮りと決めつけない）。"
+DARUPOYO_BANNED = ("サボ", "明日こそ", "やろう", "やりなよ", "しなきゃ", "ダメ", "だめ", "がっかり", "残念", "怠け", "なまけ", "自撮り", "顔", "メイク", "太っ", "痩せ", "やせ")
+DARUPOYO_FALLBACK = {
+    "heisei": ["だるい日もあるっしょ！休むのもチョーえらい↑↑", "正直に言えたのマジあげぽよ〜！ゆっくりしてこ↑↑"],
+    "reiwa": ["休むのも大事。それな、今日はゆるっといこ", "だるぽよ共有えらすぎ。無理しないのが正解じゃん"],
+    "kuro": ["休める子が最強！ウチら味方だから", "今日はだるぽよでOK！ちゃんと言えたのえらい"],
+    "hime": ["休むのも姫のおしごと♡ えらいこ", "がんばらない日もかわいいよ♡ ゆっくりしてね"],
+}
+
+
+def darupoyo_prompt(gal, chore, caption, with_photo=False):
+    sheet = GALS[gal_or_default(gal)]
+    rules = DARUPOYO_RULES.format(chore=DARUPOYO_CHORES.get(chore, "家事"), photo=DARUPOYO_PHOTO if with_photo else "")
+    system = "\n".join([rules, f"あなたは「{sheet['name']}」。{sheet['sheet']}", "話し方の例：" + " / ".join(sheet["examples"])])
+    return system, "ひとこと：" + (caption.strip() or "（なし）")
+
+
+def darupoyo_acceptable(text):
+    return bool(text) and len(text) <= 80 and not any(word in text for word in DARUPOYO_BANNED)
+
+
+def darupoyo_fallback(gal, rng=random):
+    return rng.choice(DARUPOYO_FALLBACK[gal_or_default(gal)])
+
+
 def gal_or_default(gal):
     return gal if gal in GALS else "reiwa"
 

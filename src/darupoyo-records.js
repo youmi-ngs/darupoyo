@@ -4,6 +4,7 @@ import { setBusy } from './busy.js';
 import { whileSending } from './sending.js';
 import { doneActionsHTML } from './celebrate.js';
 import { audienceChip } from './audience.js';
+import { momentPraise } from './moment-praise.js';
 import { api, client, refresh } from './api.js';
 import { blobOf, photoCrop } from './camera.js';
 import { takePhoto } from './photo-camera.js';
@@ -140,7 +141,10 @@ export function setupDarupoyoRecords() {
           return scopedApi(house,'/darupoyo',submission);
         });
         if(version!==composer) return;
-        discardPreview(); dialog.classList.add('is-success'); dialog.innerHTML='<div class="record-celebration" aria-hidden="true"><span class="record-confetti"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><img class="refined-success-art" src="/refined/3759b.svg" alt=""></div><h2>だるぽよ、<br>記録かんりょ〜</h2><p>きょうのあんたも、超かわいいよん♡</p>'+doneActionsHTML('けーじばんを見る');
+        discardPreview(); dialog.classList.add('is-success'); dialog.innerHTML='<div class="record-celebration" aria-hidden="true"><span class="record-confetti"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><img class="refined-success-art" src="/refined/3759b.svg" alt=""></div><h2>だるぽよ、<br>記録かんりょ〜</h2><p class="darupoyo-done-line">きょうのあんたも、超かわいいよん♡</p>'+doneActionsHTML('けーじばんを見る');
+        // The gal's own line for this だるぽよ, in her bubble (the fixed line stays only if there is none).
+        const line=momentPraise(record?.praise, dashboard?.house.members[client.uid]?.theme);
+        if(line) { line.classList.add('darupoyo-praise'); dialog.querySelector('.darupoyo-done-line').replaceWith(line); }
         // #176: けーじばん or the entrance (closing with Esc still goes to けーじばん).
         dialog.querySelectorAll('[data-done]').forEach(button=>{ button.onclick=()=>{ goTo=button.dataset.done; dialog.close(); }; });
         dialog.querySelector('[data-done]').focus({preventScroll:true});

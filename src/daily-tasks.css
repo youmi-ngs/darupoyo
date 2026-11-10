@@ -38,3 +38,7 @@
 .darupoyo-dialog label:has(input[type=file]) { padding: 12px; border: 2px dashed #b68bb4; border-radius: 14px; text-align: center; background: white; cursor: pointer; }
 .keyboard-nav .darupoyo-dialog label:has(input[type=file]):focus-within { outline: 3px solid #7fb8e8; outline-offset: 3px; }
 .darupoyo-dialog input[type=file] { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+
+/* だるぽよ done: the gal line reads like the other gal bubbles */
+.darupoyo-dialog .darupoyo-praise { align-self: stretch; text-align: left; }
+.darupoyo-dialog .darupoyo-praise .gal-text, .darupoyo-dialog .darupoyo-praise p { color: #3b2560; font-weight: 700; }

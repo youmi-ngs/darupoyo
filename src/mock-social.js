@@ -18,6 +18,7 @@ export function socialRoute({ db, uid, houseId, house, rest, method, body, save,
         record.caption = caption; record.edited_at = new Date().toISOString();
         if (kind === 'posts') record.praise = { text: (caption ? '「' + caption + '」' : '') + 'やったのえらすぎ！今日の自分に拍手〜✨', source: 'fallback' };
         if (kind === 'moments') record.praise = { ...record.praise, text: (caption ? caption + '、' : '') + '今を見せてくれてうれしい♡', source: 'fallback' };
+        if (kind === 'darupoyo') record.praise = { ...record.praise, text: (caption ? caption + '、' : '') + '休むのもえらい♡', source: 'fallback' };
       }
       save(db); return json(record);
     }

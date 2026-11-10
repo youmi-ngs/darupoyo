@@ -172,6 +172,7 @@ AIコメント生成は最大約8秒の外部呼出し待ち。Firestoreの達�
 | GET | /api/houses/{id}/members/{uid}/history/{sourceHouseId}/media/{mediaId} | 上の公開済み本人投稿に紐づく写真・録音（meal / cutout / voice のみ。未投稿のアップロードは対象外） |
 
 - コメントは投稿・うちらのなう・だるぽよの `comments: [{id, user_id, text, created_at}]` に入る。それぞれの購読・一覧にそのまま含まれる
+- だるぽよを作ると、本人が選んだギャルのひとこと `praise: {text, source, gal}` を付けて返す（家事の種類・ひとこと・写真があれば写真を Gemini に渡し、休むのを肯定する文。責める・家事をうながす文は使わない）。ひとことを編集すると書き直す
 - プロフィール写真は `house.members[uid].avatar_media_id`、共有設定は `house.members[uid].share_history`
 - 別ハウスの記録に含めるのは本人の内容だけ（`id, day, chore, method, created_at, media_id, voice_media_id, finished_voice_media_id, reward, praise, gal, caption, source_house_id`）。リアクション・コメント・シンクロ相手は含めない
 - アカウント削除では、本人のコメント（他人の投稿上も）・プロフィール写真・共有設定も消える

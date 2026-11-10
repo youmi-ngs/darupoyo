@@ -72,3 +72,17 @@ test('from やっほ〜 you can go back and fix the name you just typed', async 
   const me = await page.evaluate(async () => { const { client } = await import('/src/api.js'); const d = await (await import('/src/api.js')).houseApi('/dashboard'); return d.house.members[client.uid].display_name; });
   expect(me).toBe('もち');
 });
+
+test('だるぽよ gets the gal line too: on the done card and in けーじばん', async ({ page }) => {
+  await page.goto('/'); await newHouse(page, 'だるハウス', true);
+  await page.getByRole('button', { name: 'スキップ' }).click({ timeout: 3000 }).catch(() => {});
+  await page.locator('.scene-dot').nth(2).click(); await page.locator('[data-chore="meal"]').click(); await page.getByRole('button', { name: /^だるぽよ/ }).click();
+  await page.locator('#darupoyo-caption').fill('ねむい');
+  await page.getByRole('button', { name: 'きょーゆー' }).click();
+  const done = page.locator('.darupoyo-dialog.is-success');
+  await expect(done.locator('.darupoyo-praise .gal-text')).not.toHaveText('');
+  const line = await done.locator('.darupoyo-praise .gal-text').textContent();
+  await done.getByRole('button', { name: 'けーじばんを見る' }).click();
+  await page.locator('.pin-grid .pin-darupoyo').first().click();
+  await expect(page.locator('.pin-viewer[open] .moment-praise .gal-text').first()).toHaveText(line);
+});
