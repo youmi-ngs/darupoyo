@@ -16,7 +16,7 @@ export function setupFurniturePlay() {
   let taps=0, house='', prize=null, expiry;
   const bound=new WeakSet(), animations=new WeakMap();
   const status=document.createElement('p'); status.className='furniture-play-status'; status.setAttribute('role','status'); document.body.append(status);
-  const clearPrize=()=>{ clearTimeout(expiry); prize?.remove(); prize=null; };
+  const clearPrize=()=>{ clearTimeout(expiry); prize?.remove(); prize=null; status.classList.remove('is-visible'); };
   function play(target) {
     taps++; sfx.pop();
     const special=taps%5===0;
@@ -25,14 +25,16 @@ export function setupFurniturePlay() {
       const frames=special ? [{rotate:'0deg',scale:'1'},{rotate:'18deg',scale:'.85'},{rotate:'-6deg',scale:'1'},{rotate:'0deg',scale:'1'}] : [{rotate:'0deg'},{rotate:'-4deg'},{rotate:'4deg'},{rotate:'0deg'}];
       animations.set(target,target.animate(frames,{duration:special?650:350,easing:'ease-out'}));
     }
-    if(!special) { status.textContent='ぽよっ'; return; }
+    if(!special) { if(!prize) status.textContent='ぽよっ'; return; }
     clearPrize(); sfx.ding();
     const room=target.closest('.sv, .myroom'); if(!room) return;
     const item=PRIZES[Math.floor(Math.random()*PRIZES.length)];
-    prize=document.createElement('button'); prize.type='button'; prize.className='furniture-prize'; prize.setAttribute('aria-label','落ちた'+item.name+'を拾う');
+    prize=document.createElement('div'); prize.className='furniture-prize'; prize.setAttribute('aria-hidden','true');
     prize.innerHTML='<svg viewBox="0 0 80 45" aria-hidden="true">'+item.svg+'</svg><span>'+item.short+'♡</span>';
-    prize.onclick=()=>{ clearPrize(); sfx.clear(); status.textContent=item.short+'みっけ♡ ラッキ〜'; status.classList.add('is-visible'); setTimeout(()=>status.classList.remove('is-visible'),2000); };
-    room.append(prize); status.textContent=item.short+'が落ちた！拾ってみよ♡'; expiry=setTimeout(clearPrize,15000);
+    room.append(prize);
+    status.textContent=item.short+'みっけ♡ ラッキ〜'; status.classList.add('is-visible');
+    expiry=setTimeout(clearPrize,3000);
+
   }
   function bind() {
     document.querySelectorAll(SELECTOR).forEach(target=>{

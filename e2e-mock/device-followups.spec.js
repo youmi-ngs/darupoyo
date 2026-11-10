@@ -95,10 +95,13 @@ test('board separates author, category and status and names moments consistently
  });
  await page.locator('#open-board').click();
  await expect(page.locator('.pin-grid .pin-moment .pin-category')).toHaveText('テストのなう');
- await expect(page.locator('.pin-grid .pin-darupoyo .pin-category')).toHaveText('ごはん');
+ await expect(page.locator('.pin-grid .pin-darupoyo .pin-category')).toHaveText('テストのごはん');
  await expect(page.locator('.pin-grid .pin-darupoyo .pin-state')).toHaveText('だるぽよ');
  await expect(page.locator('.pin-grid .pin-post .pin-state')).toHaveText('やったよ');
  await expect(page.locator('.pin-grid .pin-author strong').first()).toHaveText('テスト');
+ await expect(page.locator('.pin-grid .pin-author small')).toHaveCount(0);
+ const styles=await page.locator('.pin-grid .pin-state').evaluateAll(nodes=>nodes.map(el=>[getComputedStyle(el).color,getComputedStyle(el).backgroundColor]));
+ expect(styles[0]).toEqual(styles[1]);
  await page.screenshot({path:'/tmp/darupoyo-board-followups.png',animations:'disabled'});
  await page.locator('.pin-grid .pin-moment').click();await expect(page.locator('.pin-viewer .pm-title')).toContainText(['テストのなう']);
 });
