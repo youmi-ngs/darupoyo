@@ -22,8 +22,12 @@ async function openOwnAlbum(page) {
   await expect(page.locator('#log-modal')).toBeVisible();
 }
 
-test('home opens at the entrance; its board shows the newest records and opens けーじばん', async ({ page }) => {
+test('returning home opens at the entrance; its board shows the newest records and opens けーじばん', async ({ page }) => {
   await enter(page);
+  // The first-time guide intentionally moves to the living room. A returning
+  // resident (guide already skipped) starts at the entrance.
+  await page.reload();
+  await expect(page.locator('.onboarding')).toHaveCount(0);
   await expect(page.locator('.scene-dot').nth(1)).toHaveAttribute('aria-current', '');
   await expect(page.locator('#open-board')).toBeInViewport();
   await expect(page.locator('#entry-board-grid .pin-card.is-empty')).toHaveCount(6);
