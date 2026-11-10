@@ -325,15 +325,17 @@ class Domain:
 
         return self.store.atomic(run)
 
-    def react(self, uid, house_id, post_id, emoji):
-        path = f"houses/{house_id}/posts/{post_id}"
+    def react(self, uid, house_id, post_id, emoji, collection="posts"):
+        # Chore posts, うちらのなう (moments) and だるぽよ (darupoyo_records) all take reactions.
+        assert collection in ("posts", "moments", "darupoyo_records")
+        path = f"houses/{house_id}/{collection}/{post_id}"
 
         def run(tx):
             require_member(tx, house_id, uid)
             post = tx.get(path)
             if not post:
                 raise HTTPException(404, "Post not found")
-            post["reactions"][uid] = emoji
+            post.setdefault("reactions", {})[uid] = emoji
             tx.set(path, post)
             return post
 

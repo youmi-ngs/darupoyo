@@ -379,6 +379,15 @@ def create_app(settings=None, store=None, praise=None, clock=None):
             raise HTTPException(422, "Invalid post id")
         return app.state.domain.react(uid, str(house_id), post_id, body.emoji)
 
+    # うちらのなう and だるぽよ take the same ♥👏✨ reactions.
+    for kind, collection in (("moments", "moments"), ("darupoyo", "darupoyo_records")):
+        def react_to(house_id: UUID, record_id: str, body: Reaction, uid=Depends(current_user), collection=collection):
+            if not re.fullmatch(r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}", record_id):
+                raise HTTPException(422, "Invalid post id")
+            return app.state.domain.react(uid, str(house_id), record_id, body.emoji, collection)
+
+        app.put(f"/api/houses/{{house_id}}/{kind}/{{record_id}}/reaction")(react_to)
+
     # ---------- photos and sharing (comments, profile photo, other houses) ----------
     POST_ID = r"[0-9]{8}T[0-9]{12}_[a-f0-9]{32}"
 

@@ -152,6 +152,7 @@ export function setupBoardView(ctx) {
       },
       onDeleted: () => { viewer.close(); void loadExtra(); void refresh().catch(() => {}); },
     }));
+    if (card.record && ctx.reactions) box.append(ctx.reactions(card.record, card.type === 'moment' ? '/moments' : '/darupoyo')); // ♥👏✨
     if (card.record && ctx.comments) box.append(ctx.comments(card.record, card.type === 'moment' ? '/moments' : '/darupoyo'));
     return box;
   }
