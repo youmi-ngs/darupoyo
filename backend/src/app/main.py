@@ -101,7 +101,7 @@ def create_app(settings=None, store=None, praise=None, clock=None):
     app.add_middleware(
         CORSMiddleware,
         allow_origins=[s.strip() for s in origins.split(",") if s.strip()],
-        allow_methods=["GET", "POST", "PUT", "DELETE"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],  # PATCH: editing a post
         allow_headers=["Authorization", "Content-Type"],
     )
 

@@ -114,3 +114,11 @@ def test_deleting_moments_and_darupoyo():
         c.delete(f"/api/houses/{h}/darupoyo/{record['id']}", headers=auth())
         assert c.get(f"/api/houses/{h}/darupoyo", headers=auth()).json()["items"] == []
         assert "alice" not in dash()["state"].get("darupoyo_shared", {})
+
+
+def test_a_browser_on_another_origin_may_send_patch():
+    from dataclasses import replace
+    settings = replace(LOCAL, origins="http://127.0.0.1:5173")
+    with TestClient(create_app(settings)) as c:
+        res = c.options("/api/houses/x/posts/y", headers={"Origin": "http://127.0.0.1:5173", "Access-Control-Request-Method": "PATCH"})
+        assert res.status_code == 200 and "PATCH" in res.headers["access-control-allow-methods"]
