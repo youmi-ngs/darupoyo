@@ -80,8 +80,11 @@ def _edit_one(app, uid, house_id, kind, record_id, caption):
         return record, changed
 
     record, changed = app.state.store.atomic(save)
-    if not changed or kind == "darupoyo":  # だるぽよ has no gal line
+    if not changed:
         return record
+    if kind == "darupoyo":  # the gal answers the new words
+        from .darupoyo import add_praise
+        return add_praise(app, uid, house_id, record)
     if kind == "posts":
         line = app.state.praise.generate(record["chore"], record.get("gal"), record)
         return app.state.domain.set_praise(house_id, record_id, line)

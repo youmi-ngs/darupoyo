@@ -156,6 +156,31 @@ class Praise:
             logging.getLogger(__name__).warning("praise_provider_unavailable")
         return fallback
 
+    def darupoyo(self, gal, chore, caption="", photo=None):
+        """A gentle line for a だるぽよ (a day off from a chore). photo = (bytes, mime type) or None."""
+        fallback = {"text": gals.darupoyo_fallback(gal), "source": "fallback", "gal": gal}
+        if self.client is None:
+            return fallback
+        try:
+            from google.genai import types
+
+            system, text = gals.darupoyo_prompt(gal, chore, caption, with_photo=photo is not None)
+            contents = [types.Part.from_bytes(data=photo[0], mime_type=photo[1]), text] if photo else text
+            for _ in range(2):
+                result = self.client.models.generate_content(
+                    model=self.settings.model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(
+                        system_instruction=system, temperature=1.0, max_output_tokens=200
+                    ),
+                )
+                line = (result.text or "").strip().strip("「」\"")
+                if gals.darupoyo_acceptable(line):
+                    return {"text": line, "source": "gemini", "gal": gal}
+        except Exception:  # noqa: BLE001 -- the record is shared even without a line
+            logging.getLogger(__name__).warning("praise_provider_unavailable")
+        return fallback
+
     def close(self):
         if self.client is not None:
             self.client.close()

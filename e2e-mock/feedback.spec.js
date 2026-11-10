@@ -15,7 +15,8 @@ test('30 visible characters, optional text, compact photo and board categories',
   await enter(page); await page.locator('[data-chore=meal]').click(); await page.getByRole('button',{name:/^だるぽよ/}).click();
   const composer=page.locator('.darupoyo-dialog'), input=composer.locator('textarea');
   await expect(composer).toContainText('ま、そんな日もあるっしょ〜♡');
-  await expect(composer).toContainText('かかなくてもおけ♡');
+  await expect(composer).not.toContainText('かかなくてもおけ♡'); // the label is just ひとこと; the placeholder says it is optional
+  await expect(input).toHaveAttribute('placeholder', '書かんくてもおけ');
   await input.fill('👨‍👩‍👧‍👦'.repeat(31)); await expect(input).toHaveValue('👨‍👩‍👧‍👦'.repeat(30));
   await expect(composer.locator('[data-save]')).toBeEnabled();
   await expect(composer.locator('[data-count]')).toHaveText('30 / 30');

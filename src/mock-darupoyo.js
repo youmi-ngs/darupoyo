@@ -21,7 +21,8 @@ export function mockDarupoyo({ db, houseId, uid, rest, method, body, searchParam
     const media = db.media[body.media_id];
     if (!media || media.house_id !== houseId || media.owner_id !== uid || media.kind !== 'darupoyo') return json({detail:'Missing owned photo'},422);
   }
-  const now = new Date(), record = {id:postId(now),kind:'darupoyo',house_id:houseId,user_id:uid,chore:body.chore,caption,media_id:body.media_id || null,day,created_at:now.toISOString()};
+  const now = new Date(), record = {id:postId(now),kind:'darupoyo',house_id:houseId,user_id:uid,chore:body.chore,caption,media_id:body.media_id || null,day,created_at:now.toISOString(),
+    praise:{text:'休むのもえらい♡ ゆっくりしてね',source:'fallback',gal:'reiwa'}}; // the gal answers every だるぽよ
   db.darupoyo_records[record.id] = record;
   db.darupoyo_requests[key] = {id:record.id,user_id:uid,house_id:houseId,fingerprint};
   (state.darupoyo_shared ||= {})[uid] = true;

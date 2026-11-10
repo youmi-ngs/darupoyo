@@ -54,7 +54,7 @@ export function setupBoardView(ctx) {
     return [
       ...posts.map(p => ({ type: 'post', id: p.id, at: p.created_at, who: p.user_id, image: p.image, chore: p.chore, gal: p.gal, text: p.caption || p.praise?.text || '', post: p })),
       ...extra.moments.map(m => ({ type: 'moment', id: m.id, at: m.created_at, who: m.user_id, media: m.media_id, text: m.caption || m.praise?.text || ctx.nameOf(m.user_id) + 'のなう', caption: m.caption, praise: m.praise, record: m })),
-      ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ', record: r })),
+      ...extra.darupoyo.map(r => ({ type: 'darupoyo', id: r.id, at: r.created_at, who: r.user_id, media: r.media_id, chore: r.chore, text: r.caption || (LABELS[r.chore] || '') + '、だるぽよ', praise: r.praise, record: r })),
     ].sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
   function picture(card) {
@@ -136,19 +136,19 @@ export function setupBoardView(ctx) {
     let praise = null;
     if (card.type === 'moment') { // the caption, then the gal's line (#158)
       text.textContent = card.caption || ''; text.hidden = !card.caption;
-      praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
     }
+    // うちらのなう and だるぽよ both carry the gal's line.
+    praise = momentPraise(card.praise, ctx.themeOf(card.who)); if (praise) box.append(praise);
     // Housemates can comment on うちらのなう and だるぽよ too, like on chore records.
     // Your own うちらのなう / だるぽよ: edit the words (the gal answers again) or delete it.
     if (card.record && card.who === client.uid) box.append(ownerActions({
       record: card.record, base: card.type === 'moment' ? '/moments' : '/darupoyo', toast: ctx.toast,
       onEdited: updated => {
-        if (card.type === 'moment') {
-          text.textContent = updated.caption || ''; text.hidden = !updated.caption;
-          const fresh = momentPraise(updated.praise, ctx.themeOf(card.who));
-          if (praise && fresh) praise.replaceWith(fresh); else if (fresh) text.after(fresh);
-          praise = fresh;
-        } else text.textContent = updated.caption || (LABELS[card.chore] || '') + '、だるぽよ';
+        if (card.type === 'moment') { text.textContent = updated.caption || ''; text.hidden = !updated.caption; }
+        else text.textContent = updated.caption || (LABELS[card.chore] || '') + '、だるぽよ';
+        const fresh = momentPraise(updated.praise, ctx.themeOf(card.who)); // the gal answered the new words
+        if (praise && fresh) praise.replaceWith(fresh); else if (fresh) text.after(fresh);
+        praise = fresh || praise;
         render();
       },
       onDeleted: () => { viewer.close(); void loadExtra(); void refresh().catch(() => {}); },

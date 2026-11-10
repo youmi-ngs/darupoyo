@@ -115,3 +115,24 @@ def test_sharing_a_moment_hands_its_photo_to_the_gal(client):
     photo = upload(client, h, "selfie")
     client.post(f"/api/houses/{h}/moments", headers=auth(), json={"request_id": str(uuid4()), "media_id": photo, "caption": ""})
     assert seen and seen[0][1].startswith("image/") and len(seen[0][0]) > 0
+
+
+def test_darupoyo_gets_a_gentle_gal_line_that_never_pushes_the_chore():
+    system, text = gals.darupoyo_prompt("kuro", "laundry", "ねむい")
+    assert "洗濯" in system and "責める" in system and text == "ひとこと：ねむい"
+    praise = Praise(LOCAL)
+    praise.client = FakeGemini(["明日こそやろう！", "休むのも最強！ウチら味方だから"])
+    assert praise.darupoyo("kuro", "laundry", "ねむい")["text"] == "休むのも最強！ウチら味方だから"
+    # with a photo, Gemini sees it
+    praise.client = FakeGemini(["ねこと休憩、最高じゃん"])
+    out = praise.darupoyo("reiwa", "meal", "", (b"jpeg", "image/jpeg"))
+    assert out["source"] == "gemini" and praise.client.calls[0][0][0].inline_data.mime_type == "image/jpeg"
+    for lines in gals.DARUPOYO_FALLBACK.values():
+        assert all(gals.darupoyo_acceptable(line) for line in lines)
+
+
+def test_sharing_a_darupoyo_comes_back_with_the_gal_line(client):
+    h = house(client)
+    record = client.post(f"/api/houses/{h}/darupoyo", headers=auth(), json={"request_id": str(uuid4()), "chore": "dryer"}).json()["record"]
+    assert record["praise"]["source"] == "fallback" and record["praise"]["text"]
+    assert client.get(f"/api/houses/{h}/darupoyo", headers=auth()).json()["items"][0]["praise"] == record["praise"]

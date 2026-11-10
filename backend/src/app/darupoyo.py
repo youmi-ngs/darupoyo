@@ -58,6 +58,36 @@ def share(domain, uid, house_id, body):
     return domain.store.atomic(run)
 
 
+def set_praise(store, house_id, record_id, praise):
+    path = f"houses/{house_id}/darupoyo_records/{record_id}"
+
+    def save(tx):
+        record = tx.get(path)
+        if not record:
+            raise HTTPException(409, "Record was removed")
+        record["praise"] = praise
+        tx.set(path, record)
+        return record
+
+    return store.atomic(save)
+
+
+def add_praise(app, uid, house_id, record):
+    """The resident's gal answers the だるぽよ (with the photo, if there is one)."""
+    from .notify import voice
+    store = app.state.store
+    gal = voice(require_member(store, house_id, uid)["members"][uid].get("gal"))
+    photo = None
+    if record.get("media_id"):
+        try:
+            meta = store.get(f"houses/{house_id}/media/{record['media_id']}")
+            photo = (app.state.media.read(meta["object_name"]), meta["content_type"])
+        except Exception:  # noqa: BLE001 -- without the photo the line comes from the words
+            photo = None
+    line = app.state.praise.darupoyo(gal, record["chore"], record.get("caption", ""), photo)
+    return set_praise(store, house_id, record["id"], line)
+
+
 def register_darupoyo_routes(app, current_user):
     @app.post('/api/houses/{house_id}/darupoyo', status_code=201)
     def create_record(house_id: UUID, body: DarupoyoRecord, uid=Depends(current_user)):
@@ -65,9 +95,14 @@ def register_darupoyo_routes(app, current_user):
         house = str(house_id)
         targets(app.state.store, uid, house, body.share_to)  # check before anything is saved
         result = share(app.state.domain, uid, house, body)
+        if "praise" not in result["record"]:  # new: the gal answers (a retry already has her line)
+            result["record"] = add_praise(app, uid, house, result["record"])
 
         def copy(other, media_ids):
-            return share(app.state.domain, uid, other, body.model_copy(update={**media_ids, "share_to": []}))["record"]
+            made = share(app.state.domain, uid, other, body.model_copy(update={**media_ids, "share_to": []}))["record"]
+            if "praise" not in made and result["record"].get("praise"):
+                made = set_praise(app.state.store, other, made["id"], result["record"]["praise"])
+            return made
 
         result["record"] = fan_out(app, uid, house, "darupoyo_records", result["record"], body, copy)
         return result
