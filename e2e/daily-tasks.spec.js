@@ -79,9 +79,12 @@ test('furniture reacts on taps and keyboard, with a temporary prize (つけま�
   await page.locator('.scene-dot').nth(1).click(); const furniture=page.getByRole('button',{name:'玄関のドアであそぶ'});
   for(let i=0;i<4;i++) await furniture.click(); await expect(page.locator('.furniture-prize')).toHaveCount(0);
   await furniture.focus(); await furniture.press('Enter');
-  await expect(page.getByRole('button',{name:/^落ちた(つけまつげ|ネイルチップ|アメピン|ピアスのキャッチ)を拾う$/})).toBeVisible();
-  await page.getByRole('button',{name:/^落ちた(つけまつげ|ネイルチップ|アメピン|ピアスのキャッチ)を拾う$/}).click();
+  await expect(page.locator('.furniture-prize')).toBeVisible();
+  await expect(page.locator('.furniture-prize')).not.toHaveAttribute('role','button');
+  await expect(page.getByRole('button',{name:/拾う/})).toHaveCount(0);
   await expect(page.locator('.furniture-play-status')).toHaveText(/^(つけま|ネイルチップ|アメピン|ピアスのキャッチ)みっけ♡ ラッキ〜$/);
+  await expect(page.locator('.furniture-play-status')).toHaveClass(/is-visible/);
+  await expect(page.locator('.furniture-prize')).toHaveCount(0,{timeout:5000});
   expect((await state(page)).state).toEqual(before.state);
   await page.reload(); await page.locator('.scene-dot').nth(1).click();
   await page.getByRole('button',{name:'玄関のドアであそぶ'}).click(); await expect(page.locator('.furniture-prize')).toHaveCount(0);
