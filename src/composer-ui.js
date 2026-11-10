@@ -10,6 +10,16 @@ export function captionCounter(input) {
 
 export function photoPreview(image) {
   image.classList.add('composer-thumbnail');
+  if (image instanceof HTMLCanvasElement) {
+    const fit = () => {
+      const frame = image.closest('.capture-frame,.now-frame');
+      if (!frame) return;
+      const scale = Math.min(180 / image.width, 180 / image.height);
+      frame.style.setProperty('--preview-width', image.width * scale + 'px');
+      frame.style.setProperty('--preview-height', image.height * scale + 'px');
+    };
+    new MutationObserver(fit).observe(image, { attributes:true, attributeFilter:['width','height'] }); fit();
+  }
   image.tabIndex = 0; image.setAttribute('role', 'button');
   image.setAttribute('aria-label', '写真を拡大して確認');
   const open = () => {

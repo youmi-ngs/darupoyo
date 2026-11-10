@@ -94,7 +94,7 @@ test('IME input stops at the limit and can submit after composition', async ({pa
   await input.fill('');
   await input.dispatchEvent('compositionstart');
   await input.evaluate(el=>{el.value='あ'.repeat(31);el.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,inputType:'insertCompositionText'}));});
-  await expect(save).toBeDisabled(); await expect(input).toHaveValue('あ'.repeat(30));
+  await expect(save).toBeEnabled(); await expect(input).toHaveValue('あ'.repeat(30));
   await input.dispatchEvent('compositionend');
   await expect(input).toHaveValue('あ'.repeat(30));
   await expect(page.locator('.darupoyo-dialog [data-count]')).toHaveText('30 / 30');

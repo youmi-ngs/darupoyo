@@ -55,7 +55,7 @@ export function snapshot(video) {
 }
 
 export async function openMic(resources, signal) {
-  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false }, video: false });
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }, video: false });
   if (signal.aborted) { stream.getTracks().forEach(t => t.stop()); check(signal); }
   resources.push(() => stream.getTracks().forEach(t => t.stop())); check(signal);
   return stream;
