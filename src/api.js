@@ -1,4 +1,5 @@
 import { createWelcome } from './welcome-ui.js';
+import { captureInvite, clearInvite } from './invite-link.js';
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup, onAuthStateChanged, signOut, connectAuthEmulator } from 'firebase/auth';
 import { getFirestore, doc, collection, onSnapshot, query, orderBy, limit, connectFirestoreEmulator } from 'firebase/firestore';
@@ -84,6 +85,9 @@ export async function refresh({ onPaint } = {}) {
 }
 export async function start(onUpdate, onError) {
   update = onUpdate; report = onError;
+  let inviteStorage;
+  try { inviteStorage = window.sessionStorage; } catch {}
+  const invite = captureInvite(location.href, inviteStorage);
   const welcome = createWelcome(), dialog = welcome.dialog;
   client.houses = [];
   client.config = await config();
@@ -108,7 +112,6 @@ export async function start(onUpdate, onError) {
   }
   if (client.auth && !client.auth.currentUser) await welcome.login(() => signInWithPopup(client.auth, new GoogleAuthProvider()));
   client.uid = client.auth?.currentUser?.uid || client.uid;
-  const invite = new URLSearchParams(location.hash.slice(1)).get('invite');
   const me = await api('/me');
   if (me.deletion_pending) {
     welcome.deletion(deleteAccount);
@@ -117,7 +120,7 @@ export async function start(onUpdate, onError) {
   const houses = await api('/houses');
   const items = houses.items || houses;
   client.houses = items;
-  const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); await welcome.leave(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
+  const enter = async id => { client.house = id; await new Promise((resolve, reject) => { refresh({ onPaint: resolve }).then(resolve, reject); }); write('darupoyo-house-' + client.uid, id); if (invite) history.replaceState(null, '', clearInvite(location.href, inviteStorage)); await welcome.leave(); subscribe(); window.dispatchEvent(new Event('darupoyo:entered')); };
   if (!invite) {
     const requested = new URLSearchParams(location.hash.slice(1)).get('house');
     if (requested && items.some(h => h.id === requested)) { await enter(requested); return; }
@@ -135,7 +138,7 @@ export async function start(onUpdate, onError) {
       write(nameKey, name, userStore());
       if (!joining) { welcome.created(h.name || value, () => enter(h.id)); return; }
       await enter(h.id);
-      if (joining) { if (invite) history.replaceState(null, '', location.pathname); window.dispatchEvent(new Event('darupoyo:joined')); }
+      if (joining) window.dispatchEvent(new Event('darupoyo:joined'));
     },
   });
 }

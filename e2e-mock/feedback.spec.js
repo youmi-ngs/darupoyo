@@ -44,7 +44,7 @@ test('name limits preserve old names, invite links and profile cancel leave sett
   await expect(page.locator('.account-row b')).toHaveText('長い名前'.repeat(15));
   await page.evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async data=>window.sharedInvite=data});});
   await page.locator('#share-invite').click();
-  expect(await page.evaluate(()=>window.sharedInvite.url)).toContain('#invite=');
+  expect(await page.evaluate(()=>window.sharedInvite.url)).toContain('?invite=');
   await page.evaluate(()=>{Object.defineProperty(navigator,'share',{configurable:true,value:async()=>{throw new DOMException('cancel','AbortError');}});});
   await page.locator('#share-invite').click();
   await expect(page.locator('#invite-status')).toBeHidden();
